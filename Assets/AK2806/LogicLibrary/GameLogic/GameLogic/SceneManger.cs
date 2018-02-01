@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace GameLogic
 {
-    public struct SceneListFile { // persistent
+    public class SceneListFile { // persistent
         public struct Router {
             public struct From {
                 public string scene;
@@ -15,18 +15,27 @@ namespace GameLogic
             public string to; // reference to the name of scene
         }
 
+        public struct SceneFileInfo {
+            public string name;
+            public string path;
+        }
+
         public string fileType;
-        public List<Scene.SceneFile> scenes;
+        public List<SceneFileInfo> scenes;
         public string startup; // reference to the name of scene
         public List<Router> routers;
     }
 
     public class SceneManger
     {
-        private SceneListFile mSceneList;
+        private SceneListFile mSceneList = null;
 
         public SceneManger()
         {
+        }
+
+        public SceneManger(string json) : this() {
+            this.Load(json);
         }
 
         public void Load(string json) {
