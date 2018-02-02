@@ -31,11 +31,11 @@ namespace GameLogic.Scene
     public class Scene
     {
         private SceneFile mScene = null;
-        private List<IRenderer> renderers = null;
+        private List<IRenderer> renderers = new List<IRenderer>();
+        private ulong currentAction = 0;
 
         public Scene()
         {
-            this.renderers = new List<IRenderer>();
         }
 
         public Scene(string json) : this() {

@@ -10,6 +10,26 @@ namespace GameLogic.Scene
         ShowText, Pause, RunBattle
     }
 
+    public class TweenParameter {
+        public struct Tween {
+            public struct Effect {
+                public string target;
+                public string function;
+                public long time;
+                public Object param;
+            }
+
+            public int layer;
+            public List<Effect> effect;
+        }
+
+        public List<Tween> tween;
+    }
+
+    public class RenderAttribute {
+        
+    }
+
     public struct AtomicAction {
         public AtomicActionType actionType;
         public ArrayList parameters;
