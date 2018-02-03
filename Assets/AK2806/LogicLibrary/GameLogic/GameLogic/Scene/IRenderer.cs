@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 namespace GameLogic.Scene
 {
-    public enum AtomicActionType {
+    public enum RenderActionType {
         PutViewable, EditViewable, DeleteViewable,
         Tween, Cutscene,
         PlayBGM, StopBGM, PlaySE,
@@ -27,16 +27,17 @@ namespace GameLogic.Scene
     }
 
     public class RenderAttribute {
-        
+        public string target;
+        public double value;
     }
 
-    public struct AtomicAction {
-        public AtomicActionType actionType;
+    public struct RenderAction {
+        public RenderActionType actionType;
         public ArrayList parameters;
     }
 
     public interface IRenderer
     {
-        void Render(List<AtomicAction> actions);
+        void Render(List<RenderAction> actions);
     }
 }
