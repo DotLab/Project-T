@@ -21,15 +21,15 @@ namespace GameLogic
             Console.WriteLine(test.GetHashCode());
 
             var engine = new Engine()
-        .SetValue("log", new Action<object>(Console.WriteLine))
-        ;
+                .SetValue("log", new Action<object>(Console.WriteLine))
+                ;
 
             engine.Execute(@"
-      (function(){ 
-        log('Hello World');
-      })();
-      
-    ");
+              (function(){ 
+                log('Hello World');
+              })();
+              
+            ");
         }
     }
 }
