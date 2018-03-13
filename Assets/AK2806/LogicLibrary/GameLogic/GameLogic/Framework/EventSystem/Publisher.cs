@@ -15,13 +15,7 @@ namespace GameLogic.Framework.EventSystem
 
         private List<ITrigger> subscribers;
 
-        public List<ITrigger> Subscribers
-        {
-            get
-            {
-                return this.subscribers;
-            }
-        }
+        public List<ITrigger> Subscribers => this.subscribers;
 
         private Publisher()
         {

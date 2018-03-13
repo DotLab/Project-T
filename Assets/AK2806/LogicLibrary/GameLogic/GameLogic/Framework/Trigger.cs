@@ -23,11 +23,41 @@ namespace GameLogic.Framework
         private string actionJS;
         private bool active;
 
-        public string EventID => this.eventID;
+        public string EventID
+        {
+            get
+            {
+                return this.eventID;
+            }
+            set
+            {
+                this.eventID = value;
+            }
+        }
 
-        public string ActionJS => this.actionJS;
+        public string ActionJS
+        {
+            get
+            {
+                return this.actionJS;
+            }
+            set
+            {
+                this.actionJS = value;
+            }
+        }
 
-        public bool Active => this.active;
+        public bool Active
+        {
+            get
+            {
+                return this.active;
+            }
+            set
+            {
+                this.active = value;
+            }
+        }
 
         public void Action(Engine engine)
         {
