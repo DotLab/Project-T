@@ -19,17 +19,7 @@ namespace GameLogic.Framework.EventSystem
     {
         private string id;
 
-        public string ID
-        {
-            get
-            {
-                return this.id;
-            }
-            set
-            {
-                this.id = value;
-            }
-        }
+        public string ID => this.id;
         
         public abstract void ProvideParam(Engine engine);
     }

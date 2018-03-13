@@ -14,17 +14,7 @@ namespace GameLogic.Framework
     {
         private string actionJS;
 
-        public string ActionJS
-        {
-            get
-            {
-                return this.actionJS;
-            }
-            set
-            {
-                this.actionJS = value;
-            }
-        }
+        public string ActionJS => this.actionJS;
 
         public void Action(Engine engine)
         {
