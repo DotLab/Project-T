@@ -28,73 +28,11 @@ namespace GameLogic.Character
         private string description;
         private BaseCharacter belong;
 
-        public PropertyList<BaseCharacter> Items
-        {
-            get
-            {
-                return this.items;
-            }
-        }
-
-        public ITrigger Trigger
-        {
-            get
-            {
-                return this.trigger;
-            }
-            set
-            {
-                this.trigger = value;
-            }
-        }
-
-        public string Description
-        {
-            get
-            {
-                return this.description;
-            }
-            set
-            {
-                this.description = value;
-            }
-        }
-
-        public BaseCharacter Belong
-        {
-            get
-            {
-                return this.belong;
-            }
-            set
-            {
-                this.belong = value;
-            }
-        }
-
-        public string Group
-        {
-            get
-            {
-                return this.group;
-            }
-            set
-            {
-                this.group = value;
-            }
-        }
-
-        public string ID
-        {
-            get
-            {
-                return this.id;
-            }
-            set
-            {
-                this.id = value;
-            }
-        }
-
+        public string Id { get => id; set => id = value; }
+        public string Group { get => group; set => group = value; }
+        public string Description { get => description; set => description = value; }
+        public PropertyList<BaseCharacter> Items => items;
+        public ITrigger Trigger { get => trigger; set => trigger = value; }
+        public BaseCharacter Belong { get => belong; set => belong = value; }
     }
 }

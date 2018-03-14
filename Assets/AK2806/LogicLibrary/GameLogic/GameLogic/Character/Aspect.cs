@@ -40,78 +40,12 @@ namespace GameLogic.Character
         private AspectEffectType effectType;
         private BaseCharacter belong;
 
-        public string Description
-        {
-            get
-            {
-                return this.description;
-            }
-            set
-            {
-                this.description = value;
-            }
-        }
-
-        public AspectTimeType TimeType
-        {
-            get
-            {
-                return this.timeType;
-            }
-            set
-            {
-                this.timeType = value;
-            }
-        }
-
-        public AspectEffectType EffectType
-        {
-            get
-            {
-                return this.effectType;
-            }
-            set
-            {
-                this.effectType = value;
-            }
-        }
-
-        public BaseCharacter Belong
-        {
-            get
-            {
-                return this.belong;
-            }
-            set
-            {
-                this.belong = value;
-            }
-        }
-
-        public string Group
-        {
-            get
-            {
-                return this.group;
-            }
-            set
-            {
-                this.group = value;
-            }
-        }
-
-        public string ID
-        {
-            get
-            {
-                return this.id;
-            }
-            set
-            {
-                this.id = value;
-            }
-        }
-        
+        public string Description { get => description; set => description = value; }
+        public string ID { get => id; set => id = value; }
+        public string Group { get => group; set => group = value; }
+        public AspectTimeType TimeType { get => timeType; set => timeType = value; }
+        public AspectEffectType EffectType { get => effectType; set => effectType = value; }
+        public BaseCharacter Belong { get => belong; set => belong = value; }
     }
 
     class Consequence : IAspect
@@ -119,101 +53,15 @@ namespace GameLogic.Character
         private IAspect aspect;
         private int level;
 
-        public IAspect Aspect
-        {
-            get
-            {
-                return this.aspect;
-            }
-            set
-            {
-                this.aspect = value;
-            }
-        }
+        public IAspect Aspect { get => aspect; set => aspect = value; }
+        public int Level { get => level; set => level = value; }
 
-        public int Level
-        {
-            get
-            {
-                return this.level;
-            }
-            set
-            {
-                this.level = value;
-            }
-        }
-
-        public string Description
-        {
-            get
-            {
-                return this.Aspect.Description;
-            }
-            set
-            {
-                this.Aspect.Description = value;
-            }
-        }
-
-        public string Group
-        {
-            get
-            {
-                return this.Aspect.Group;
-            }
-            set
-            {
-                this.Aspect.Group = value;
-            }
-        }
-
-        public string ID
-        {
-            get
-            {
-                return this.Aspect.ID;
-            }
-            set
-            {
-                this.Aspect.ID = value;
-            }
-        }
-
-        public AspectTimeType TimeType
-        {
-            get
-            {
-                return this.Aspect.TimeType;
-            }
-            set
-            {
-                this.Aspect.TimeType = value;
-            }
-        }
-
-        public AspectEffectType EffectType
-        {
-            get
-            {
-                return this.Aspect.EffectType;
-            }
-            set
-            {
-                this.Aspect.EffectType = value;
-            }
-        }
-
-        public BaseCharacter Belong
-        {
-            get
-            {
-                return this.Aspect.Belong;
-            }
-            set
-            {
-                this.Aspect.Belong = value;
-            }
-        }
+        public string Description { get => this.Aspect.Description; set => this.Aspect.Description = value; }
+        public string Group { get => this.Aspect.Group; set => this.Aspect.Group = value; }
+        public string ID { get => this.Aspect.ID; set => this.Aspect.ID = value; }
+        public AspectTimeType TimeType { get => this.Aspect.TimeType; set => this.Aspect.TimeType = value; }
+        public AspectEffectType EffectType { get => this.Aspect.EffectType; set => this.Aspect.EffectType = value; }
+        public BaseCharacter Belong { get => this.Aspect.Belong; set => this.Aspect.Belong = value; }
 
     }
 }

@@ -27,18 +27,7 @@ namespace GameLogic.Character
 
         private string name;
 
-        public string Name
-        {
-            get
-            {
-                return this.name;
-            }
-            set
-            {
-                this.name = value;
-            }
-        }
-        
+        public string Name { get => name; set => name = value; }
     }
 
     class Skill : IProperty
@@ -47,52 +36,11 @@ namespace GameLogic.Character
         private int level;
         private BaseCharacter belong;
 
-        public SkillType SkillType
-        {
-            get
-            {
-                return this.skillType;
-            }
-            set
-            {
-                this.skillType = value;
-            }
-        }
+        public SkillType SkillType { get => skillType; set => skillType = value; }
+        public int Level { get => level; set => level = value; }
+        public BaseCharacter Belong { get => belong; set => belong = value; }
 
-        public int Level
-        {
-            get
-            {
-                return this.level;
-            }
-            set
-            {
-                this.level = value;
-            }
-        }
+        public string Description { get => this.SkillType.Name + " " + this.Level.ToString(); set => throw new NotImplementedException(); }
 
-        public BaseCharacter Belong
-        {
-            get
-            {
-                return this.belong;
-            }
-            set
-            {
-                this.belong = value;
-            }
-        }
-
-        public string Description
-        {
-            get
-            {
-                return this.SkillType.Name + " " + this.Level.ToString();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
     }
 }

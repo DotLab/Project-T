@@ -17,53 +17,9 @@ namespace GameLogic.Character
         private string group;
         private BaseCharacter belong;
 
-        public string Description
-        {
-            get
-            {
-                return this.description;
-            }
-            set
-            {
-                this.description = value;
-            }
-        }
-
-        public string ID
-        {
-            get
-            {
-                return this.id;
-            }
-            set
-            {
-                this.id = value;
-            }
-        }
-
-        public string Group
-        {
-            get
-            {
-                return this.group;
-            }
-            set
-            {
-                this.group = value;
-            }
-        }
-
-        public BaseCharacter Belong
-        {
-            get
-            {
-                return this.belong;
-            }
-            set
-            {
-                this.belong = value;
-            }
-        }
-
+        public string Description { get => description; set => description = value; }
+        public string ID { get => id; set => id = value; }
+        public string Group { get => group; set => group = value; }
+        public BaseCharacter Belong { get => belong; set => belong = value; }
     }
 }

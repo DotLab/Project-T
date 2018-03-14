@@ -13,74 +13,13 @@ namespace GameLogic.Character
         private string group;
         private BaseCharacter belong;
         private List<Skill> skills;
-
-        public string Name
-        {
-            get
-            {
-                return this.name;
-            }
-            set
-            {
-                this.name = value;
-            }
-        }
         
-        public List<Skill> Skills
-        {
-            get
-            {
-                return this.skills;
-            }
-        }
-
-        public BaseCharacter Belong
-        {
-            get
-            {
-                return this.belong;
-            }
-            set
-            {
-                this.belong = value;
-            }
-        }
-
-        public string Description
-        {
-            get
-            {
-                return this.description;
-            }
-            set
-            {
-                this.description = value;
-            }
-        }
-
-        public string Group
-        {
-            get
-            {
-                return this.group;
-            }
-            set
-            {
-                this.group = value;
-            }
-        }
-
-        public string ID
-        {
-            get
-            {
-                return this.name;
-            }
-            set
-            {
-                this.name = value;
-            }
-        }
+        public string Name { get => name; set => name = value; }
+        public string Description { get => description; set => description = value; }
+        public string Group { get => group; set => group = value; }
+        public BaseCharacter Belong { get => belong; set => belong = value; }
+        public List<Skill> Skills => skills;
+        public string ID { get => name; set => name = value; }
 
         public int UseSkill(Skill skill)
         {

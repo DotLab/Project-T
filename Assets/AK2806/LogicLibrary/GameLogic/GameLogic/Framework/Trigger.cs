@@ -25,29 +25,8 @@ namespace GameLogic.Framework
 
         public string EventID => this.eventID;
 
-        public string ActionJS
-        {
-            get
-            {
-                return this.actionJS;
-            }
-            set
-            {
-                this.actionJS = value;
-            }
-        }
-
-        public bool Active
-        {
-            get
-            {
-                return this.active;
-            }
-            set
-            {
-                this.active = value;
-            }
-        }
+        public string ActionJS { get => actionJS; set => actionJS = value; }
+        public bool Active { get => active; set => active = value; }
 
         public Trigger(string eventID)
         {
