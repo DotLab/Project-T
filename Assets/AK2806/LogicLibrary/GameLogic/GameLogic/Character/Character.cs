@@ -102,10 +102,25 @@ namespace GameLogic.Character
         private int m_stress;
         private int m_stressMax;
 
+        public int PhysicsStress { get => p_stress; set => p_stress = value; }
+        public int PhysicsStressMax { get => p_stressMax; set => p_stressMax = value; }
+        public int MentalStress { get => m_stress; set => m_stress = value; }
+        public int MentalStressMax { get => m_stressMax; set => m_stressMax = value; }
+        public PropertyList<IStunt> Stunts => stunts;
     }
 
     class MainCharacter : Character
     {
+        private int refresh;
+        private int fate;
+        private PropertyList<IAspect> aspects;
+        private PropertyList<IExtra> extras;
+        private PropertyList<Consequence> consequences;
 
+        public int Refresh { get => refresh; set => refresh = value; }
+        public int Fate { get => fate; set => fate = value; }
+        public PropertyList<IAspect> Aspects => aspects;
+        public PropertyList<IExtra> Extras => extras;
+        public PropertyList<Consequence> Consequences => consequences;
     }
 }
