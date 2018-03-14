@@ -5,19 +5,15 @@ using Jint;
 
 namespace GameLogic.Framework.EventSystem
 {
-    interface IEvent
+    interface IEvent : IGroupable
     {
-        string ID
-        {
-            get;
-        }
-
         void ProvideParam(Engine engine);
     }
 
     abstract class Event : IEvent
     {
         private string id;
+        private string group;
 
         public string ID
         {
@@ -28,6 +24,18 @@ namespace GameLogic.Framework.EventSystem
             set
             {
                 this.id = value;
+            }
+        }
+
+        public string Group
+        {
+            get
+            {
+                return this.group;
+            }
+            set
+            {
+                this.group = value;
             }
         }
 

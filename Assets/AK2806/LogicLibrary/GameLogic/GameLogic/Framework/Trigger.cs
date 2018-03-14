@@ -13,7 +13,7 @@ namespace GameLogic.Framework
         }
         bool Active
         {
-            get;
+            get; set;
         }
     }
 

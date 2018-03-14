@@ -8,7 +8,7 @@ namespace GameLogic.Framework
     {
         string ID
         {
-            get;
+            get; set;
         }
     }
 
@@ -16,7 +16,7 @@ namespace GameLogic.Framework
     {
         string Group
         {
-            get;
+            get; set;
         }
     }
 }
