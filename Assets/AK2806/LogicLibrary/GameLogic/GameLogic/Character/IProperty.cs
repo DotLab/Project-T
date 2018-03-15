@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GameLogic.Character
 {
-    interface IProperty
+    public interface IProperty
     {
         BaseCharacter Belong
         {

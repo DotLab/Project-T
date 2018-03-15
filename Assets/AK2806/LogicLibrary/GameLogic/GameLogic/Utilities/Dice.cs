@@ -2,7 +2,7 @@
 
 namespace GameLogic.Utilities
 {
-    struct DicePoint
+    public struct DicePoint
     {
         public int value;
         public double weight;
@@ -14,7 +14,7 @@ namespace GameLogic.Utilities
         }
     }
 
-    struct DiceType
+    public struct DiceType
     {
         public DicePoint[] range;
 
@@ -44,7 +44,7 @@ namespace GameLogic.Utilities
         }
     }
 
-    class Dice
+    public class Dice
     {
         public static Dice Create(DicePoint[] points)
         {

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GameLogic.Framework
 {
-    interface IIdentifiable
+    public interface IIdentifiable
     {
         string ID
         {
@@ -12,7 +12,7 @@ namespace GameLogic.Framework
         }
     }
 
-    interface IGroupable : IIdentifiable
+    public interface IGroupable : IIdentifiable
     {
         string Group
         {

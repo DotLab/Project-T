@@ -5,12 +5,12 @@ using Jint;
 
 namespace GameLogic.Framework
 {
-    interface ICommand
+    public interface ICommand
     {
         void Action(Engine engine);
     }
     
-    class Command : ICommand
+    public class Command : ICommand
     {
         private string actionJS;
 

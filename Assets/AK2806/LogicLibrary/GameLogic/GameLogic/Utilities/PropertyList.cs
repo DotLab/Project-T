@@ -5,7 +5,7 @@ using GameLogic.Character;
 
 namespace GameLogic.Utilities
 {
-    class PropertyList<T> where T:IProperty
+    public class PropertyList<T> where T:IProperty
     {
 
         private BaseCharacter owner;

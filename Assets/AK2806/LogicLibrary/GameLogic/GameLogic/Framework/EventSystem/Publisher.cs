@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GameLogic.Framework.EventSystem
 {
-    class Publisher
+    public class Publisher
     {
         private static Publisher instance = new Publisher();
 

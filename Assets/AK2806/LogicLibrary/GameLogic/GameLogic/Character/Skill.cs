@@ -5,11 +5,11 @@ using GameLogic.Framework;
 
 namespace GameLogic.Character
 {
-    class SkillType
+    public class SkillType
     {
         private static Dictionary<SkillType, SkillType[]> skillTypeDict = new Dictionary<SkillType, SkillType[]>();
         private static List<SkillType> skillTypes = new List<SkillType>();
-
+        
         public static Dictionary<SkillType, SkillType[]> SkillTypeDict()
         {
             return skillTypeDict;
@@ -22,15 +22,21 @@ namespace GameLogic.Character
 
         static SkillType()
         {
-
+            
         }
 
         private string name;
 
         public string Name { get => name; set => name = value; }
+
+        public SkillType(string name)
+        {
+            this.Name = name;
+        }
+        
     }
 
-    class Skill : IProperty
+    public class Skill : IProperty
     {
         private SkillType skillType;
         private int level;

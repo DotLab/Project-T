@@ -5,7 +5,7 @@ using Jint;
 
 namespace GameLogic.Framework
 {
-    interface ITrigger : ICommand
+    public interface ITrigger : ICommand
     {
         string EventID
         {
@@ -17,7 +17,7 @@ namespace GameLogic.Framework
         }
     }
 
-    class Trigger : ITrigger
+    public class Trigger : ITrigger
     {
         private string eventID;
         private string actionJS;

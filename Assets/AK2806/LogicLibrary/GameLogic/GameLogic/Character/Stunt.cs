@@ -5,12 +5,12 @@ using GameLogic.Framework;
 
 namespace GameLogic.Character
 {
-    interface IStunt : ICommand, IGroupable, IProperty
+    public interface IStunt : ICommand, IGroupable, IProperty
     {
 
     }
 
-    class Stunt : Command, IStunt
+    public class Stunt : Command, IStunt
     {
         private string description;
         private string id;

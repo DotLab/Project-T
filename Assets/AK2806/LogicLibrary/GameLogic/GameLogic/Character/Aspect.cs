@@ -5,20 +5,20 @@ using GameLogic.Framework;
 
 namespace GameLogic.Character
 {
-    enum AspectTimeType
+    public enum AspectTimeType
     {
         Fixed,
         Advance,
         Boost
     }
 
-    enum AspectEffectType
+    public enum AspectEffectType
     {
         Negative,
         Positive
     }
 
-    interface IAspect : IGroupable, IProperty
+    public interface IAspect : IGroupable, IProperty
     {
         AspectTimeType TimeType
         {
@@ -31,7 +31,7 @@ namespace GameLogic.Character
         }
     }
 
-    class Aspect : IAspect
+    public class Aspect : IAspect
     {
         private string description;
         private string id;
@@ -48,7 +48,7 @@ namespace GameLogic.Character
         public BaseCharacter Belong { get => belong; set => belong = value; }
     }
 
-    class Consequence : IAspect
+    public class Consequence : IAspect
     {
         private IAspect aspect;
         private int level;

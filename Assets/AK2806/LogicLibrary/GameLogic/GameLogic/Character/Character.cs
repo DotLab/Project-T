@@ -6,7 +6,7 @@ using GameLogic.Utilities;
 
 namespace GameLogic.Character
 {
-    class BaseCharacter : IProperty, IGroupable
+    public class BaseCharacter : IProperty, IGroupable
     {
         private string name;
         private string description;
@@ -33,7 +33,7 @@ namespace GameLogic.Character
         
     }
 
-    class Character : BaseCharacter
+    public class Character : BaseCharacter
     {
         private PropertyList<IStunt> stunts;
         private int p_stress;
@@ -48,7 +48,7 @@ namespace GameLogic.Character
         public PropertyList<IStunt> Stunts => stunts;
     }
 
-    class MainCharacter : Character
+    public class MainCharacter : Character
     {
         private int refresh;
         private int fate;
