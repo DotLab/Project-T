@@ -8,10 +8,7 @@ namespace GameLogic.Framework.EventSystem
     {
         private static Publisher instance = new Publisher();
 
-        public static Publisher Instance()
-        {
-            return instance;
-        }
+        public static Publisher Instance() => instance;
 
         private List<ITrigger> subscribers;
 
