@@ -1,16 +1,17 @@
-﻿using System;
-using Newtonsoft.Json;
-using Jint;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.IO;
+using System;
+using Xunit;
 using GameLogic.Utilities;
 
-namespace GameLogic
+namespace XUnitTest
 {
-    class MainClass
+    public class DiceTest
     {
-        public static void Main(string[] args)
+        [Theory]
+        [InlineData(new int[]{1,2,3})]
+        [InlineData(new int[]{1,3,5})]
+        [InlineData(new int[] { 1, 5, 2, 4 })]
+        [InlineData(new int[]{-2,0,3,6,-7})]
+        public void CreateDiceFromPointsAndRoll_RangeTest(int[] points, int diceCount = 4, int testCount = 10000)
         {
             /*
             string json = @"
@@ -64,21 +65,27 @@ namespace GameLogic
             dicePoints[1]= new DicePoint(1, 0.8);
             Dice dice = Dice.Create(dicePoints);
             */
-            /*
-            int[] points = { 1, 2, 3, 6, 7, 8 };
-            Dice dice = Dice.Create(DiceType.Create(points));
-            StreamWriter stream2 = new StreamWriter(@"D:\test.txt");
-            int i = 0;
-            while (i++ < 1000)
-            {
-                stream2.WriteLine(dice.Roll(1));
-            }
-            stream2.Close();
-            */
-            System.Console.Write("请按任意键继续...");
-            System.Console.ReadKey();
+            Assert.True(points.Length > 0);
 
+            int min_p = points[0];
+            int max_p = points[0];
+
+            for (int j = 0; j < points.Length; ++j)
+            {
+                min_p = points[j] < min_p ? points[j] : min_p;
+                max_p = points[j] > max_p ? points[j] : max_p;
+            }
+            
+            Dice dice = Dice.Create(DiceType.Create(points));
+            int i = 0;
+            while (i++ < testCount)
+            {
+                int dice_p = dice.Roll(diceCount);
+                Assert.InRange(dice_p, min_p * diceCount, max_p * diceCount);
+                
+            }
             
         }
+
     }
 }
