@@ -63,17 +63,7 @@ namespace GameLogic.Utilities
         private Random generator;
         private DiceType diceType;
 
-        public DiceType DiceType
-        {
-            get
-            {
-                return this.diceType;
-            }
-            set
-            {
-                this.diceType = value;
-            }
-        }
+        public DiceType DiceType { get => diceType; set => diceType = value; }
 
         public Dice()
         {

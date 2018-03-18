@@ -7,37 +7,13 @@ namespace GameLogic.Utilities
 {
     public class PropertyList<T> where T:IProperty
     {
-
         private BaseCharacter owner;
         private List<T> container;
         
-        public BaseCharacter Owner
-        {
-            get
-            {
-                return this.owner;
-            }
-        }
+        public BaseCharacter Owner => owner;
+        public int Count => container.Count;
 
-        public int Count
-        {
-            get
-            {
-                return this.container.Count;
-            }
-        }
-
-        public T this[int index]
-        {
-            get
-            {
-                return this.container[index];
-            }
-            set
-            {
-                this.container[index] = value;
-            }
-        }
+        public T this[int i] { get => this.container[i]; set => this.container[i] = value; }
         
         public PropertyList(BaseCharacter owner)
         {

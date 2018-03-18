@@ -13,18 +13,6 @@ namespace GameLogic.Character
         Defend = 0b1000
     }
 
-    public struct SkillTypeWhenAction
-    {
-        public SkillType type;
-        public CharaAction action;
-
-        public SkillTypeWhenAction(SkillType type, CharaAction action)
-        {
-            this.type = type;
-            this.action = action;
-        }
-    }
-
     public class SkillType
     {
         /*
@@ -47,17 +35,32 @@ namespace GameLogic.Character
         private static SkillType Stealth = new SkillType("潜行");
         private static SkillType Will = new SkillType("意志");
         */
-        public static void Register(SkillType skillType, SkillTypeWhenAction[] against)
-        {
-            skillTypes.Add(skillType);
-            againstTable.Add(skillType, against);
-        }
 
-        private static Dictionary<SkillType, SkillTypeWhenAction[]> againstTable = new Dictionary<SkillType, SkillTypeWhenAction[]>();
+        private static Dictionary<SkillType, SkillType[]> againstOvercome = new Dictionary<SkillType, SkillType[]>();
+        private static Dictionary<SkillType, SkillType[]> againstAdvantage = new Dictionary<SkillType, SkillType[]>();
+        private static Dictionary<SkillType, SkillType[]> againstAttack = new Dictionary<SkillType, SkillType[]>();
+        private static Dictionary<SkillType, SkillType[]> againstDefend = new Dictionary<SkillType, SkillType[]>();
+
         private static List<SkillType> skillTypes = new List<SkillType>();
-        
-        public static Dictionary<SkillType, SkillTypeWhenAction[]> AgainstTable => againstTable;
+
         public static List<SkillType> SkillTypes => skillTypes;
+
+        public static Dictionary<SkillType, SkillType[]> AgainstTable(CharaAction action)
+        {
+            switch (action)
+            {
+                case CharaAction.Overcome:
+                    return againstOvercome;
+                case CharaAction.Advantage:
+                    return againstAdvantage;
+                case CharaAction.Attack:
+                    return againstAttack;
+                case CharaAction.Defend:
+                    return againstDefend;
+                default:
+                    return null;
+            }
+        }
 
         static SkillType()
         {
