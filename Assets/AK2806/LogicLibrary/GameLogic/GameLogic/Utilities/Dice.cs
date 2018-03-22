@@ -18,6 +18,11 @@ namespace GameLogic.Utilities
     {
         public DicePoint[] range;
 
+        public DiceType(DicePoint[] range)
+        {
+            this.range = range;
+        }
+
         public static DiceType Create(int min, int max)
         {
             DiceType ret;
@@ -46,28 +51,20 @@ namespace GameLogic.Utilities
 
     public class Dice
     {
-        public static Dice Create(DicePoint[] points)
-        {
-            Dice ret = new Dice();
-            ret.CreateDiceType(points);
-            return ret;
-        }
-
-        public static Dice Create(DiceType diceType)
-        {
-            Dice ret = new Dice();
-            ret.diceType = diceType;
-            return ret;
-        }
-
         private Random generator;
         private DiceType diceType;
 
         public DiceType DiceType { get => diceType; set => diceType = value; }
 
-        public Dice()
+        public Dice(DiceType diceType)
         {
             this.generator = new Random();
+            this.diceType = diceType;
+        }
+
+        public Dice(DicePoint[] points) : this(new DiceType(points))
+        {
+            
         }
 
         public int Roll(int number)
@@ -92,11 +89,15 @@ namespace GameLogic.Utilities
             }
             return ret;
         }
+    }
 
-        public void CreateDiceType(DicePoint[] points)
+    public static class FateDice
+    {
+        private static Dice dice = new Dice(DiceType.Create(-1, 1));
+
+        public static int Roll()
         {
-            this.diceType.range = points;
+            return dice.Roll(4);
         }
-
     }
 }
