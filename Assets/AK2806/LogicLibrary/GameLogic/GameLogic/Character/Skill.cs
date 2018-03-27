@@ -28,7 +28,7 @@ namespace GameLogic.Character
         private static SkillType Lore = new SkillType("学识");
         private static SkillType Notice = new SkillType("洞察");
         private static SkillType Physique = new SkillType("体格");
-        private static SkillType Provoke = new SkillType("威胁");
+        private static SkillType Provoke = new SkillType("煽动");
         private static SkillType Rapport = new SkillType("交际");
         private static SkillType Resources = new SkillType("资源");
         private static SkillType Shoot = new SkillType("射击");

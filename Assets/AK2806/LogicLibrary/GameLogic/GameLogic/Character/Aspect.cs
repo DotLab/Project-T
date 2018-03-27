@@ -20,15 +20,8 @@ namespace GameLogic.Character
 
     public interface IAspect : IGroupable, IProperty
     {
-        AspectTimeType TimeType
-        {
-            get; set;
-        }
-
-        AspectEffectType EffectType
-        {
-            get; set;
-        }
+        AspectTimeType TimeType { get; set; }
+        AspectEffectType EffectType { get; set; }
     }
 
     public class Aspect : IAspect

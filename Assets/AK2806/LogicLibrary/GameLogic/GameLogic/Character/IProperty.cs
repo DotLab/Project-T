@@ -6,13 +6,7 @@ namespace GameLogic.Character
 {
     public interface IProperty
     {
-        BaseCharacter Belong
-        {
-            get; set;
-        }
-        string Description
-        {
-            get; set;
-        }
+        BaseCharacter Belong { get; set; }
+        string Description { get; set; }
     }
 }

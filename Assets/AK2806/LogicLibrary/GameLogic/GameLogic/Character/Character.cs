@@ -21,16 +21,22 @@ namespace GameLogic.Character
         public List<Skill> Skills => skills;
         public string ID { get => name; set => name = value; }
 
-        public int UseSkill(Skill skill)
+        public int RollDice(SkillType skillType)
         {
-            return 0;
-        }
-
-        public int UseSkill(int index)
-        {
-            return 0;
+            return FateDice.Roll() + this.SkillLevel(skillType);
         }
         
+        public int SkillLevel(SkillType skillType)
+        {
+            foreach (Skill skill in this.skills)
+            {
+                if (skill.SkillType == skillType)
+                {
+                    return skill.Level;
+                }
+            }
+            return 0;
+        }
     }
 
     public class Character : BaseCharacter

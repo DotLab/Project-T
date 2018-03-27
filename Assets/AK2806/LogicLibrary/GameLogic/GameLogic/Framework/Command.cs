@@ -18,7 +18,7 @@ namespace GameLogic.Framework
 
         public void Action(Engine engine)
         {
-            throw new NotImplementedException();
+            engine.Execute(this.ActionJS);
         }
     }
 
