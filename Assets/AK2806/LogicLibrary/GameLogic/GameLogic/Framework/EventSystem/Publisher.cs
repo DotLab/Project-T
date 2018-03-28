@@ -4,19 +4,19 @@ using System.Text;
 
 namespace GameLogic.Framework.EventSystem
 {
-    public class Publisher
+    public sealed class Publisher 
     {
         private static Publisher instance = new Publisher();
 
         public static Publisher Instance() => instance;
 
-        private List<ITrigger> subscribers;
+        private List<ITrigger> _subscribers;
 
-        public List<ITrigger> Subscribers => this.subscribers;
+        public List<ITrigger> Subscribers => this._subscribers;
 
         private Publisher()
         {
-            this.subscribers = new List<ITrigger>();
+            this._subscribers = new List<ITrigger>();
         }
 
         public void Publish(IEvent e)

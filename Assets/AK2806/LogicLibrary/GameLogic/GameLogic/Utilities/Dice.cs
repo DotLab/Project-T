@@ -49,17 +49,17 @@ namespace GameLogic.Utilities
         }
     }
 
-    public class Dice
+    public sealed class Dice
     {
-        private Random generator;
-        private DiceType diceType;
+        private Random _generator;
+        private DiceType _diceType;
 
-        public DiceType DiceType { get => diceType; set => diceType = value; }
+        public DiceType DiceType { get => _diceType; set => _diceType = value; }
 
         public Dice(DiceType diceType)
         {
-            this.generator = new Random();
-            this.diceType = diceType;
+            this._generator = new Random();
+            this._diceType = diceType;
         }
 
         public Dice(DicePoint[] points) : this(new DiceType(points))
@@ -72,15 +72,15 @@ namespace GameLogic.Utilities
             int ret = 0;
             for (int c = 1; c <= number; ++c)
             {
-                double rand = this.generator.NextDouble();
+                double rand = this._generator.NextDouble();
                 double step = 0.0;
-                int value = this.diceType.range[this.diceType.range.Length - 1].value;
-                for (int i = 0; i < this.diceType.range.Length; ++i)
+                int value = this._diceType.range[this._diceType.range.Length - 1].value;
+                for (int i = 0; i < this._diceType.range.Length; ++i)
                 {
-                    double weight = this.diceType.range[i].weight;
+                    double weight = this._diceType.range[i].weight;
                     if (rand >= step && rand < weight + step)
                     {
-                        value = this.diceType.range[i].value;
+                        value = this._diceType.range[i].value;
                         break;
                     }
                     step += weight;

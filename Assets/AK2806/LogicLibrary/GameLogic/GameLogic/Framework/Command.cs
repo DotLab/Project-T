@@ -12,9 +12,9 @@ namespace GameLogic.Framework
     
     public class Command : ICommand
     {
-        private string actionJS;
+        private string _actionJS;
 
-        public string ActionJS { get => actionJS; set => actionJS = value; }
+        public string ActionJS { get => _actionJS; set => _actionJS = value; }
 
         public void Action(Engine engine)
         {

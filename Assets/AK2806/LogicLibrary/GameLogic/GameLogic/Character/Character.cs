@@ -8,18 +8,21 @@ namespace GameLogic.Character
 {
     public class BaseCharacter : IProperty, IGroupable
     {
-        private string name;
-        private string description;
-        private string group;
-        private BaseCharacter belong;
-        private List<Skill> skills;
-        
+        protected string name;
+        protected string description;
+        protected PropertyList<IAspect> _aspects;
+        protected List<Skill> skills;
+        protected BaseCharacter belong;
+        protected string group;
+        protected string id;
+
         public string Name { get => name; set => name = value; }
         public string Description { get => description; set => description = value; }
-        public string Group { get => group; set => group = value; }
-        public BaseCharacter Belong { get => belong; set => belong = value; }
+        public PropertyList<IAspect> Aspects => _aspects;
         public List<Skill> Skills => skills;
-        public string ID { get => name; set => name = value; }
+        public BaseCharacter Belong { get => belong; set => belong = value; }
+        public string Group { get => group; set => group = value; }
+        public string ID { get => id; set => id = value; }
 
         public int RollDice(SkillType skillType)
         {
@@ -41,31 +44,29 @@ namespace GameLogic.Character
 
     public class Character : BaseCharacter
     {
-        private PropertyList<IStunt> stunts;
-        private int p_stress;
-        private int p_stressMax;
-        private int m_stress;
-        private int m_stressMax;
+        protected PropertyList<IStunt> _stunts;
+        protected int _physicsStress;
+        protected int _physicsStressMax;
+        protected int _mentalStress;
+        protected int _mentalStressMax;
 
-        public int PhysicsStress { get => p_stress; set => p_stress = value; }
-        public int PhysicsStressMax { get => p_stressMax; set => p_stressMax = value; }
-        public int MentalStress { get => m_stress; set => m_stress = value; }
-        public int MentalStressMax { get => m_stressMax; set => m_stressMax = value; }
-        public PropertyList<IStunt> Stunts => stunts;
+        public int PhysicsStress { get => _physicsStress; set => _physicsStress = value; }
+        public int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value; }
+        public int MentalStress { get => _mentalStress; set => _mentalStress = value; }
+        public int MentalStressMax { get => _mentalStressMax; set => _mentalStressMax = value; }
+        public PropertyList<IStunt> Stunts => _stunts;
     }
 
     public class MainCharacter : Character
     {
-        private int refresh;
-        private int fate;
-        private PropertyList<IAspect> aspects;
-        private PropertyList<IExtra> extras;
-        private PropertyList<Consequence> consequences;
+        protected int _refresh;
+        protected int _fate;
+        protected PropertyList<IExtra> _extras;
+        protected PropertyList<IConsequence> _consequences;
 
-        public int Refresh { get => refresh; set => refresh = value; }
-        public int Fate { get => fate; set => fate = value; }
-        public PropertyList<IAspect> Aspects => aspects;
-        public PropertyList<IExtra> Extras => extras;
-        public PropertyList<Consequence> Consequences => consequences;
+        public int Refresh { get => _refresh; set => _refresh = value; }
+        public int Fate { get => _fate; set => _fate = value; }
+        public PropertyList<IExtra> Extras => _extras;
+        public PropertyList<IConsequence> Consequences => _consequences;
     }
 }

@@ -13,18 +13,18 @@ namespace GameLogic.Character
 
     public class Stunt : IStunt
     {
-        private string description;
-        private string id;
-        private string group;
-        private BaseCharacter belong;
-        private List<ICommand> commands;
-        private List<ITrigger> triggers;
+        protected string _description;
+        protected string _id;
+        protected string _group;
+        protected BaseCharacter _belong;
+        protected List<ICommand> _commands;
+        protected List<ITrigger> _triggers;
 
-        public string Description { get => description; set => description = value; }
-        public string ID { get => id; set => id = value; }
-        public string Group { get => group; set => group = value; }
-        public BaseCharacter Belong { get => belong; set => belong = value; }
-        public List<ICommand> Commands { get => commands; set => commands = value; }
-        public List<ITrigger> Triggers { get => triggers; set => triggers = value; }
+        public string Description { get => _description; set => _description = value; }
+        public string ID { get => _id; set => _id = value; }
+        public string Group { get => _group; set => _group = value; }
+        public BaseCharacter Belong { get => _belong; set => _belong = value; }
+        public List<ICommand> Commands { get => _commands; set => _commands = value; }
+        public List<ITrigger> Triggers { get => _triggers; set => _triggers = value; }
     }
 }

@@ -5,86 +5,86 @@ using GameLogic.Character;
 
 namespace GameLogic.Utilities
 {
-    public class PropertyList<T> where T:IProperty
+    public sealed class PropertyList<T> where T:IProperty
     {
-        private BaseCharacter owner;
-        private List<T> container;
+        private BaseCharacter _owner;
+        private List<T> _container;
         
-        public BaseCharacter Owner => owner;
-        public int Count => container.Count;
+        public BaseCharacter Owner => _owner;
+        public int Count => _container.Count;
 
-        public T this[int i] { get => this.container[i]; set => this.container[i] = value; }
+        public T this[int i] { get => this._container[i]; set => this._container[i] = value; }
         
         public PropertyList(BaseCharacter owner)
         {
-            this.owner = owner;
-            this.container = new List<T>();
+            this._owner = owner;
+            this._container = new List<T>();
         }
 
         public void Add(T item)
         {
-            this.container.Add(item);
+            this._container.Add(item);
             item.Belong = this.Owner;
         }
 
         public void Clear()
         {
-            foreach (IProperty item in this.container)
+            foreach (IProperty item in this._container)
             {
                 item.Belong = null;
             }
-            this.container.Clear();
+            this._container.Clear();
         }
 
         public bool Contains(T item)
         {
-            return this.container.Contains(item);
+            return this._container.Contains(item);
         }
 
         public void ForEach(Action<T> action)
         {
-            this.container.ForEach(action);
+            this._container.ForEach(action);
         }
 
         public int IndexOf(T item, int index = 0, int count = -1)
         {
-            if (count >= 0) return this.container.IndexOf(item, index, count);
-            else return this.container.IndexOf(item, index);
+            if (count >= 0) return this._container.IndexOf(item, index, count);
+            else return this._container.IndexOf(item, index);
         }
 
         public void Insert(int index, T item)
         {
-            this.container.Insert(index, item);
+            this._container.Insert(index, item);
             item.Belong = this.Owner;
         }
 
         public int LastIndexOf(T item, int index = 0, int count = -1)
         {
-            if (count >= 0) return this.container.LastIndexOf(item, index, count);
-            else return this.container.LastIndexOf(item, index);
+            if (count >= 0) return this._container.LastIndexOf(item, index, count);
+            else return this._container.LastIndexOf(item, index);
         }
 
         public bool Remove(T item)
         {
-            bool ret = this.container.Remove(item);
+            bool ret = this._container.Remove(item);
             if (ret) item.Belong = null;
             return ret;
         }
 
         public void RemoveAt(int index)
         {
-            this.container[index].Belong = null;
-            this.container.RemoveAt(index);
+            this._container[index].Belong = null;
+            this._container.RemoveAt(index);
         }
 
         public void Reverse()
         {
-            this.container.Reverse();
+            this._container.Reverse();
         }
         
         public T[] ToArray()
         {
-            return this.container.ToArray();
+            return this._container.ToArray();
         }
     }
 }

@@ -7,30 +7,24 @@ namespace GameLogic.Framework
 {
     public interface ITrigger : ICommand
     {
-        string EventID
-        {
-            get;
-        }
-        bool Active
-        {
-            get; set;
-        }
+        string EventID { get; }
+        bool Active { get; set; }
     }
 
     public class Trigger : ITrigger
     {
-        private string eventID;
-        private string actionJS;
-        private bool active;
+        protected string _eventID;
+        protected string _actionJS;
+        protected bool _active;
 
-        public string EventID => this.eventID;
+        public string EventID => this._eventID;
 
-        public string ActionJS { get => actionJS; set => actionJS = value; }
-        public bool Active { get => active; set => active = value; }
+        public string ActionJS { get => _actionJS; set => _actionJS = value; }
+        public bool Active { get => _active; set => _active = value; }
 
         public Trigger(string eventID)
         {
-            this.eventID = eventID;
+            this._eventID = eventID;
         }
 
         public void Action(Engine engine)

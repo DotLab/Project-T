@@ -13,7 +13,7 @@ namespace GameLogic.Character
         Defend = 0b1000
     }
 
-    public class SkillType
+    public sealed class SkillType
     {
         /*
         private static SkillType Athletics = new SkillType("运动");
@@ -67,31 +67,30 @@ namespace GameLogic.Character
             
         }
 
-        private string name;
-        private CharaAction cando;
+        private string _name;
+        private CharaAction _cando;
 
-        public string Name { get => name; set => name = value; }
-        public CharaAction Cando { get => cando; set => cando = value; }
+        public string Name { get => _name; set => _name = value; }
+        public CharaAction Cando { get => _cando; set => _cando = value; }
 
         public SkillType(string name, CharaAction cando)
         {
-            this.Name = name;
-            this.Cando = cando;
+            this._name = name;
+            this._cando = cando;
         }
         
     }
 
     public class Skill : IProperty
     {
-        private SkillType skillType;
-        private int level;
-        private BaseCharacter belong;
+        protected SkillType _skillType;
+        protected int _level;
+        protected BaseCharacter _belong;
+        protected string _extraInfo;
 
-        public SkillType SkillType { get => skillType; set => skillType = value; }
-        public int Level { get => level; set => level = value; }
-        public BaseCharacter Belong { get => belong; set => belong = value; }
-
-        public string Description { get => this.SkillType.Name + " " + this.Level.ToString(); set => throw new NotImplementedException(); }
-
+        public SkillType SkillType { get => _skillType; set => _skillType = value; }
+        public int Level { get => _level; set => _level = value; }
+        public BaseCharacter Belong { get => _belong; set => _belong = value; }
+        public string Description { get => this._extraInfo; set => this._extraInfo = value; }
     }
 }
