@@ -14,52 +14,6 @@ namespace XUnitTest
         public void CreateDiceFromPointsAndRoll_RangeTest(int[] points, int diceCount = 4, int testCount = 10000)
         {
             /*
-            string json = @"
-                {
-                    'name':'John',
-                    'age':32,
-                    'phoneNum':[
-                        1234567,
-                        9876543
-                    ]
-                }
-            ";
-            object test = JsonConvert.DeserializeObject(json);
-            Console.WriteLine(test.GetHashCode());
-
-            var engine = new Engine()
-                .SetValue("log", new Action<object>(Console.WriteLine))
-                ;
-
-            engine.Execute(@"
-              (function(){ 
-                log('Hello World');
-              })();
-              
-            ");
-
-
-            IFormatter formatter = new BinaryFormatter();
-
-            Class3 testSerialize = new Class3();
-            testSerialize.interface1s.Add(new Class1());
-            testSerialize.interface1s.Add(new Class2());
-            Stream stream = new FileStream(@"D:\MyFile.bin", FileMode.Create,
-            FileAccess.Write, FileShare.None);
-            formatter.Serialize(stream, testSerialize);
-            stream.Close();
-            
-            Stream stream2 = new FileStream(@"D:\MyFile.bin", FileMode.Open,
-            FileAccess.Read, FileShare.Read);
-            Class3 obj = (Class3)formatter.Deserialize(stream2);
-            stream2.Close();
-
-            foreach (Interface1 i in obj.interface1s)
-            {
-                System.Console.WriteLine(i.Desc());
-            }
-            */
-            /*
             DicePoint[] dicePoints = new DicePoint[2];
             dicePoints[0]= new DicePoint(0, 0.8);
             dicePoints[1]= new DicePoint(1, 0.8);
@@ -76,7 +30,7 @@ namespace XUnitTest
                 max_p = points[j] > max_p ? points[j] : max_p;
             }
             
-            Dice dice = Dice.Create(DiceType.Create(points));
+            Dice dice = new Dice(DiceType.Create(points));
             int i = 0;
             while (i++ < testCount)
             {

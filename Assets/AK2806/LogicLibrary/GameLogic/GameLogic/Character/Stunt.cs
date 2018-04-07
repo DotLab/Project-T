@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using GameLogic.Framework;
+using GameLogic.Framework.ScriptSystem;
+using GameLogic.Framework.ScriptSystem.Event;
 
 namespace GameLogic.Character
 {

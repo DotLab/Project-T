@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Text;
 using Jint;
 
-namespace GameLogic.Framework
+namespace GameLogic.Framework.ScriptSystem
 {
     public interface ICommand
     {
-        void Action(Engine engine);
+        void DoAction(Engine engine);
     }
     
     public class Command : ICommand
@@ -16,7 +16,7 @@ namespace GameLogic.Framework
 
         public string ActionJS { get => _actionJS; set => _actionJS = value; }
 
-        public void Action(Engine engine)
+        public void DoAction(Engine engine)
         {
             engine.Execute(this.ActionJS);
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Jint;
 
-namespace GameLogic.Framework
+namespace GameLogic.Framework.ScriptSystem.Event
 {
     public interface ITrigger : ICommand
     {
@@ -27,7 +27,7 @@ namespace GameLogic.Framework
             this._eventID = eventID;
         }
 
-        public void Action(Engine engine)
+        public void DoAction(Engine engine)
         {
             throw new NotImplementedException();
         }

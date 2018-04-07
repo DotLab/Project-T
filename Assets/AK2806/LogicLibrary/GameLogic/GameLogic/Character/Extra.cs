@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using GameLogic.Framework;
+using GameLogic.Framework.ScriptSystem.Event;
 using GameLogic.Utilities;
 
 namespace GameLogic.Character
