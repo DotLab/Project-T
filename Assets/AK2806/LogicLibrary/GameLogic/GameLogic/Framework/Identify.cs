@@ -6,11 +6,11 @@ namespace GameLogic.Framework
 {
     public interface IIdentifiable
     {
-        string ID { get; set; }
+        string ID { get; }
     }
-
-    public interface IGroupable : IIdentifiable
+    
+    public interface IDescribable
     {
-        string Group { get; set; }
+        string Description { get; set; }
     }
 }

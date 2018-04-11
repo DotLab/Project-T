@@ -5,15 +5,17 @@ using Jint;
 
 namespace GameLogic.Framework.ScriptSystem
 {
-    public interface ICommand
+    public interface ICommand : IIdentifiable
     {
         void DoAction(Engine engine);
     }
     
     public class Command : ICommand
     {
-        private string _actionJS;
+        protected string _id;
+        protected string _actionJS;
 
+        public string ID => _id;
         public string ActionJS { get => _actionJS; set => _actionJS = value; }
 
         public void DoAction(Engine engine)

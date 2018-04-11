@@ -6,32 +6,57 @@ using GameLogic.Utilities;
 
 namespace GameLogic.Character
 {
-    public class BaseCharacter : IProperty, IGroupable
+    public class BaseCharacter : IProperty, IIdentifiable
     {
-        protected string name;
-        protected string description;
+        protected string _name;
+        protected string _description;
         protected PropertyList<IAspect> _aspects;
-        protected List<Skill> skills;
-        protected BaseCharacter belong;
-        protected string group;
-        protected string id;
+        protected List<Skill> _skills;
+        protected BaseCharacter _belong;
+        protected string _id;
+        protected int _physicsStress;
+        protected int _physicsStressMax;
+        protected int _mentalStress;
+        protected int _mentalStressMax;
 
-        public string Name { get => name; set => name = value; }
-        public string Description { get => description; set => description = value; }
+        public string Name { get => _name; set => _name = value; }
+        public string Description { get => _description; set => _description = value; }
         public PropertyList<IAspect> Aspects => _aspects;
-        public List<Skill> Skills => skills;
-        public BaseCharacter Belong { get => belong; set => belong = value; }
-        public string Group { get => group; set => group = value; }
-        public string ID { get => id; set => id = value; }
+        public List<Skill> Skills => _skills;
+        public BaseCharacter Belong { get => _belong; set => _belong = value; }
+        public string ID => _id;
+        public int PhysicsStress { get => _physicsStress; set => _physicsStress = value; }
+        public int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value; }
+        public int MentalStress { get => _mentalStress; set => _mentalStress = value; }
+        public int MentalStressMax { get => _mentalStressMax; set => _mentalStressMax = value; }
+
+        protected Dictionary<SkillType, SkillType[]> againstOvercome = new Dictionary<SkillType, SkillType[]>();
+        protected Dictionary<SkillType, SkillType[]> againstAdvantage = new Dictionary<SkillType, SkillType[]>();
+        protected Dictionary<SkillType, SkillType[]> againstAttack = new Dictionary<SkillType, SkillType[]>();
+
+        public Dictionary<SkillType, SkillType[]> AgainstTable(CharaAction action)
+        {
+            switch (action)
+            {
+                case CharaAction.Overcome:
+                    return againstOvercome;
+                case CharaAction.Advantage:
+                    return againstAdvantage;
+                case CharaAction.Attack:
+                    return againstAttack;
+                default:
+                    return null;
+            }
+        }
 
         public int RollDice(SkillType skillType)
         {
             return FateDice.Roll() + this.SkillLevel(skillType);
         }
         
-        public int SkillLevel(SkillType skillType)
+        public virtual int SkillLevel(SkillType skillType)
         {
-            foreach (Skill skill in this.skills)
+            foreach (Skill skill in this._skills)
             {
                 if (skill.SkillType == skillType)
                 {
@@ -45,15 +70,7 @@ namespace GameLogic.Character
     public class Character : BaseCharacter
     {
         protected PropertyList<IStunt> _stunts;
-        protected int _physicsStress;
-        protected int _physicsStressMax;
-        protected int _mentalStress;
-        protected int _mentalStressMax;
 
-        public int PhysicsStress { get => _physicsStress; set => _physicsStress = value; }
-        public int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value; }
-        public int MentalStress { get => _mentalStress; set => _mentalStress = value; }
-        public int MentalStressMax { get => _mentalStressMax; set => _mentalStressMax = value; }
         public PropertyList<IStunt> Stunts => _stunts;
     }
 
@@ -68,5 +85,16 @@ namespace GameLogic.Character
         public int Fate { get => _fate; set => _fate = value; }
         public PropertyList<IExtra> Extras => _extras;
         public PropertyList<IConsequence> Consequences => _consequences;
+    }
+
+    public static class CharacterManager
+    {
+        private static List<BaseCharacter> baseCharacters = new List<BaseCharacter>();
+        private static List<Character> characters = new List<Character>();
+        private static List<MainCharacter> mainCharacters = new List<MainCharacter>();
+
+        public static List<BaseCharacter> BaseCharacters => baseCharacters;
+        public static List<Character> Characters => characters;
+        public static List<MainCharacter> MainCharacters => mainCharacters;
     }
 }

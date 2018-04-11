@@ -10,7 +10,7 @@ namespace GameLogic.Character
         Overcome = 0b0001,
         Advantage = 0b0010,
         Attack = 0b0100,
-        Defend = 0b1000
+        Support = 0b1000
     }
 
     public sealed class SkillType
@@ -35,33 +35,10 @@ namespace GameLogic.Character
         private static SkillType Stealth = new SkillType("潜行");
         private static SkillType Will = new SkillType("意志");
         */
-
-        private static Dictionary<SkillType, SkillType[]> againstOvercome = new Dictionary<SkillType, SkillType[]>();
-        private static Dictionary<SkillType, SkillType[]> againstAdvantage = new Dictionary<SkillType, SkillType[]>();
-        private static Dictionary<SkillType, SkillType[]> againstAttack = new Dictionary<SkillType, SkillType[]>();
-        private static Dictionary<SkillType, SkillType[]> againstDefend = new Dictionary<SkillType, SkillType[]>();
-
         private static List<SkillType> skillTypes = new List<SkillType>();
 
         public static List<SkillType> SkillTypes => skillTypes;
-
-        public static Dictionary<SkillType, SkillType[]> AgainstTable(CharaAction action)
-        {
-            switch (action)
-            {
-                case CharaAction.Overcome:
-                    return againstOvercome;
-                case CharaAction.Advantage:
-                    return againstAdvantage;
-                case CharaAction.Attack:
-                    return againstAttack;
-                case CharaAction.Defend:
-                    return againstDefend;
-                default:
-                    return null;
-            }
-        }
-
+        
         static SkillType()
         {
             

@@ -5,21 +5,25 @@ using Jint;
 
 namespace GameLogic.Framework.ScriptSystem.Event
 {
-    public interface IEvent
+    public interface IEvent : IIdentifiable
     {
-        string ID { get; }
         void ProvideParam(Engine engine);
     }
 
     public class Event : IEvent
     {
-        private const string id = "event";
+        protected string _id;
 
-        public string ID => id;
+        public string ID => _id;
         
+        protected Event()
+        {
+            this._id = "event";
+        }
+
         public virtual void ProvideParam(Engine engine)
         {
-            engine.SetValue("$EventID", id);
+            engine.SetValue("$EventID", _id);
         }
     }
 }
