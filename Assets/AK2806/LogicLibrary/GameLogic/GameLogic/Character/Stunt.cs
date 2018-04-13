@@ -20,7 +20,7 @@ namespace GameLogic.Character
         protected List<ICommand> _commands;
 
         public string Description { get => _description; set => _description = value; }
-        public string ID => _id
+        public string ID => _id;
         public BaseCharacter Belong { get => _belong; set => _belong = value; }
         public List<ICommand> Commands => _commands;
     }
