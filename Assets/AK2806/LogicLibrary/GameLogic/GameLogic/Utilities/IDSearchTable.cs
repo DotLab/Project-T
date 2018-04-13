@@ -54,7 +54,7 @@ namespace GameLogic.Utilities
 
         public IEnumerator<T> GetEnumerator()
         {
-            return this._container.Values.GetEnumerator();
+            return ((IEnumerable<T>)this._container.Values).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()

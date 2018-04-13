@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using GameLogic.Character;
 
 namespace GameLogic.Utilities
 {
-    public sealed class PropertyList<T> where T:IProperty
+    public sealed class PropertyList<T> : IEnumerable<T>, IEnumerable where T:IProperty
     {
         private BaseCharacter _owner;
         private List<T> _container;
@@ -85,6 +86,16 @@ namespace GameLogic.Utilities
         public T[] ToArray()
         {
             return this._container.ToArray();
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            return ((IEnumerable<T>)this._container).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
         }
     }
 }
