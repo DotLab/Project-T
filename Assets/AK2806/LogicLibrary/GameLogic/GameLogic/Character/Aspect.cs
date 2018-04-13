@@ -52,11 +52,11 @@ namespace GameLogic.Character
         public IAspect Aspect { get => _aspect; set => _aspect = value; }
         public int Level { get => _level; set => _level = value; }
 
-        public string Description { get => this._aspect.Description; set => this._aspect.Description = value; }
-        public string ID => this._aspect.ID;
-        public AspectTimeType TimeType { get => this._aspect.TimeType; set => this._aspect.TimeType = value; }
-        public AspectEffectType EffectType { get => this._aspect.EffectType; set => this._aspect.EffectType = value; }
-        public BaseCharacter Belong { get => this._aspect.Belong; set => this._aspect.Belong = value; }
+        public string Description { get => _aspect.Description; set => _aspect.Description = value; }
+        public string ID => _aspect.ID;
+        public AspectTimeType TimeType { get => _aspect.TimeType; set => _aspect.TimeType = value; }
+        public AspectEffectType EffectType { get => _aspect.EffectType; set => _aspect.EffectType = value; }
+        public BaseCharacter Belong { get => _aspect.Belong; set => _aspect.Belong = value; }
 
     }
 }
