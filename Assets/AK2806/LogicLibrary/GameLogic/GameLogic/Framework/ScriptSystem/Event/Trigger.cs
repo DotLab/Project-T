@@ -13,14 +13,13 @@ namespace GameLogic.Framework.ScriptSystem.Event
 
     public class Trigger : ITrigger
     {
-        protected string _id;
+        protected ICommand _command;
         protected string _eventID;
-        protected string _actionJS;
         protected bool _active;
 
-        public string ID => _id;
+        public string ID => _command.ID;
         public string EventID => _eventID;
-        public string ActionJS { get => _actionJS; set => _actionJS = value; }
+        public ICommand Command { get => _command; set => _command = value; }
         public bool Active { get => _active; set => _active = value; }
 
         public Trigger(string eventID)
