@@ -43,7 +43,7 @@ namespace GameLogic.Character
         }
 
         public string Description { get => _description; set => _description = value; }
-        public string ID { get => _id; set => _id = value; }
+        public string ID => _id;
         public AspectTimeType TimeType { get => _timeType; set => _timeType = value; }
         public AspectEffectType EffectType { get => _effectType; set => _effectType = value; }
         public BaseCharacter Belong { get => _belong; set => _belong = value; }

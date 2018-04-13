@@ -21,6 +21,7 @@ namespace GameLogic.Utilities
         public IDSearchTable(string id, IEnumerable<T> list)
         {
             this._id = id;
+            this._container = new Dictionary<string, T>();
             foreach (T e in list)
             {
                 this._container.Add(e.ID, e);
