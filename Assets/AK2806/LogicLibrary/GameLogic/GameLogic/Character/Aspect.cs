@@ -32,10 +32,15 @@ namespace GameLogic.Character
     public class Aspect : IAspect
     {
         protected string _description;
-        protected string _id;
+        protected readonly string _id;
         protected AspectTimeType _timeType;
         protected AspectEffectType _effectType;
         protected BaseCharacter _belong;
+
+        public Aspect(string id)
+        {
+            this._id = id;
+        }
 
         public string Description { get => _description; set => _description = value; }
         public string ID { get => _id; set => _id = value; }

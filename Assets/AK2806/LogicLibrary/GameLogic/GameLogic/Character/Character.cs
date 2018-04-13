@@ -13,7 +13,7 @@ namespace GameLogic.Character
         protected PropertyList<IAspect> _aspects;
         protected List<Skill> _skills;
         protected BaseCharacter _belong;
-        protected string _id;
+        protected readonly string _id;
         protected int _physicsStress;
         protected int _physicsStressMax;
         protected int _mentalStress;
@@ -49,6 +49,11 @@ namespace GameLogic.Character
             }
         }
 
+        public BaseCharacter(string id)
+        {
+            this._id = id;
+        }
+
         public int RollDice(SkillType skillType)
         {
             return FateDice.Roll() + this.SkillLevel(skillType);
@@ -71,6 +76,10 @@ namespace GameLogic.Character
     {
         protected PropertyList<IStunt> _stunts;
 
+        public Character(string id) : base(id)
+        {
+        }
+
         public PropertyList<IStunt> Stunts => _stunts;
     }
 
@@ -80,6 +89,10 @@ namespace GameLogic.Character
         protected int _fate;
         protected PropertyList<IExtra> _extras;
         protected PropertyList<IConsequence> _consequences;
+
+        public MainCharacter(string id) : base(id)
+        {
+        }
 
         public int Refresh { get => _refresh; set => _refresh = value; }
         public int Fate { get => _fate; set => _fate = value; }

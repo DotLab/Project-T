@@ -15,9 +15,14 @@ namespace GameLogic.Character
     public class Stunt : IStunt
     {
         protected string _description;
-        protected string _id;
+        protected readonly string _id;
         protected BaseCharacter _belong;
         protected List<ICommand> _commands;
+
+        public Stunt(string id)
+        {
+            this._id = id;
+        }
 
         public string Description { get => _description; set => _description = value; }
         public string ID => _id;

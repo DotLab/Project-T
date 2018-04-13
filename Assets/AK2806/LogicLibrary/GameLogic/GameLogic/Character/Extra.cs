@@ -17,9 +17,14 @@ namespace GameLogic.Character
     {
         protected PropertyList<BaseCharacter> _items;
         protected List<ITrigger> _triggers;
-        protected string _id;
+        protected readonly string _id;
         protected string _description;
         protected BaseCharacter _belong;
+
+        public Extra(string id)
+        {
+            this._id = id;
+        }
 
         public string ID => _id;
         public string Description { get => _description; set => _description = value; }

@@ -8,7 +8,7 @@ namespace GameLogic.Utilities
 {
     public sealed class IDSearchTable<T> : IIdentifiable, IEnumerable<T>, IEnumerable where T : IIdentifiable
     {
-        private string _id;
+        private readonly string _id;
         private Dictionary<string, T> _container;
 
         public string ID => _id;

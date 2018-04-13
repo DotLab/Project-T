@@ -12,7 +12,7 @@ namespace GameLogic.Framework.ScriptSystem.Event
 
     public class Event : IEvent
     {
-        protected string _id;
+        protected readonly string _id;
 
         public string ID => _id;
         
