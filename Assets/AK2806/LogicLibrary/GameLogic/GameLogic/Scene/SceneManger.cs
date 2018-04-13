@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace GameLogic.Framework
+namespace GameLogic.Scene
 {
-    public class SceneListFile { // persistent
+    public sealed class SceneListFile { // persistent
         public struct Router {
             public struct From {
                 public string scene;
@@ -26,7 +26,7 @@ namespace GameLogic.Framework
         public List<Router> routers;
     }
 
-    public class SceneManger
+    public sealed class SceneManger
     {
         private SceneListFile mSceneList = null;
 
