@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using GameLogic.Framework;
+using GameLogic.Core;
 
 namespace GameLogic.Character
 {
     public interface IProperty : IDescribable
     {
-        BaseCharacter Belong { get; set; }
+        ICharacter Belong { get; set; }
     }
 }

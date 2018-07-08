@@ -1,22 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using GameLogic.Framework;
-using GameLogic.Framework.ScriptSystem;
-using GameLogic.Framework.ScriptSystem.Event;
+using GameLogic.Core;
+using GameLogic.Core.ScriptSystem;
+using GameLogic.Core.ScriptSystem.Event;
 
 namespace GameLogic.Character
 {
-    public interface IStunt : IIdentifiable, IProperty
-    {
-        List<ICommand> Commands { get; }
-    }
 
-    public class Stunt : IStunt
+    public class Stunt : IIdentifiable, IProperty
     {
         protected string _description;
         protected readonly string _id;
-        protected BaseCharacter _belong;
+        protected ICharacter _belong;
         protected List<ICommand> _commands;
 
         public Stunt(string id)
@@ -26,7 +22,17 @@ namespace GameLogic.Character
 
         public string Description { get => _description; set => _description = value; }
         public string ID => _id;
-        public BaseCharacter Belong { get => _belong; set => _belong = value; }
+        public ICharacter Belong { get => _belong; set => _belong = value; }
         public List<ICommand> Commands => _commands;
+        
+        public virtual object GetContext()
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual void SetContext(object context)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using GameLogic.Framework;
+using GameLogic.Core;
 
 namespace GameLogic.Character
 {
@@ -18,24 +18,13 @@ namespace GameLogic.Character
         Positive
     }
 
-    public interface IAspect : IIdentifiable, IProperty
-    {
-        AspectTimeType TimeType { get; set; }
-        AspectEffectType EffectType { get; set; }
-    }
-
-    public interface IConsequence : IAspect
-    {
-        int Level { get; set; }
-    }
-
-    public class Aspect : IAspect
+    public class Aspect : IIdentifiable, IProperty
     {
         protected string _description;
         protected readonly string _id;
         protected AspectTimeType _timeType;
         protected AspectEffectType _effectType;
-        protected BaseCharacter _belong;
+        protected ICharacter _belong;
 
         public Aspect(string id)
         {
@@ -46,22 +35,39 @@ namespace GameLogic.Character
         public string ID => _id;
         public AspectTimeType TimeType { get => _timeType; set => _timeType = value; }
         public AspectEffectType EffectType { get => _effectType; set => _effectType = value; }
-        public BaseCharacter Belong { get => _belong; set => _belong = value; }
+        public ICharacter Belong { get => _belong; set => _belong = value; }
+
+        public virtual object GetContext()
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual void SetContext(object context)
+        {
+            throw new NotImplementedException();
+        }
     }
 
-    public class Consequence : IConsequence
+    public class Consequence : Aspect
     {
-        protected IAspect _aspect;
         protected int _level;
-
-        public IAspect Aspect { get => _aspect; set => _aspect = value; }
+        
         public int Level { get => _level; set => _level = value; }
 
-        public string Description { get => _aspect.Description; set => _aspect.Description = value; }
-        public string ID => _aspect.ID;
-        public AspectTimeType TimeType { get => _aspect.TimeType; set => _aspect.TimeType = value; }
-        public AspectEffectType EffectType { get => _aspect.EffectType; set => _aspect.EffectType = value; }
-        public BaseCharacter Belong { get => _aspect.Belong; set => _aspect.Belong = value; }
+        public Consequence(string id) :
+            base(id)
+        {
 
+        }
+
+        public override object GetContext()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void SetContext(object context)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

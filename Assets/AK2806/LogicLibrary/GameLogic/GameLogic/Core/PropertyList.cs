@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Text;
 using GameLogic.Character;
 
-namespace GameLogic.Utilities
+namespace GameLogic.Core
 {
-    public sealed class PropertyList<T> : IEnumerable<T>, IEnumerable where T:IProperty
+    public sealed class PropertyList<T> : IEnumerable<T>, IEnumerable where T : IProperty
     {
         private BaseCharacter _owner;
         private List<T> _container;
@@ -25,7 +25,7 @@ namespace GameLogic.Utilities
         public void Add(T item)
         {
             this._container.Add(item);
-            item.Belong = this.Owner;
+            item.Belong = this._owner;
         }
 
         public void Clear()
@@ -56,7 +56,7 @@ namespace GameLogic.Utilities
         public void Insert(int index, T item)
         {
             this._container.Insert(index, item);
-            item.Belong = this.Owner;
+            item.Belong = this._owner;
         }
 
         public int LastIndexOf(T item, int index = 0, int count = -1)

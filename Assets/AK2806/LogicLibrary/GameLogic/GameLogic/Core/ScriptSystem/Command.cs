@@ -1,33 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Jint;
 
-namespace GameLogic.Framework.ScriptSystem
+namespace GameLogic.Core.ScriptSystem
 {
-    public interface ICommand : IIdentifiable
+    public interface ICommand
     {
-        void DoAction(Engine engine);
+        void DoAction(JSEngine engine);
     }
     
     public class Command : ICommand
     {
-        protected readonly string _id;
         protected readonly string _actionJS;
-
-        public string ID => _id;
+        
         public string ActionJS => _actionJS;
 
-        public Command(string id, string jscode)
+        public Command(string jscode)
         {
-            this._id = id;
             this._actionJS = jscode;
         }
 
-        public void DoAction(Engine engine)
+        public virtual void DoAction(JSEngine engine)
         {
             engine.Execute(this.ActionJS);
         }
+        
     }
 
 

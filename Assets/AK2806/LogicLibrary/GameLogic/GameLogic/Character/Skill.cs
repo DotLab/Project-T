@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using GameLogic.Framework;
+using GameLogic.Core;
 
 namespace GameLogic.Character
 {
@@ -62,12 +62,12 @@ namespace GameLogic.Character
     {
         protected SkillType _skillType;
         protected int _level;
-        protected BaseCharacter _belong;
+        protected ICharacter _belong;
         protected string _extraInfo;
 
         public SkillType SkillType { get => _skillType; set => _skillType = value; }
         public int Level { get => _level; set => _level = value; }
-        public BaseCharacter Belong { get => _belong; set => _belong = value; }
+        public ICharacter Belong { get => _belong; set => _belong = value; }
         public string Description { get => this._extraInfo; set => this._extraInfo = value; }
     }
 }

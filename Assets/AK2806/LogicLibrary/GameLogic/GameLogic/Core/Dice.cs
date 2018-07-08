@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GameLogic.Utilities
+namespace GameLogic.Core
 {
     public struct DicePoint
     {

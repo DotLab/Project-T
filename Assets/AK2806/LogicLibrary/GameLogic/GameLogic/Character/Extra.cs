@@ -1,25 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using GameLogic.Framework;
-using GameLogic.Framework.ScriptSystem.Event;
-using GameLogic.Utilities;
+using GameLogic.Core;
+using GameLogic.Core.ScriptSystem.Event;
 
 namespace GameLogic.Character
 {
-    public interface IExtra : IProperty, IIdentifiable
-    {
-        PropertyList<BaseCharacter> Items { get; }
-        List<ITrigger> Triggers { get; }
-    }
 
-    public class Extra : IExtra
+    public class Extra : IProperty, IIdentifiable
     {
-        protected PropertyList<BaseCharacter> _items;
-        protected List<ITrigger> _triggers;
+        protected PropertyList<ICharacter> _items;
+        protected List<Trigger> _triggers;
         protected readonly string _id;
         protected string _description;
-        protected BaseCharacter _belong;
+        protected ICharacter _belong;
 
         public Extra(string id)
         {
@@ -28,8 +22,18 @@ namespace GameLogic.Character
 
         public string ID => _id;
         public string Description { get => _description; set => _description = value; }
-        public PropertyList<BaseCharacter> Items => _items;
-        public List<ITrigger> Triggers => _triggers;
-        public BaseCharacter Belong { get => _belong; set => _belong = value; }
+        public PropertyList<ICharacter> Items => _items;
+        public List<Trigger> Triggers => _triggers;
+        public ICharacter Belong { get => _belong; set => _belong = value; }
+
+        public virtual object GetContext()
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual void SetContext(object context)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

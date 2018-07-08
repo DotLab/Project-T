@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-namespace GameLogic.Scene
+
+namespace GameLogic.Character
 {
     public enum RenderActionType {
         PutViewable, EditViewable, DeleteViewable,
@@ -36,8 +37,8 @@ namespace GameLogic.Scene
         public ArrayList parameters;
     }
 
-    public interface IRenderer
+    public interface IViewable
     {
-        void Render(List<RenderAction> actions);
+        void Render();
     }
 }
