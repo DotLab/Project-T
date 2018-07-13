@@ -29,7 +29,7 @@ namespace GameLogic.Character
         private static readonly PropertyList<Extra> _emptyExtras = new PropertyList<Extra>(null);
         private static readonly PropertyList<Consequence> _emptyConsequences = new PropertyList<Consequence>(null);
 
-        private class API
+        private sealed class API : IJSAPI
         {
             private BaseCharacter _outer;
 
@@ -51,7 +51,14 @@ namespace GameLogic.Character
                 return _outer.Belong.ID;
             }
 
-
+            public IJSContextProvider Origin(JSContextHelper proof)
+            {
+                if (proof == JSContextHelper.Instance)
+                {
+                    return _outer;
+                }
+                return null;
+            }
         }
 
         private API _apiObj;
@@ -107,12 +114,14 @@ namespace GameLogic.Character
 
         public BaseCharacter(string id)
         {
-            this._id = id;
+            _id = id;
+            _apiObj = new API(this);
         }
 
         public int RollDice(SkillType skillType)
         {
-            return FateDice.Roll() + this.SkillLevel(skillType);
+            //return FateDice.Roll() + this.SkillLevel(skillType);
+            return this.SkillLevel(skillType);
         }
         
         public virtual int SkillLevel(SkillType skillType)
@@ -129,28 +138,74 @@ namespace GameLogic.Character
 
         public virtual object GetContext()
         {
-            throw new NotImplementedException();
+            return _apiObj;
         }
 
-        public virtual void SetContext(object context)
-        {
-            throw new NotImplementedException();
-        }
+        public virtual void SetContext(object context) { }
     }
 
     public class Character : BaseCharacter
     {
+        private sealed class API : IJSAPI
+        {
+            private Character _outer;
+
+            public API(Character outer)
+            {
+                _outer = outer;
+            }
+
+            public IJSContextProvider Origin(JSContextHelper proof)
+            {
+                if (proof == JSContextHelper.Instance)
+                {
+                    return _outer;
+                }
+                return null;
+            }
+        }
+
+        private API _apiObj;
+
         protected PropertyList<Stunt> _stunts;
 
         public Character(string id) : base(id)
         {
+            _apiObj = new API(this);
         }
 
         public override PropertyList<Stunt> Stunts => _stunts;
+
+        public override object GetContext()
+        {
+            return _apiObj;
+        }
+        
     }
 
     public class MainCharacter : Character
     {
+        private sealed class API : IJSAPI
+        {
+            private MainCharacter _outer;
+
+            public API(MainCharacter outer)
+            {
+                _outer = outer;
+            }
+
+            public IJSContextProvider Origin(JSContextHelper proof)
+            {
+                if (proof == JSContextHelper.Instance)
+                {
+                    return _outer;
+                }
+                return null;
+            }
+        }
+
+        private API _apiObj;
+
         protected int _refresh;
         protected int _fate;
         protected PropertyList<Extra> _extras;
@@ -158,17 +213,23 @@ namespace GameLogic.Character
 
         public MainCharacter(string id) : base(id)
         {
+            _apiObj = new API(this);
         }
 
         public override int Refresh { get => _refresh; set => _refresh = value; }
         public override int Fate { get => _fate; set => _fate = value; }
         public override PropertyList<Extra> Extras => _extras;
         public override PropertyList<Consequence> Consequences => _consequences;
+
+        public override object GetContext()
+        {
+            return _apiObj;
+        }
     }
 
-    public sealed class CharacterManager : JSContext
+    public sealed class CharacterManager : IJSContextProvider
     {
-        private class API
+        private sealed class API : IJSAPI
         {
             private CharacterManager _outer;
 
@@ -177,7 +238,14 @@ namespace GameLogic.Character
                 _outer = outer;
             }
 
-
+            public IJSContextProvider Origin(JSContextHelper proof)
+            {
+                if (proof == JSContextHelper.Instance)
+                {
+                    return _outer;
+                }
+                return null;
+            }
         }
 
         private API _apiObj;
@@ -198,6 +266,7 @@ namespace GameLogic.Character
             _templateNPC = new List<ICharacter>();
             _npc = new List<ICharacter>();
             _player = new List<ICharacter>();
+            _apiObj = new API(this);
         }
 
         public object GetContext()
@@ -205,8 +274,6 @@ namespace GameLogic.Character
             return _apiObj;
         }
 
-        public void SetContext(object context)
-        {
-        }
+        public void SetContext(object context) { }
     }
 }

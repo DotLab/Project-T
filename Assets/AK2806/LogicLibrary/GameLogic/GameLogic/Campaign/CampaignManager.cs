@@ -5,9 +5,9 @@ using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.Campaign
 {
-    public sealed class CampaignManager : JSContext
+    public sealed class CampaignManager : IJSContextProvider
     {
-        private class API
+        private sealed class API : IJSAPI
         {
             private CampaignManager _outer;
 
@@ -16,7 +16,14 @@ namespace GameLogic.Campaign
                 _outer = outer;
             }
 
-
+            public IJSContextProvider Origin(JSContextHelper proof)
+            {
+                if (proof == JSContextHelper.Instance)
+                {
+                    return _outer;
+                }
+                return null;
+            }
         }
 
         private API _apiObj;
@@ -49,9 +56,6 @@ namespace GameLogic.Campaign
             return _apiObj;
         }
         
-        public void SetContext(object context)
-        {
-            
-        }
+        public void SetContext(object context) { }
     }
 }

@@ -7,7 +7,7 @@ namespace GameLogic.Core.ScriptSystem
 {
     public interface IJSEngineRaw
     {
-        T GetVar<T>(string name);
+        void BindType(string typeName, Type type);
         object GetVar(string name);
         void SetVar(string name, object[] array);
         void SetVar(string name, object obj);
@@ -68,20 +68,23 @@ namespace GameLogic.Core.ScriptSystem
 
         public JSEngine(IJSEngineRaw engine)
         {
-            _engine = engine;
+            _engine = engine ?? throw new ArgumentNullException("engine");
         }
-
-        public void SetVar(string varname, JSContext context)
+        
+        public void SynchronizeContext(string varname, IJSContextProvider provider)
         {
-            this._engine.SetVar(varname, context.GetContext());
+            object context = this._engine.GetVar(varname);
+            if (context == null) this._engine.SetVar(varname, provider.GetContext());
+            else
+            {
+                if (!(context is IJSAPI))
+                {
+                    provider.SetContext(context);
+                }
+            }
         }
 
-        public void GetVar(JSContext context, string varname)
-        {
-            context.SetContext(this._engine.GetVar<object>(varname));
-        }
-
-        public void DelVar(string varname)
+        public void RemoveContext(string varname)
         {
             this._engine.DelVar(varname);
         }
@@ -105,7 +108,7 @@ namespace GameLogic.Core.ScriptSystem
 
         public static IJSEngineRaw EngineRaw => _engineRaw;
         public static JSEngine Engine => _engine;
-
+        
         public static void Run(ICommand command)
         {
             command.DoAction(_engine);

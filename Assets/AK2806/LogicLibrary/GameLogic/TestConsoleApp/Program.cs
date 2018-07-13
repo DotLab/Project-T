@@ -25,6 +25,11 @@ namespace TestConsoleApp
         {
             Console.WriteLine("Derived A");
         }
+
+        public void Test2()
+        {
+            Console.WriteLine("Test 2  A");
+        }
     }
 
     public class DerivedB : DerivedA
@@ -37,10 +42,10 @@ namespace TestConsoleApp
             Console.WriteLine("Derived B");
         }
 
-        public void Test2()
+        public new void Test2()
         {
-            base.Test();
-            Console.WriteLine("Test 2");
+            base.Test2();
+            Console.WriteLine("Test 2  B");
         }
     }
 
@@ -58,9 +63,9 @@ namespace TestConsoleApp
         }
     }
 
-    public class VarTest : JSContext
+    public class VarTest : IJSContextProvider
     {
-        private struct Var
+        public struct Var
         {
             public int x;
             public int y;
@@ -87,10 +92,36 @@ namespace TestConsoleApp
         {
             return _var.y;
         }
+
+    }
+
+    public class VarTest2 : IJSContextProvider
+    {
+        private struct Var
+        {
+            public string s;
+        }
+
+        private Var _var;
+
+        public object GetContext()
+        {
+            return _var;
+        }
+
+        public void SetContext(object context)
+        {
+            _var = (Var)context;
+        }
+
+        public string VarS()
+        {
+            return _var.s;
+        }
         
     }
 
-    public class ApiTest : JSContext
+    public class ApiTest : IJSContextProvider
     {
         private int x;
         private Dictionary<string, List<Stest>> dict;
@@ -102,11 +133,15 @@ namespace TestConsoleApp
             private string _eee="222";
             
 
+
+
             public Inner(ApiTest outer)
             {
                 _outer = outer;
             }
-            
+
+            public ApiTest Outer { get => _outer; set => _outer = value; }
+
             public void Foo()
             {
                 _outer.x++;
@@ -145,8 +180,18 @@ namespace TestConsoleApp
         }
     }
 
+    public enum TestEnum
+    {
+        A,B,C,D
+    }
+
     class Program
     {
+        static void Foo(int x)
+        {
+            Console.WriteLine(x);
+        }
+
         static void Main(string[] args)
         {
             /*
@@ -194,34 +239,44 @@ namespace TestConsoleApp
             object test = JsonConvert.DeserializeObject(json);
             Console.WriteLine(test.GetHashCode());
             */
-            
-            ApiTest test = new ApiTest();
+            JSEngineManager.EngineRaw.BindType("Stest", typeof(Stest));
             JSEngineManager.EngineRaw.SetVar("log", new Action<object>(Console.WriteLine));
+            JSEngineManager.EngineRaw.SetVar("foo", new Action<int>(Foo));
+            try
+            {
+                JSEngineManager.EngineRaw.Execute("var s = new Stest(); s.w = 'aaa'; log(s.w);");
+            } catch (JSException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            /*
+            ApiTest test = new ApiTest();
+            
             JSEngineManager.EngineRaw.SetVar("testRaw", test);
-            JSEngineManager.Engine.SetVar("test", test);
+            JSEngineManager.Engine.SynchronizeContext("test", test);
             JSEngineManager.Engine.Execute("log(test._eee == undefined? '1':'0');");
             JSEngineManager.Engine.Execute("test.Foo();");
             Console.WriteLine(test.X);
             JSEngineManager.Engine.Execute("test.Foo();");
             Console.WriteLine(test.X);
-            try
-            {
-                JSEngineManager.Engine.Execute("function foo() { foo(); } foo();");
-            }
-            catch (JSException e)
-            {
-                Console.WriteLine(e.Message);
-            }
+            JSEngineManager.Engine.Execute("log(test.Outer.Dict.Count);");
 
-            /*VarTest varTest = new VarTest();
-            JSEngineManager.Engine.SetVar("test", varTest);
-            Console.WriteLine(varTest.VarX() + ", " + varTest.VarY());
-            JSEngineManager.Engine.Execute("test.x = 3; test.y = 2;");
-            Console.WriteLine(varTest.VarX() + ", " + varTest.VarY());
-            JSEngineManager.Engine.GetVar(varTest, "test");
-            Console.WriteLine(varTest.VarX() + ", " + varTest.VarY());
+            object i = 1;
+            string s = (string)i;
+            Console.WriteLine(s);
             */
-
+            /*
+            VarTest varTest = new VarTest();
+            JSEngineManager.Engine.SynchronizeContext("test", varTest);
+            Console.WriteLine(varTest.VarX() + ", " + varTest.VarY());
+            TestEnum testEnum = TestEnum.B;
+            JSEngineManager.EngineRaw.SetVar("testEnum", testEnum);
+            JSEngineManager.Engine.Execute("log(testEnum);");
+            Console.WriteLine(varTest.VarX() + ", " + varTest.VarY());
+            JSEngineManager.Engine.SynchronizeContext("test", varTest);
+            Console.WriteLine(varTest.VarX() + ", " + varTest.VarY());
+            JSEngineManager.Engine.Execute("var e = {}; e.a = 3; log(e.a);");
+            */
             /*
             Engine engine = new Engine();
             try

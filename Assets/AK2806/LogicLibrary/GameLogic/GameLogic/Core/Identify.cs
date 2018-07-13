@@ -5,7 +5,7 @@ using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.Core
 {
-    public interface IIdentifiable : JSContext
+    public interface IIdentifiable : IJSContextProvider
     {
         string ID { get; }
     }

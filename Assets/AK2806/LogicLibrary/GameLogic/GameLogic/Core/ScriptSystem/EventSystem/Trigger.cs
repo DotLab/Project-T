@@ -14,9 +14,11 @@ namespace GameLogic.Core.ScriptSystem.Event
         public ICommand Command { get => _command; set => _command = value; }
         public bool Active { get => _active; set => _active = value; }
 
-        public Trigger(string eventID)
+        public Trigger(string eventID, ICommand command = null)
         {
-            this._eventID = eventID;
+            _eventID = eventID ?? throw new ArgumentNullException("eventID");
+            _command = command;
+            _active = true;
         }
 
         public virtual void Notify(JSEngine engine)

@@ -5,7 +5,7 @@ using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.Core.DataSystem
 {
-    public sealed class GameObjectSearcher : JSContext
+    public sealed class GameObjectSearcher : IJSContextProvider
     {
         private class API
         {

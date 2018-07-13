@@ -95,9 +95,14 @@ namespace GameLogic.Core
     {
         private static Dice dice = new Dice(DiceType.Create(-1, 1));
 
-        public static int Roll()
+        public static int[] Roll()
         {
-            return dice.Roll(4);
+            int[] ret = new int[4];
+            for (int i = 0; i < 3; ++i)
+            {
+                ret[i] = dice.Roll(1);
+            }
+            return ret;
         }
     }
 }

@@ -93,12 +93,12 @@ namespace GameLogic.Campaign
         protected string _comment;
 
         public ICommand Command { get => _command; set => _command = value; }
-        public string Comment { get => _comment; set => _comment = value; }
+        public string Comment { get => _comment; set => _comment = value ?? throw new ArgumentNullException("Comment"); }
 
         public Action(ICommand command = null, string comment = "")
         {
             _command = command;
-            _comment = comment;
+            _comment = comment ?? throw new ArgumentNullException("comment");
         }
         
         public void DoAction()

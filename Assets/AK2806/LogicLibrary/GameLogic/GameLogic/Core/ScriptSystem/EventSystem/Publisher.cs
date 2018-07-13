@@ -4,12 +4,18 @@ using System.Text;
 
 namespace GameLogic.Core.ScriptSystem.Event
 {
-    public sealed class Publisher : JSContext
+    public sealed class Publisher : IJSContextProvider
     {
         private static Publisher _instance = new Publisher();
-        private static Dictionary<string, List<Trigger> > _subscribers = new Dictionary<string, List<Trigger> >();
 
         public static Publisher Instance => _instance;
+
+        private Dictionary<string, List<Trigger>> _subscribers;
+
+        private Publisher()
+        {
+            _subscribers = new Dictionary<string, List<Trigger>>();
+        }
 
         public void Publish(JSEngine engine, IEvent e)
         {
@@ -36,7 +42,7 @@ namespace GameLogic.Core.ScriptSystem.Event
             e.RetrieveContext(engine);
         }
 
-        public static void Register(Trigger trigger)
+        public void Register(Trigger trigger)
         {
             if (!_subscribers.ContainsKey(trigger.BoundEventID))
             {
