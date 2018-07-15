@@ -17,7 +17,7 @@ namespace GameLogic.Core.ScriptSystem
 
     public sealed class JSContextHelper
     {
-        private static JSContextHelper _instance = new JSContextHelper();
+        private static readonly JSContextHelper _instance = new JSContextHelper();
 
         public static JSContextHelper Instance => _instance;
 

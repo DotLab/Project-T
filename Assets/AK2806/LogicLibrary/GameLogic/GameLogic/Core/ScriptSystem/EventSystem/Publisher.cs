@@ -6,11 +6,11 @@ namespace GameLogic.Core.ScriptSystem.Event
 {
     public sealed class Publisher : IJSContextProvider
     {
-        private static Publisher _instance = new Publisher();
+        private static readonly Publisher _instance = new Publisher();
 
         public static Publisher Instance => _instance;
 
-        private Dictionary<string, List<Trigger>> _subscribers;
+        private readonly Dictionary<string, List<Trigger>> _subscribers;
 
         private Publisher()
         {

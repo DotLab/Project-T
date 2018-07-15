@@ -13,7 +13,7 @@ namespace GameLogic.Scene
     {
         private sealed class API : IJSAPI
         {
-            private StoryScene _outer;
+            private readonly StoryScene _outer;
 
             public API(StoryScene outer)
             {
@@ -184,13 +184,16 @@ namespace GameLogic.Scene
             }
         }
 
-        private API _apiObj;
+        private readonly API _apiObj;
 
-        private IdentifiedObjList<ISceneObject> _objList;
-        private IdentifiedObjList<ISceneObject> _objInSceneList;
-        private Camera _camera;
-        private List<TextBox> _textBoxes;
-        private List<Player> _players;
+        private static readonly StoryScene _instance = new StoryScene();
+        public static StoryScene Instance => _instance;
+        
+        private readonly IdentifiedObjList<ISceneObject> _objList;
+        private readonly IdentifiedObjList<ISceneObject> _objInSceneList;
+        private readonly Camera _camera;
+        private readonly List<TextBox> _textBoxes;
+        private readonly List<Player> _players;
 
         public IdentifiedObjList<ISceneObject> ObjList => _objList;
         public IdentifiedObjList<ISceneObject> ObjInSceneList => _objInSceneList;
@@ -277,7 +280,7 @@ namespace GameLogic.Scene.Story
     {
         private sealed class API : IJSAPI
         {
-            private SceneObject _outer;
+            private readonly SceneObject _outer;
 
             public API(SceneObject outer)
             {
@@ -462,7 +465,7 @@ namespace GameLogic.Scene.Story
             }
         }
 
-        private API _apiObj;
+        private readonly API _apiObj;
 
         protected readonly string _id;
         protected ICommand _interact;
@@ -556,7 +559,7 @@ namespace GameLogic.Scene.Story
     {
         private sealed class API : IJSAPI
         {
-            private Camera _outer;
+            private readonly Camera _outer;
 
             public API(Camera outer)
             {
@@ -645,7 +648,7 @@ namespace GameLogic.Scene.Story
             }
         }
 
-        private API _apiObj;
+        private readonly API _apiObj;
 
         private Layout _layout;
         private ViewEffect _effect;
@@ -698,7 +701,7 @@ namespace GameLogic.Scene.Story
     {
         private sealed class API : IJSAPI
         {
-            private TextItem _outer;
+            private readonly TextItem _outer;
 
             public API(TextItem outer)
             {
@@ -739,7 +742,7 @@ namespace GameLogic.Scene.Story
             }
         }
 
-        private API _apiObj;
+        private readonly API _apiObj;
 
         protected string _text;
 
@@ -766,7 +769,7 @@ namespace GameLogic.Scene.Story
     {
         private sealed class API : IJSAPI
         {
-            private SelectionItem _outer;
+            private readonly SelectionItem _outer;
 
             public API(SelectionItem outer)
             {
@@ -819,7 +822,7 @@ namespace GameLogic.Scene.Story
             }
         }
 
-        private API _apiObj;
+        private readonly API _apiObj;
 
         protected string _text;
         protected ICommand _action;
@@ -862,7 +865,7 @@ namespace GameLogic.Scene.Story
     {
         private sealed class API : IJSAPI
         {
-            private TextBox _outer;
+            private readonly TextBox _outer;
 
             public API(TextBox outer)
             {
@@ -941,12 +944,12 @@ namespace GameLogic.Scene.Story
             }
         }
 
-        private API _apiObj;
+        private readonly API _apiObj;
 
-        private List<ITextItem> _textItems;
+        private readonly List<ITextItem> _textItems;
         private int _playerIndex;
 
-        public List<ITextItem> TextItems { get => _textItems; set => _textItems = value; }
+        public List<ITextItem> TextItems => _textItems;
         public int PlayerIndex { get => _playerIndex; set => _playerIndex = value; }
 
         public TextBox(int index)

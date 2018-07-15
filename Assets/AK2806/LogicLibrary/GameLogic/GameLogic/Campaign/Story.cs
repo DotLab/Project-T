@@ -5,43 +5,27 @@ using System.Text;
 
 namespace GameLogic.Campaign
 {
-    public interface IStory
+    public sealed class Story : CampaignBlock
     {
-        IAction NextAction();
-        IAction CurrentAction();
-        bool Next();
-    }
+        private readonly List<Action> _actions;
+        private int _currentActionIndex;
 
-    public abstract class AbstractStory : IStory, ICampaignBlock
-    {
-        public CBType Type => CBType.Story;
-        public IStory Story => this;
-        public IBattle Battle => null;
-        public abstract List<ICampaignBlock> Nexts { get; }
-
-        public abstract IAction NextAction();
-        public abstract IAction CurrentAction();
-        public abstract bool Next();
-    }
-
-    public class Story : AbstractStory
-    {
-        protected List<IAction> _actions;
-        protected int _currentActionIndex;
-        protected List<ICampaignBlock> _nexts;
-
-        public List<IAction> Actions { get => _actions; set => _actions = value; }
+        public List<Action> Actions => _actions;
         public int CurrentActionIndex => _currentActionIndex;
-        public override List<ICampaignBlock> Nexts => _nexts;
 
-        public Story(List<IAction> actions = null, List<ICampaignBlock> nexts = null)
+        public override CBType Type => CBType.Story;
+        public override Story StoryBlock => this;
+        public override Battle BattleBlock => null;
+        public override Movie MovieBlock => null;
+
+        public Story(List<Action> actions, List<CampaignBlock> nexts) :
+            base(nexts)
         {
-            _actions = actions;
+            _actions = actions ?? throw new ArgumentNullException("actions");
             _currentActionIndex = -1;
-            _nexts = nexts;
         }
         
-        public override IAction NextAction()
+        public Action NextAction()
         {
             if (_actions != null)
             {
@@ -54,7 +38,7 @@ namespace GameLogic.Campaign
             return null;
         }
 
-        public override IAction CurrentAction()
+        public Action CurrentAction()
         {
             if (_actions != null)
             {
@@ -66,7 +50,7 @@ namespace GameLogic.Campaign
             return null;
         }
 
-        public override bool Next()
+        public bool Next()
         {
             if (_actions != null)
             {
@@ -80,17 +64,11 @@ namespace GameLogic.Campaign
             return false;
         }
     }
-
-    public interface IAction
+    
+    public sealed class Action
     {
-        void DoAction();
-        string Comment { get; }
-    }
-
-    public class Action : IAction
-    {
-        protected ICommand _command;
-        protected string _comment;
+        private ICommand _command;
+        private string _comment;
 
         public ICommand Command { get => _command; set => _command = value; }
         public string Comment { get => _comment; set => _comment = value ?? throw new ArgumentNullException("Comment"); }

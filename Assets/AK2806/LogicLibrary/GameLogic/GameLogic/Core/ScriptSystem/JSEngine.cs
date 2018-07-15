@@ -55,16 +55,16 @@ namespace GameLogic.Core.ScriptSystem
         public JSException(int errID, JSErrorType errType, string errMessage) :
             base(FullMessage(errID, errType, errMessage))
         {
-            this._errID = errID;
-            this._errType = errType;
-            this._errMessage = errMessage;
+            _errID = errID;
+            _errType = errType;
+            _errMessage = errMessage;
         }
         
     }
 
     public sealed class JSEngine
     {
-        private IJSEngineRaw _engine;
+        private readonly IJSEngineRaw _engine;
 
         public JSEngine(IJSEngineRaw engine)
         {
@@ -73,8 +73,8 @@ namespace GameLogic.Core.ScriptSystem
         
         public void SynchronizeContext(string varname, IJSContextProvider provider)
         {
-            object context = this._engine.GetVar(varname);
-            if (context == null) this._engine.SetVar(varname, provider.GetContext());
+            object context = _engine.GetVar(varname);
+            if (context == null) _engine.SetVar(varname, provider.GetContext());
             else
             {
                 if (!(context is IJSAPI))
@@ -86,19 +86,19 @@ namespace GameLogic.Core.ScriptSystem
 
         public void RemoveContext(string varname)
         {
-            this._engine.DelVar(varname);
+            _engine.DelVar(varname);
         }
 
         public void Execute(string code)
         {
-            this._engine.Execute(code);
+            _engine.Execute(code);
         }
     }
 
     public static class JSEngineManager
     {
-        private static IJSEngineRaw _engineRaw;
-        private static JSEngine _engine;
+        private readonly static IJSEngineRaw _engineRaw;
+        private readonly static JSEngine _engine;
 
         static JSEngineManager()
         {

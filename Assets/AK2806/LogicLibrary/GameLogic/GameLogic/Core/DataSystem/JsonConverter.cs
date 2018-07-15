@@ -26,19 +26,19 @@ namespace GameLogic.Core.DataSystem
         public JsonException(int errID, string errMessage) :
             base(FullMessage(errID, errMessage))
         {
-            this._errID = errID;
-            this._errMessage = errMessage;
+            _errID = errID;
+            _errMessage = errMessage;
         }
 
     }
 
     public sealed class JsonConverter
     {
-        private IJsonConverterRaw _converter;
+        private readonly IJsonConverterRaw _converter;
 
         public JsonConverter(IJsonConverterRaw converter)
         {
-            this._converter = converter;
+            this._converter = converter ?? throw new ArgumentNullException("converter");
         }
 
         public string Serialize(object obj)

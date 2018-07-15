@@ -28,23 +28,19 @@ namespace GameLogic.Campaign
 
         private API _apiObj;
 
-        private static CampaignManager _instance = new CampaignManager();
+        private static readonly CampaignManager _instance = new CampaignManager();
         public static CampaignManager Instance => _instance;
         
-        private ICampaignBlock _currentCampaign;
-        private ICampaignBlock _currentBlock;
-        private StoryScene _storyScene;
-        private BattleScene _battleScene;
+        private CampaignBlock _currentCampaign;
+        private CampaignBlock _currentBlock;
         
         private CampaignManager()
         {
             _apiObj = new API(this);
         }
 
-        public ICampaignBlock CurrentCampaign { get => _currentCampaign; set => _currentCampaign = value; }
-        public ICampaignBlock CurrentBlock { get => _currentBlock; set => _currentBlock = value; }
-        public StoryScene StoryScene { get => _storyScene; set => _storyScene = value; }
-        public BattleScene BattleScene { get => _battleScene; set => _battleScene = value; }
+        public CampaignBlock CurrentCampaign { get => _currentCampaign; set => _currentCampaign = value; }
+        public CampaignBlock CurrentBlock { get => _currentBlock; set => _currentBlock = value; }
 
         public void Load(string json)
         {

@@ -5,31 +5,23 @@ using GameLogic.Scene;
 
 namespace GameLogic.Campaign
 {
-    public interface IBattle
+    public class Battle : CampaignBlock
     {
-        void InitBattleScene(BattleScene scene);
-    }
-
-    public abstract class AbstractBattle : IBattle, ICampaignBlock
-    {
-        public CBType Type => CBType.Battle;
-
-        public IStory Story => null;
-
-        public IBattle Battle => this;
-
-        public abstract List<ICampaignBlock> Nexts { get; }
-
-        public abstract void InitBattleScene(BattleScene scene);
-    }
-
-    public class Battle : AbstractBattle
-    {
-        public override List<ICampaignBlock> Nexts => throw new NotImplementedException();
-
-        public override void InitBattleScene(BattleScene scene)
+        public override CBType Type => CBType.Battle;
+        public override Story StoryBlock => null;
+        public override Movie MovieBlock => null;
+        public override Battle BattleBlock => this;
+        
+        public Battle(List<CampaignBlock> nexts) :
+            base(nexts)
         {
-            throw new NotImplementedException();
+
+        }
+
+        public void InitBattleScene(BattleScene scene)
+        {
+
         }
     }
+    
 }

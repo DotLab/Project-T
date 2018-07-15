@@ -6,31 +6,50 @@ namespace GameLogic.Campaign
 {
     public enum CBType
     {
-        Story, Battle
+        Story, Battle, Movie
     }
 
-    public interface ICampaignBlock
+    public abstract class CampaignBlock
     {
-        CBType Type { get; }
-        IStory Story { get; }
-        IBattle Battle { get; }
-        List<ICampaignBlock> Nexts { get; }
+        protected readonly List<CampaignBlock> _nexts;
+        protected string _comment;
+        protected string _name;
+
+        public abstract CBType Type { get; }
+        public abstract Story StoryBlock { get; }
+        public abstract Battle BattleBlock { get; }
+        public abstract Movie MovieBlock { get; }
+
+        public List<CampaignBlock> Nexts => _nexts;
+        public string Comment { get => _comment; set => _comment = value; }
+        public string Name { get => _name; set => _name = value; }
+
+        public CampaignBlock(List<CampaignBlock> nexts, string name = "", string comment = "")
+        {
+            _nexts = nexts ?? throw new ArgumentNullException("actions");
+            _name = name ?? throw new ArgumentNullException("name");
+            _comment = comment ?? throw new ArgumentNullException("comment");
+        }
     }
 
     public sealed class Campaign : IDescribable
     {
-        private List<ICampaignBlock> _blocks;
-        private ICampaignBlock _startup;
+        private List<CampaignBlock> _blocks;
+        private CampaignBlock _startup;
         private List<Campaign> _endings;
+        private string _comment;
+        private string _name;
 
-        public List<ICampaignBlock> Blocks { get => _blocks; set => _blocks = value; }
-        public ICampaignBlock Startup { get => _startup; set => _startup = value; }
+        public List<CampaignBlock> Blocks { get => _blocks; set => _blocks = value; }
+        public CampaignBlock Startup { get => _startup; set => _startup = value; }
         public List<Campaign> Endings { get => _endings; set => _endings = value; }
+        public string Comment { get => _comment; set => _comment = value; }
+        public string Name { get => _name; set => _name = value; }
 
         private string _description;
-
         public string Description { get => _description; set => _description = value; }
         
+
         public Campaign()
         {
 

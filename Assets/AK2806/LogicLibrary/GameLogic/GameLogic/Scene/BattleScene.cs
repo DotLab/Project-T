@@ -6,5 +6,6 @@ namespace GameLogic.Scene
 {
     public class BattleScene
     {
+
     }
 }

@@ -11,7 +11,7 @@ namespace GameLogic.Core.ScriptSystem.EngineWrapper
 {
     public sealed class JintEngine : IJSEngineRaw
     {
-        private Engine _jsEngine;
+        private readonly Engine _jsEngine;
         
         public JintEngine()
         {
