@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
-using GameLogic.Character;
+using GameLogic.CharacterSystem;
 using GameLogic.Scene.Story;
 using GameLogic.Campaign;
 using System.Numerics;
@@ -11,6 +11,7 @@ namespace GameLogic.Scene
 {
     public sealed class StoryScene : IJSContextProvider
     {
+        #region Javascript API class
         private sealed class API : IJSAPI
         {
             private readonly StoryScene _outer;
@@ -24,7 +25,7 @@ namespace GameLogic.Scene
             {
                 try
                 {
-                    ICharacter originCharacter = JSContextHelper.Instance.GetAPIOrigin(character) as ICharacter;
+                    Character originCharacter = JSContextHelper.Instance.GetAPIOrigin(character) as Character;
                     if (originCharacter != null)
                     {
                         ISceneObject sceneObject = _outer.CreateSceneObject(id, originCharacter);
@@ -34,6 +35,7 @@ namespace GameLogic.Scene
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return null;
                 }
             }
@@ -51,6 +53,7 @@ namespace GameLogic.Scene
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return false;
                 }
             }
@@ -64,6 +67,7 @@ namespace GameLogic.Scene
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return null;
                 }
             }
@@ -81,6 +85,7 @@ namespace GameLogic.Scene
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return false;
                 }
             }
@@ -93,6 +98,7 @@ namespace GameLogic.Scene
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return false;
                 }
             }
@@ -110,6 +116,7 @@ namespace GameLogic.Scene
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return false;
                 }
             }
@@ -122,6 +129,7 @@ namespace GameLogic.Scene
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return false;
                 }
             }
@@ -134,7 +142,7 @@ namespace GameLogic.Scene
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
             
@@ -146,6 +154,7 @@ namespace GameLogic.Scene
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return null;
                 }
             }
@@ -158,6 +167,7 @@ namespace GameLogic.Scene
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return null;
                 }
             }
@@ -170,20 +180,28 @@ namespace GameLogic.Scene
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return null;
                 }
             }
 
             public IJSContextProvider Origin(JSContextHelper proof)
             {
-                if (proof == JSContextHelper.Instance)
+                try
                 {
-                    return _outer;
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
                 }
-                return null;
+                catch (Exception)
+                {
+                    return null;
+                }
             }
         }
-
+        #endregion
         private readonly API _apiObj;
 
         private static readonly StoryScene _instance = new StoryScene();
@@ -211,7 +229,7 @@ namespace GameLogic.Scene
             _apiObj = new API(this);
         }
 
-        public ISceneObject CreateSceneObject(string id, ICharacter character)
+        public ISceneObject CreateSceneObject(string id, Character character)
         {
             SceneObject ret = new SceneObject(id, character);
             _objList.Add(ret);
@@ -268,7 +286,7 @@ namespace GameLogic.Scene.Story
         void OnCreateAdvantage();
         void OnAttack();
         void OnSupport();
-        ICharacter Character { get; }
+        Character CharacterRef { get; }
         Layout Layout { get; }
         Style Style { get; }
         void TransTo(Layout layout);
@@ -278,6 +296,7 @@ namespace GameLogic.Scene.Story
 
     public class SceneObject : ISceneObject
     {
+        #region Javascript API class
         private sealed class API : IJSAPI
         {
             private readonly SceneObject _outer;
@@ -295,6 +314,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return null;
                 }
             }
@@ -307,7 +327,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -319,7 +339,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -331,7 +351,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -343,7 +363,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -351,10 +371,11 @@ namespace GameLogic.Scene.Story
             {
                 try
                 {
-                    return (IJSAPI)_outer.Character.GetContext();
+                    return (IJSAPI)_outer.CharacterRef.GetContext();
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return null;
                 }
             }
@@ -367,7 +388,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -379,6 +400,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return new Vector3();
                 }
             }
@@ -391,6 +413,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return new Quaternion();
                 }
             }
@@ -403,6 +426,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return new Vector3();
                 }
             }
@@ -415,7 +439,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -427,6 +451,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return -1;
                 }
             }
@@ -439,6 +464,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return -1;
                 }
             }
@@ -451,20 +477,27 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
             public IJSContextProvider Origin(JSContextHelper proof)
             {
-                if (proof == JSContextHelper.Instance)
+                try
                 {
-                    return _outer;
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
                 }
-                return null;
+                catch (Exception)
+                {
+                    return null;
+                }
             }
         }
-
+        #endregion
         private readonly API _apiObj;
 
         protected readonly string _id;
@@ -472,7 +505,7 @@ namespace GameLogic.Scene.Story
         protected ICommand _createAdvantage;
         protected ICommand _attack;
         protected ICommand _support;
-        protected ICharacter _characterRef;
+        protected Character _characterRef;
         protected Layout _layout;
         protected Style _style;
         protected ViewEffect _effect;
@@ -482,15 +515,15 @@ namespace GameLogic.Scene.Story
         public ICommand CreateAdvantage { get => _createAdvantage; set => _createAdvantage = value; }
         public ICommand Attack { get => _attack; set => _attack = value; }
         public ICommand Support { get => _support; set => _support = value; }
-        public ICharacter Character { get => _characterRef; set => _characterRef = value ?? throw new ArgumentNullException("character"); }
+        public Character CharacterRef { get => _characterRef; set => _characterRef = value ?? throw new ArgumentNullException(nameof(CharacterRef)); }
         public Layout Layout => _layout;
         public Style Style => _style;
         public ViewEffect Effect => _effect;
         
-        public SceneObject(string id, ICharacter character)
+        public SceneObject(string id, Character character)
         {
-            _id = id ?? throw new ArgumentNullException("id");
-            _characterRef = character ?? throw new ArgumentNullException("character");
+            _id = id ?? throw new ArgumentNullException(nameof(id));
+            _characterRef = character ?? throw new ArgumentNullException(nameof(character));
             _layout = Layout.INIT;
             _style = Style.INIT;
             _effect = ViewEffect.INIT;
@@ -557,6 +590,7 @@ namespace GameLogic.Scene.Story
 
     public sealed class Camera : IJSContextProvider
     {
+        #region Javascript API class
         private sealed class API : IJSAPI
         {
             private readonly Camera _outer;
@@ -574,7 +608,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
             
@@ -586,6 +620,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return new Vector3();
                 }
             }
@@ -598,6 +633,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return new Quaternion();
                 }
             }
@@ -610,6 +646,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return new Vector3();
                 }
             }
@@ -622,7 +659,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -634,20 +671,27 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
             public IJSContextProvider Origin(JSContextHelper proof)
             {
-                if (proof == JSContextHelper.Instance)
+                try
                 {
-                    return _outer;
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
                 }
-                return null;
+                catch (Exception)
+                {
+                    return null;
+                }
             }
         }
-
+        #endregion
         private readonly API _apiObj;
 
         private Layout _layout;
@@ -699,6 +743,7 @@ namespace GameLogic.Scene.Story
 
     public class TextItem : ITextItem
     {
+        #region Javascript API class
         private sealed class API : IJSAPI
         {
             private readonly TextItem _outer;
@@ -716,7 +761,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -728,30 +773,38 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return null;
                 }
             }
 
             public IJSContextProvider Origin(JSContextHelper proof)
             {
-                if (proof == JSContextHelper.Instance)
+                try
                 {
-                    return _outer;
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
                 }
-                return null;
+                catch (Exception)
+                {
+                    return null;
+                }
             }
         }
-
+        #endregion
         private readonly API _apiObj;
 
         protected string _text;
 
         public bool IsReactable => false;
-        public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException("text"); }
+        public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException(nameof(Text)); }
 
         public TextItem(string text = "")
         {
-            _text = text ?? throw new ArgumentNullException("text");
+            _text = text ?? throw new ArgumentNullException(nameof(text));
             _apiObj = new API(this);
         }
 
@@ -767,6 +820,7 @@ namespace GameLogic.Scene.Story
 
     public class SelectionItem : ITextItem
     {
+        #region Javascript API class
         private sealed class API : IJSAPI
         {
             private readonly SelectionItem _outer;
@@ -784,7 +838,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -796,7 +850,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -808,32 +862,40 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return null;
                 }
             }
 
             public IJSContextProvider Origin(JSContextHelper proof)
             {
-                if (proof == JSContextHelper.Instance)
+                try
                 {
-                    return _outer;
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
                 }
-                return null;
+                catch (Exception)
+                {
+                    return null;
+                }
             }
         }
-
+        #endregion
         private readonly API _apiObj;
 
         protected string _text;
         protected ICommand _action;
 
         public bool IsReactable => true;
-        public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException("text"); }
+        public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException(nameof(Text)); }
         public ICommand Action { get => _action; set => _action = value; }
 
         public SelectionItem(string text = "", string actionCode = null)
         {
-            _text = text ?? throw new ArgumentNullException("text");
+            _text = text ?? throw new ArgumentNullException(nameof(text));
             if (actionCode != null)
             {
                 _action = new Command(actionCode);
@@ -863,6 +925,7 @@ namespace GameLogic.Scene.Story
 
     public sealed class TextBox : IJSContextProvider
     {
+        #region Javascript API class
         private sealed class API : IJSAPI
         {
             private readonly TextBox _outer;
@@ -881,6 +944,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return null;
                 }
             }
@@ -894,6 +958,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return null;
                 }
             }
@@ -906,6 +971,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
+                    JSEngineManager.Engine.Log(e.Message);
                     return -1;
                 }
             }
@@ -918,7 +984,7 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -930,20 +996,27 @@ namespace GameLogic.Scene.Story
                 }
                 catch (Exception e)
                 {
-                    return;
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
             public IJSContextProvider Origin(JSContextHelper proof)
             {
-                if (proof == JSContextHelper.Instance)
+                try
                 {
-                    return _outer;
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
                 }
-                return null;
+                catch (Exception)
+                {
+                    return null;
+                }
             }
         }
-
+        #endregion
         private readonly API _apiObj;
 
         private readonly List<ITextItem> _textItems;
@@ -954,7 +1027,7 @@ namespace GameLogic.Scene.Story
 
         public TextBox(int index)
         {
-            if (index < 0) throw new ArgumentOutOfRangeException("index", "Player index is less than 0.");
+            if (index < 0) throw new ArgumentOutOfRangeException(nameof(index), "Player index is less than 0.");
             _textItems = new List<ITextItem>();
             _playerIndex = index;
             _apiObj = new API(this);

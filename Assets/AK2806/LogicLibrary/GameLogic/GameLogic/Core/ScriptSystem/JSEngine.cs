@@ -7,6 +7,7 @@ namespace GameLogic.Core.ScriptSystem
 {
     public interface IJSEngineRaw
     {
+        void Log(string log);
         void BindType(string typeName, Type type);
         object GetVar(string name);
         void SetVar(string name, object[] array);
@@ -68,9 +69,14 @@ namespace GameLogic.Core.ScriptSystem
 
         public JSEngine(IJSEngineRaw engine)
         {
-            _engine = engine ?? throw new ArgumentNullException("engine");
+            _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         }
         
+        public void Log(string log)
+        {
+            _engine.Log(log);
+        }
+
         public void SynchronizeContext(string varname, IJSContextProvider provider)
         {
             object context = _engine.GetVar(varname);

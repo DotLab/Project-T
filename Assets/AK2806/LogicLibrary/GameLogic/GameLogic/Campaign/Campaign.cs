@@ -26,9 +26,9 @@ namespace GameLogic.Campaign
 
         public CampaignBlock(List<CampaignBlock> nexts, string name = "", string comment = "")
         {
-            _nexts = nexts ?? throw new ArgumentNullException("actions");
-            _name = name ?? throw new ArgumentNullException("name");
-            _comment = comment ?? throw new ArgumentNullException("comment");
+            _nexts = nexts ?? throw new ArgumentNullException(nameof(nexts));
+            _name = name ?? throw new ArgumentNullException(nameof(name));
+            _comment = comment ?? throw new ArgumentNullException(nameof(comment));
         }
     }
 

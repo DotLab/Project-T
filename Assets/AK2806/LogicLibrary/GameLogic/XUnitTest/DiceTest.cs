@@ -1,6 +1,6 @@
 using System;
 using Xunit;
-using GameLogic.Utilities;
+using GameLogic.Core;
 
 namespace XUnitTest
 {

@@ -38,7 +38,7 @@ namespace GameLogic.Core.DataSystem
 
         public JsonConverter(IJsonConverterRaw converter)
         {
-            this._converter = converter ?? throw new ArgumentNullException("converter");
+            this._converter = converter ?? throw new ArgumentNullException(nameof(converter));
         }
 
         public string Serialize(object obj)

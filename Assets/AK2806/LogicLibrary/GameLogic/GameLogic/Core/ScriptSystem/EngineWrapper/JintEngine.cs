@@ -90,6 +90,10 @@ namespace GameLogic.Core.ScriptSystem.EngineWrapper
         {
             _jsEngine.SetValue(typeName, TypeReference.CreateTypeReference(_jsEngine, type));
         }
-        
+
+        public void Log(string log)
+        {
+            Console.WriteLine("Javascript Engine Log:" + log);
+        }
     }
 }

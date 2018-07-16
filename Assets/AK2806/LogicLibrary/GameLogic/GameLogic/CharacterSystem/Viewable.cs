@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace GameLogic.Character
+namespace GameLogic.CharacterSystem
 {
     public enum RenderActionType {
         PutViewable, EditViewable, DeleteViewable,
@@ -37,8 +37,9 @@ namespace GameLogic.Character
         public ArrayList parameters;
     }
 
-    public interface IViewable
+    public sealed class Viewable
     {
-        void Render();
+        public string battle;
+        public string story;
     }
 }

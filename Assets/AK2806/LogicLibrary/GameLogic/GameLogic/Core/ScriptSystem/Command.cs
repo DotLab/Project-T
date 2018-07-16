@@ -17,7 +17,7 @@ namespace GameLogic.Core.ScriptSystem
 
         public Command(string jscode)
         {
-            _actionJS = jscode ?? throw new ArgumentNullException("jscode");
+            _actionJS = jscode ?? throw new ArgumentNullException(nameof(jscode));
         }
 
         public virtual void DoAction(JSEngine engine)

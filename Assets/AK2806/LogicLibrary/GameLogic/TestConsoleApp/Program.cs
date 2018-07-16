@@ -5,7 +5,7 @@ using Jint;
 using Jint.Native;
 using Newtonsoft.Json;
 using System.Numerics;
-using GameLogic.Character;
+using GameLogic.CharacterSystem;
 using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 using GameLogic.Core.ScriptSystem.EngineWrapper;
@@ -30,6 +30,11 @@ namespace TestConsoleApp
         {
             Console.WriteLine("Test 2  A");
         }
+
+        public virtual void Test3()
+        {
+            Console.WriteLine("Test 3 A");
+        }
     }
 
     public class DerivedB : DerivedA
@@ -46,6 +51,12 @@ namespace TestConsoleApp
         {
             base.Test2();
             Console.WriteLine("Test 2  B");
+        }
+
+        public new void Test3()
+        {
+            base.Test3();
+            Console.WriteLine("Test 3 B");
         }
     }
 
@@ -126,6 +137,7 @@ namespace TestConsoleApp
         private int x;
         private Dictionary<string, List<Stest>> dict;
         private Inner _inner;
+        public string testStr;
 
         private class Inner
         {
@@ -157,6 +169,7 @@ namespace TestConsoleApp
         {
             this.dict = new Dictionary<string, List<Stest>>();
             _inner = new Inner(this);
+            //testStr = "";
         }
 
         public int TestMethod(int v)
@@ -184,6 +197,68 @@ namespace TestConsoleApp
     {
         A,B,C,D
     }
+    public class TestElement : IProperty
+    {
+        public static IJSAPI createTestElement()
+        {
+            return (IJSAPI)new TestElement().GetContext();
+        }
+
+        private class API : IJSAPI
+        {
+            private TestElement _outer;
+
+            public API(TestElement outer)
+            {
+                _outer = outer;
+            }
+
+            public string description { get => _outer.Description; set => _outer.Description = value; }
+
+            public IJSContextProvider Origin(JSContextHelper proof)
+            {
+                try
+                {
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+            }
+        }
+
+        private API _apiObj;
+        private string _description;
+
+        public Character Belong { get => null; set { } }
+        public string Description { get => _description; set => _description = value; }
+
+        public TestElement()
+        {
+            _apiObj = new API(this);
+        }
+
+        public TestElement(string description) :
+            this()
+        {
+            _description = description;
+        }
+
+        public object GetContext()
+        {
+            return _apiObj;
+        }
+
+        public void SetContext(object context)
+        {
+
+        }
+    }
 
     class Program
     {
@@ -195,20 +270,14 @@ namespace TestConsoleApp
         static void Main(string[] args)
         {
             /*
-            Engine engine = new Engine();
-            Test testObj = new Test();
-            testObj.X = 1;
-            engine.SetValue("eee", testObj);
-            engine.SetValue("log", new Action<object>(Console.WriteLine));
-            engine.SetValue("eee", JsValue.Undefined);
-            IBase derivedb = new DerivedB();
-            engine.SetValue("interface", derivedb);
-            engine.Execute(@"
-                xTest = 3;
-                //interface.Test();
-                //interface.Test2();
-            ");
-            engine.Execute(@"log(xTest);");
+            PropertyList < TestElement > testList = new PropertyList<TestElement>(null);
+            JSEngineManager.EngineRaw.SetVar("log", new Action<string>(Console.WriteLine));
+            JSEngineManager.Engine.SynchronizeContext(nameof(testList), testList);
+            testList.Add(new TestElement("A"));
+            testList.Add(new TestElement("B"));
+            testList.Add(new TestElement("C"));
+            testList.Add(new TestElement("D"));
+            JSEngineManager.Engine.Execute("function foo(e){ e.description += ' Engine'; log(e.description); }  testList.forEach(foo);");
             */
             /*
             JintEngine engine = new JintEngine();
@@ -239,6 +308,7 @@ namespace TestConsoleApp
             object test = JsonConvert.DeserializeObject(json);
             Console.WriteLine(test.GetHashCode());
             */
+            /*
             JSEngineManager.EngineRaw.BindType("Stest", typeof(Stest));
             JSEngineManager.EngineRaw.SetVar("log", new Action<object>(Console.WriteLine));
             JSEngineManager.EngineRaw.SetVar("foo", new Action<int>(Foo));
@@ -249,6 +319,8 @@ namespace TestConsoleApp
             {
                 Console.WriteLine(e.Message);
             }
+            */
+            
             /*
             ApiTest test = new ApiTest();
             

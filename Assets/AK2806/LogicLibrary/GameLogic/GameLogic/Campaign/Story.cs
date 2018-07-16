@@ -21,7 +21,7 @@ namespace GameLogic.Campaign
         public Story(List<Action> actions, List<CampaignBlock> nexts) :
             base(nexts)
         {
-            _actions = actions ?? throw new ArgumentNullException("actions");
+            _actions = actions ?? throw new ArgumentNullException(nameof(actions));
             _currentActionIndex = -1;
         }
         
@@ -71,12 +71,12 @@ namespace GameLogic.Campaign
         private string _comment;
 
         public ICommand Command { get => _command; set => _command = value; }
-        public string Comment { get => _comment; set => _comment = value ?? throw new ArgumentNullException("Comment"); }
+        public string Comment { get => _comment; set => _comment = value ?? throw new ArgumentNullException(nameof(Comment)); }
 
         public Action(ICommand command = null, string comment = "")
         {
             _command = command;
-            _comment = comment ?? throw new ArgumentNullException("comment");
+            _comment = comment ?? throw new ArgumentNullException(nameof(comment));
         }
         
         public void DoAction()

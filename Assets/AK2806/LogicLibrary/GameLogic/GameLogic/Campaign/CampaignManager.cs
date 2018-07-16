@@ -18,11 +18,18 @@ namespace GameLogic.Campaign
 
             public IJSContextProvider Origin(JSContextHelper proof)
             {
-                if (proof == JSContextHelper.Instance)
+                try
                 {
-                    return _outer;
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
                 }
-                return null;
+                catch (Exception)
+                {
+                    return null;
+                }
             }
         }
 
@@ -41,12 +48,12 @@ namespace GameLogic.Campaign
 
         public CampaignBlock CurrentCampaign { get => _currentCampaign; set => _currentCampaign = value; }
         public CampaignBlock CurrentBlock { get => _currentBlock; set => _currentBlock = value; }
-
+        /*
         public void Load(string json)
         {
             //this.mSceneList = JsonConvert.DeserializeObject<SceneListFile>(json);
         }
-
+        */
         public object GetContext()
         {
             return _apiObj;

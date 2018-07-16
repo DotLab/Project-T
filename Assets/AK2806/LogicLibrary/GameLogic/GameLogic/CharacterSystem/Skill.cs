@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 using GameLogic.Core;
+using GameLogic.Core.ScriptSystem;
 
-namespace GameLogic.Character
+namespace GameLogic.CharacterSystem
 {
-    public enum CharaAction
+    public enum CharacterAction
     {
         Overcome = 0b0001,
         Advantage = 0b0010,
@@ -45,12 +46,12 @@ namespace GameLogic.Character
         }
 
         private string _name;
-        private CharaAction _cando;
+        private CharacterAction _cando;
 
         public string Name { get => _name; set => _name = value; }
-        public CharaAction Cando { get => _cando; set => _cando = value; }
+        public CharacterAction Cando { get => _cando; set => _cando = value; }
 
-        public SkillType(string name, CharaAction cando)
+        public SkillType(string name, CharacterAction cando)
         {
             this._name = name;
             this._cando = cando;
@@ -60,14 +61,54 @@ namespace GameLogic.Character
 
     public class Skill : IProperty
     {
+        private sealed class API : IJSAPI
+        {
+            private readonly Skill _outer;
+
+            public API(Skill outer)
+            {
+                _outer = outer;
+            }
+
+            public IJSContextProvider Origin(JSContextHelper proof)
+            {
+                try
+                {
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+            }
+        }
+
+        private readonly API _apiObj;
+
         protected SkillType _skillType;
         protected int _level;
-        protected ICharacter _belong;
-        protected string _extraInfo;
+        protected Character _belong;
+        protected string _description;
 
         public SkillType SkillType { get => _skillType; set => _skillType = value; }
         public int Level { get => _level; set => _level = value; }
-        public ICharacter Belong { get => _belong; set => _belong = value; }
-        public string Description { get => this._extraInfo; set => this._extraInfo = value; }
+        public Character Belong { get => _belong; set => _belong = value; }
+        public string Description { get => _description; set => _description = value; }
+
+        public Skill()
+        {
+            _apiObj = new API(this);
+        }
+
+        public object GetContext()
+        {
+            return _apiObj;
+        }
+
+        public void SetContext(object context) { }
     }
 }

@@ -2,19 +2,64 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using GameLogic.Client;
 
 namespace GameLogic.Core
 {
-    public class User : IJSContextProvider
+    public sealed class User : IJSContextProvider
     {
-        public object GetContext()
+        private sealed class API : IJSAPI
         {
-            throw new NotImplementedException();
+            private readonly User _outer;
+
+            public API(User outer)
+            {
+                _outer = outer;
+            }
+
+            public IJSContextProvider Origin(JSContextHelper proof)
+            {
+                try
+                {
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+            }
         }
 
-        public void SetContext(object context)
+        private API _apiObj;
+
+        private readonly GameClient _client;
+        private readonly string _id;
+        private readonly string _name;
+        private readonly int _level;
+
+        public GameClient Client => _client;
+        public string Id => _id;
+        public string Name => _name;
+        public int Level => _level;
+
+        public User(string id, string name, int level)
         {
-            throw new NotImplementedException();
+            _apiObj = new API(this);
+            _client = new GameClient();
+            _id = id ?? throw new ArgumentNullException(nameof(id));
+            _name = name ?? throw new ArgumentNullException(nameof(name));
+            _level = level;
         }
+        
+        public object GetContext()
+        {
+            return _apiObj;
+        }
+
+        public void SetContext(object context) { }
     }
 }
