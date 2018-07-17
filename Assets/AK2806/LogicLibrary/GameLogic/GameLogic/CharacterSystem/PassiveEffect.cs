@@ -8,5 +8,10 @@ namespace GameLogic.CharacterSystem
 {
     public class PassiveEffect : Trigger
     {
+        public PassiveEffect(string boundEventID, Command command) :
+            base(boundEventID, command)
+        {
+
+        }
     }
 }

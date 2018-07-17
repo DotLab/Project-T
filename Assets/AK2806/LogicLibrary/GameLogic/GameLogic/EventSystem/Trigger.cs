@@ -110,6 +110,7 @@ namespace GameLogic.EventSystem
             _boundEventID = boundEventID ?? throw new ArgumentNullException(nameof(boundEventID));
             _command = command ?? throw new ArgumentNullException(nameof(command));
             _active = true;
+            _apiObj = new API(this);
             if (autoReg) this.Register();
         }
         
