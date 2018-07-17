@@ -3,34 +3,23 @@ using System.Collections.Generic;
 using System.Text;
 using GameLogic.CharacterSystem;
 using GameLogic.Core.ScriptSystem;
-using GameLogic.Core.ScriptSystem.Event;
 
-namespace GameLogic.GameEvent
+namespace GameLogic.EventSystem.Events
 {
-    public class EventCharacter : IEvent
+    public class EventCharacter : Event
     {
         private static readonly string[] _idList = {
             "event.character"
         };
         
-        public virtual string[] NotifyList => _idList;
+        public override string[] NotifyList => _idList;
 
-        public object GetContext()
+        public override object GetContext()
         {
             throw new NotImplementedException();
         }
-
-        public virtual void RetrieveContext(JSEngine engine)
-        {
-            throw new NotImplementedException();
-        }
-
-        public virtual void SendContext(JSEngine engine)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void SetContext(object context)
+        
+        public override void SetContext(object context)
         {
             throw new NotImplementedException();
         }
@@ -54,15 +43,6 @@ namespace GameLogic.GameEvent
         private EventGetSkillLevel()
         {
         }
-
-        public override void RetrieveContext(JSEngine engine)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override void SendContext(JSEngine engine)
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 }

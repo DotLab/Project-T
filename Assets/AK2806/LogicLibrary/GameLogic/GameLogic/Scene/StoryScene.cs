@@ -238,7 +238,7 @@ namespace GameLogic.Scene
 
         public bool AddIntoScene(ISceneObject sceneObject)
         {
-            if (!_objList.Contains(sceneObject)) return false;
+            if (!_objList.Contains(sceneObject)) throw new ArgumentException("Scene object is not created by the container.", nameof(sceneObject));
             _objInSceneList.Add(sceneObject);
             throw new NotImplementedException();
             return true;

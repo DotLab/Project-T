@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
-using GameLogic.Core.ScriptSystem.Event;
+using GameLogic.EventSystem;
 
 namespace GameLogic.CharacterSystem
 {

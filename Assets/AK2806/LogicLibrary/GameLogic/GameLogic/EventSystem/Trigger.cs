@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GameLogic.Core.ScriptSystem;
 
-namespace GameLogic.Core.ScriptSystem.Event
+namespace GameLogic.EventSystem
 {
     public class Trigger : IJSContextProvider
     {

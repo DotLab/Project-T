@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GameLogic.Core.ScriptSystem;
+using GameLogic.EventSystem.Events;
 
-namespace GameLogic.Core.ScriptSystem.Event
+namespace GameLogic.EventSystem
 {
     public sealed class GameEventBus : IJSContextProvider
     {
@@ -30,16 +32,17 @@ namespace GameLogic.Core.ScriptSystem.Event
                 }
             }
 
-            public void publish(IJSAPI e)
+            public void publishCustomEvent(object message, string[] notifyList)
             {
                 try
                 {
-                    IEvent originEvent = (IEvent)JSContextHelper.Instance.GetAPIOrigin(e);
-                    _outer.Publish(originEvent);
+                    CustomEvent customEvent = new CustomEvent();
+                    customEvent.Info = new CustomEvent.EventInfo(message, notifyList);
+                    _outer.Publish(customEvent);
                 }
-                catch (Exception err)
+                catch (Exception e)
                 {
-                    JSEngineManager.Engine.Log(err.Message);
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -101,7 +104,7 @@ namespace GameLogic.Core.ScriptSystem.Event
             _apiObj = new API(this);
         }
 
-        public void Publish(IEvent e)
+        public void Publish(Event e)
         {
             string[] eventIDs = e.NotifyList;
             e.SendContext(JSEngineManager.Engine);
