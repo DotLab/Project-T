@@ -67,13 +67,13 @@ namespace GameLogic.Campaign
     
     public sealed class Action
     {
-        private ICommand _command;
+        private Command _command;
         private string _comment;
 
-        public ICommand Command { get => _command; set => _command = value; }
+        public Command Command { get => _command; set => _command = value; }
         public string Comment { get => _comment; set => _comment = value ?? throw new ArgumentNullException(nameof(Comment)); }
 
-        public Action(ICommand command = null, string comment = "")
+        public Action(Command command = null, string comment = "")
         {
             _command = command;
             _comment = comment ?? throw new ArgumentNullException(nameof(comment));

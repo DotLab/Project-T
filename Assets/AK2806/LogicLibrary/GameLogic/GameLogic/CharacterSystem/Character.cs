@@ -507,24 +507,32 @@ namespace GameLogic.CharacterSystem
 
         private readonly API _apiObj;
 
-        private static CharacterManager _instance = new CharacterManager();
+        private static readonly CharacterManager _instance = new CharacterManager();
         public static CharacterManager Instance => _instance;
-        
-        private readonly List<Character> _templateNPC;
-        private readonly List<Character> _npc;
-        private readonly List<Character> _player;
 
-        public List<Character> TemplateNPC => _templateNPC;
-        public List<Character> Npc => _npc;
-        public List<Character> Player => _player;
+        private readonly IdentifiedObjList<Character> _templateItems;
+        private readonly IdentifiedObjList<Character> _keyItems;
+        private readonly IdentifiedObjList<Character> _templateCharacters;
+        private readonly IdentifiedObjList<Character> _keyCharacters;
+        private readonly IdentifiedObjList<Character> _players;
+
+        public IdentifiedObjList<Character> TemplateItems => _templateItems;
+        public IdentifiedObjList<Character> KeyItems => _keyItems;
+        public IdentifiedObjList<Character> TemplateCharacters => _templateCharacters;
+        public IdentifiedObjList<Character> KeyCharacters => _keyCharacters;
+        public IdentifiedObjList<Character> Players => _players;
 
         private CharacterManager()
         {
-            _templateNPC = new List<Character>();
-            _npc = new List<Character>();
-            _player = new List<Character>();
+            _templateItems = new IdentifiedObjList<Character>();
+            _keyItems = new IdentifiedObjList<Character>();
+            _templateCharacters = new IdentifiedObjList<Character>();
+            _keyCharacters = new IdentifiedObjList<Character>();
+            _players = new IdentifiedObjList<Character>();
             _apiObj = new API(this);
         }
+
+
 
         public object GetContext()
         {

@@ -501,20 +501,20 @@ namespace GameLogic.Scene.Story
         private readonly API _apiObj;
 
         protected readonly string _id;
-        protected ICommand _interact;
-        protected ICommand _createAdvantage;
-        protected ICommand _attack;
-        protected ICommand _support;
+        protected Command _interact;
+        protected Command _createAdvantage;
+        protected Command _attack;
+        protected Command _support;
         protected Character _characterRef;
         protected Layout _layout;
         protected Style _style;
         protected ViewEffect _effect;
 
         public string ID => _id;
-        public ICommand Interact { get => _interact; set => _interact = value; }
-        public ICommand CreateAdvantage { get => _createAdvantage; set => _createAdvantage = value; }
-        public ICommand Attack { get => _attack; set => _attack = value; }
-        public ICommand Support { get => _support; set => _support = value; }
+        public Command Interact { get => _interact; set => _interact = value; }
+        public Command CreateAdvantage { get => _createAdvantage; set => _createAdvantage = value; }
+        public Command Attack { get => _attack; set => _attack = value; }
+        public Command Support { get => _support; set => _support = value; }
         public Character CharacterRef { get => _characterRef; set => _characterRef = value ?? throw new ArgumentNullException(nameof(CharacterRef)); }
         public Layout Layout => _layout;
         public Style Style => _style;
@@ -887,11 +887,11 @@ namespace GameLogic.Scene.Story
         private readonly API _apiObj;
 
         protected string _text;
-        protected ICommand _action;
+        protected Command _action;
 
         public bool IsReactable => true;
         public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException(nameof(Text)); }
-        public ICommand Action { get => _action; set => _action = value; }
+        public Command Action { get => _action; set => _action = value; }
 
         public SelectionItem(string text = "", string actionCode = null)
         {

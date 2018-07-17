@@ -97,15 +97,15 @@ namespace GameLogic.EventSystem
 
         private readonly API _apiObj;
 
-        protected ICommand _command;
+        protected Command _command;
         protected string _boundEventID;
         protected bool _active;
         
         public string BoundEventID => _boundEventID;
-        public ICommand Command { get => _command; set => _command = value ?? throw new ArgumentNullException(nameof(Command)); }
+        public Command Command { get => _command; set => _command = value ?? throw new ArgumentNullException(nameof(Command)); }
         public bool Active { get => _active; set => _active = value; }
 
-        public Trigger(string boundEventID, ICommand command, bool autoReg = true)
+        public Trigger(string boundEventID, Command command, bool autoReg = true)
         {
             _boundEventID = boundEventID ?? throw new ArgumentNullException(nameof(boundEventID));
             _command = command ?? throw new ArgumentNullException(nameof(command));

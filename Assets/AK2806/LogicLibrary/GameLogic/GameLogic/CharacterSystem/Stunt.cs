@@ -40,10 +40,10 @@ namespace GameLogic.CharacterSystem
 
         protected string _description = "";
         protected Character _belong = null;
-        protected ICommand _command;
+        protected Command _command;
         protected bool _dmCheck = false;
 
-        public Stunt(ICommand command = null, string description = "")
+        public Stunt(Command command = null, string description = "")
         {
             _command = command;
             _description = description ?? throw new ArgumentNullException(nameof(description));
@@ -52,7 +52,7 @@ namespace GameLogic.CharacterSystem
 
         public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(Description)); }
         public Character Belong { get => _belong; set => _belong = value; }
-        public ICommand Command { get => _command; set => _command = value; }
+        public Command Command { get => _command; set => _command = value; }
         public bool DMCheck { get => _dmCheck; set => _dmCheck = value; }
         
         public virtual object GetContext()

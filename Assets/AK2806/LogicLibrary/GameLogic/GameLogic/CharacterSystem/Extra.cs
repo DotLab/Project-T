@@ -83,7 +83,7 @@ namespace GameLogic.CharacterSystem
         protected bool _dmCheck = false;
         protected readonly Character _item;
         protected readonly List<Trigger> _triggers;
-        protected ICommand _command = null;
+        protected Command _command = null;
 
         public Extra(Character item)
         {
@@ -97,7 +97,7 @@ namespace GameLogic.CharacterSystem
         public Character Item => _item;
         public string Description { get => _item.Description; set => _item.Description = value; }
         public List<Trigger> Triggers => _triggers;
-        public ICommand Command { get => _command; set => _command = value; }
+        public Command Command { get => _command; set => _command = value; }
 
         public virtual object GetContext()
         {
