@@ -16,13 +16,13 @@ namespace GameLogic.EventSystem
             IEventInfo eventInfo = (IEventInfo)this.GetContext();
             eventInfo.swallowed = _swallowed;
             this.SetContext(eventInfo);
-            engine.SynchronizeContext("eventArgs", this);
+            engine.SynchronizeContext("_eventArgs", this);
         }
 
         public void RetrieveContext(JSEngine engine)
         {
-            engine.SynchronizeContext("eventArgs", this);
-            engine.RemoveContext("eventArgs");
+            engine.SynchronizeContext("_eventArgs", this);
+            engine.RemoveContext("_eventArgs");
             IEventInfo eventInfo = (IEventInfo)this.GetContext();
             _swallowed = eventInfo.swallowed;
         }

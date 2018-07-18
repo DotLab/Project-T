@@ -89,15 +89,17 @@ namespace GameLogic.CharacterSystem
 
         private readonly API _apiObj;
 
+        protected string _name = "";
+        protected string _description = "";
+        protected Character _belong = null;
         protected SkillType _skillType;
-        protected int _level;
-        protected Character _belong;
-        protected string _description;
+        protected int _level = 0;
 
+        public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(Name)); }
+        public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(Description)); }
+        public Character Belong { get => _belong; set => _belong = value; }
         public SkillType SkillType { get => _skillType; set => _skillType = value; }
         public int Level { get => _level; set => _level = value; }
-        public Character Belong { get => _belong; set => _belong = value; }
-        public string Description { get => _description; set => _description = value; }
 
         public Skill()
         {

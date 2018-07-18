@@ -31,6 +31,31 @@ namespace GameLogic.CharacterSystem
                 _outer = outer;
             }
             
+            public string getName()
+            {
+                try
+                {
+                    return _outer.Name;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                    return null;
+                }
+            }
+
+            public void setName(string value)
+            {
+                try
+                {
+                    _outer.Name = value;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                }
+            }
+
             public string getDescription()
             {
                 try
@@ -138,8 +163,9 @@ namespace GameLogic.CharacterSystem
         }
         #endregion
         private readonly API _apiObj;
-        
-        protected string _description;
+
+        protected string _name = "";
+        protected string _description = "";
         protected PersistenceType _persistenceType = PersistenceType.Common;
         protected EffectType _effectType = EffectType.Positive;
         protected Character _belong = null;
@@ -150,6 +176,7 @@ namespace GameLogic.CharacterSystem
             _apiObj = new API(this);
         }
 
+        public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(Name)); }
         public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(Description)); }
         public PersistenceType PersistenceType { get => _persistenceType; set => _persistenceType = value; }
         public EffectType EffectType { get => _effectType; set => _effectType = value; }
@@ -173,6 +200,31 @@ namespace GameLogic.CharacterSystem
             public API(Consequence outer)
             {
                 _outer = outer;
+            }
+
+            public string getName()
+            {
+                try
+                {
+                    return _outer.Name;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                    return null;
+                }
+            }
+
+            public void setName(string value)
+            {
+                try
+                {
+                    _outer.Name = value;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                }
             }
 
             public string getDescription()
@@ -308,7 +360,7 @@ namespace GameLogic.CharacterSystem
         #endregion
         private readonly API _apiObj;
 
-        protected int _counteractLevel;
+        protected int _counteractLevel = 0;
         
         public int CounteractLevel { get => _counteractLevel; set => _counteractLevel = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(CounteractLevel), "Counteract level is less than 0."); }
 

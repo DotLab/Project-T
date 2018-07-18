@@ -78,7 +78,7 @@ namespace GameLogic.CharacterSystem
         }
         #endregion
         private readonly API _apiObj;
-
+        
         protected Character _belong = null;
         protected bool _dmCheck = false;
         protected readonly Character _item;
@@ -92,10 +92,11 @@ namespace GameLogic.CharacterSystem
             _apiObj = new API(this);
         }
 
+        public string Name { get => _item.Name; set => _item.Name = value; }
+        public string Description { get => _item.Description; set => _item.Description = value; }
         public Character Belong { get => _belong; set => _belong = value; }
         public bool DMCheck { get => _dmCheck; set => _dmCheck = value; }
         public Character Item => _item;
-        public string Description { get => _item.Description; set => _item.Description = value; }
         public List<Trigger> Triggers => _triggers;
         public Command Command { get => _command; set => _command = value; }
 
@@ -106,4 +107,6 @@ namespace GameLogic.CharacterSystem
 
         public virtual void SetContext(object context) { }
     }
+
+
 }

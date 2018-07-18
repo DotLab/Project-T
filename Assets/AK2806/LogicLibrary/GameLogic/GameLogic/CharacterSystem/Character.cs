@@ -446,8 +446,8 @@ namespace GameLogic.CharacterSystem
 
     public class CommonCharacter : TemporaryCharacter
     {
-        protected int _refresh;
-        protected int _fate;
+        protected int _refresh = 0;
+        protected int _fate = 0;
         protected readonly PropertyList<Stunt> _stunts;
         protected readonly PropertyList<Extra> _extras;
         
@@ -530,6 +530,16 @@ namespace GameLogic.CharacterSystem
             _keyCharacters = new IdentifiedObjList<Character>();
             _players = new IdentifiedObjList<Character>();
             _apiObj = new API(this);
+        }
+
+        public Character CreateTempChara(string templateID)
+        {
+            return this.CreateTempChara(_templateCharacters[templateID]);
+        }
+
+        public Character CreateTempChara(Character template)
+        {
+            throw new NotImplementedException();
         }
 
 

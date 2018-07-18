@@ -288,10 +288,10 @@ namespace GameLogic.Scene.Story
         void OnSupport();
         Character CharacterRef { get; }
         Layout Layout { get; }
-        Style Style { get; }
+        PortraitStyle Style { get; }
         void TransTo(Layout layout);
-        void ChangeStyle(Style style);
-        void ApplyEffect(ViewEffect effect);
+        void ChangeStyle(PortraitStyle style);
+        void ApplyEffect(StoryViewEffect effect);
     }
 
     public class SceneObject : ISceneObject
@@ -431,7 +431,7 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public void changeStyle(Style style)
+            public void changeStyle(PortraitStyle style)
             {
                 try
                 {
@@ -469,7 +469,7 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public void applyEffect(ViewEffect effect)
+            public void applyEffect(StoryViewEffect effect)
             {
                 try
                 {
@@ -507,8 +507,8 @@ namespace GameLogic.Scene.Story
         protected Command _support;
         protected Character _characterRef;
         protected Layout _layout;
-        protected Style _style;
-        protected ViewEffect _effect;
+        protected PortraitStyle _style;
+        protected StoryViewEffect _effect;
 
         public string ID => _id;
         public Command Interact { get => _interact; set => _interact = value; }
@@ -517,20 +517,20 @@ namespace GameLogic.Scene.Story
         public Command Support { get => _support; set => _support = value; }
         public Character CharacterRef { get => _characterRef; set => _characterRef = value ?? throw new ArgumentNullException(nameof(CharacterRef)); }
         public Layout Layout => _layout;
-        public Style Style => _style;
-        public ViewEffect Effect => _effect;
+        public PortraitStyle Style => _style;
+        public StoryViewEffect Effect => _effect;
         
         public SceneObject(string id, Character character)
         {
             _id = id ?? throw new ArgumentNullException(nameof(id));
             _characterRef = character ?? throw new ArgumentNullException(nameof(character));
             _layout = Layout.INIT;
-            _style = Style.INIT;
-            _effect = ViewEffect.INIT;
+            _style = PortraitStyle.INIT;
+            _effect = StoryViewEffect.INIT;
             _apiObj = new API(this);
         }
 
-        public virtual void ApplyEffect(ViewEffect effect)
+        public virtual void ApplyEffect(StoryViewEffect effect)
         {
             _effect = effect;
             throw new NotImplementedException();
@@ -542,7 +542,7 @@ namespace GameLogic.Scene.Story
             throw new NotImplementedException();
         }
 
-        public virtual void ChangeStyle(Style style)
+        public virtual void ChangeStyle(PortraitStyle style)
         {
             _style = style;
             throw new NotImplementedException();
@@ -651,7 +651,7 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public void applyEffect(ViewEffect effect)
+            public void applyEffect(StoryViewEffect effect)
             {
                 try
                 {
@@ -695,15 +695,15 @@ namespace GameLogic.Scene.Story
         private readonly API _apiObj;
 
         private Layout _layout;
-        private ViewEffect _effect;
+        private StoryViewEffect _effect;
 
         public Layout Layout => _layout;
-        public ViewEffect Effect => _effect;
+        public StoryViewEffect Effect => _effect;
 
         public Camera()
         {
             _layout = Layout.INIT;
-            _effect = ViewEffect.INIT;
+            _effect = StoryViewEffect.INIT;
             _apiObj = new API(this);
         }
 
@@ -713,7 +713,7 @@ namespace GameLogic.Scene.Story
             throw new NotImplementedException();
         }
 
-        public void ApplyEffect(ViewEffect effect)
+        public void ApplyEffect(StoryViewEffect effect)
         {
             _effect = effect;
             throw new NotImplementedException();
@@ -722,7 +722,7 @@ namespace GameLogic.Scene.Story
         public void Reset()
         {
             _layout = Layout.INIT;
-            _effect = ViewEffect.INIT;
+            _effect = StoryViewEffect.INIT;
             throw new NotImplementedException();
         }
 

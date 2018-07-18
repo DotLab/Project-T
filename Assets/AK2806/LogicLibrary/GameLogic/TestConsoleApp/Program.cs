@@ -11,6 +11,7 @@ using GameLogic.Core.ScriptSystem;
 using GameLogic.Core.ScriptSystem.EngineWrapper;
 using Jint.Parser;
 using Jint.Runtime;
+using System.Dynamic;
 
 namespace TestConsoleApp
 {
@@ -279,20 +280,28 @@ namespace TestConsoleApp
             testList.Add(new TestElement("D"));
             JSEngineManager.Engine.Execute("function foo(e){ e.description += ' Engine'; log(e.description); }  testList.forEach(foo);");
             */
-            /*
+            
             JintEngine engine = new JintEngine();
             int[] intarray = { 1, 5, 3, 4, 5 };
-            engine.Bind("eee", intarray);
-            engine.Bind("log", new Action<object>(Console.WriteLine));
+            dynamic expandoObject = new ExpandoObject();
+            engine.SetVar("log", new Action<object>(Console.WriteLine));
+            engine.SetVar("$", expandoObject);
+            expandoObject.intarray = intarray;
             engine.Execute(@"
-                function aa() {
+                (function () {
                     var i = 0;
-                    for (; i < 5; i++)
-                        log(eee[i]);
-                };
-                aa();
+                    for (; i < $.intarray.length; i++)
+                        log($.intarray[i]);
+                })();
             ");
-            */
+            engine.SetVar("$", intarray);
+            engine.Execute(@"
+                (function () {
+                    var i = 0;
+                    for (; i < $.length; i++)
+                        log($[i]);
+                })();
+            ");
             /*
             string json = @"
                 {
@@ -320,7 +329,7 @@ namespace TestConsoleApp
                 Console.WriteLine(e.Message);
             }
             */
-            
+
             /*
             ApiTest test = new ApiTest();
             

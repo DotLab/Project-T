@@ -38,6 +38,7 @@ namespace GameLogic.CharacterSystem
 
         private readonly API _apiObj;
 
+        protected string _name = "";
         protected string _description = "";
         protected Character _belong = null;
         protected Command _command;
@@ -50,11 +51,12 @@ namespace GameLogic.CharacterSystem
             _apiObj = new API(this);
         }
 
+        public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(Name)); }
         public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(Description)); }
         public Character Belong { get => _belong; set => _belong = value; }
         public Command Command { get => _command; set => _command = value; }
         public bool DMCheck { get => _dmCheck; set => _dmCheck = value; }
-        
+
         public virtual object GetContext()
         {
             return _apiObj;
