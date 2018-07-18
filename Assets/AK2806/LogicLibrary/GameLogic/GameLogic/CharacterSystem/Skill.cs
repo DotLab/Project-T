@@ -59,9 +59,9 @@ namespace GameLogic.CharacterSystem
         
     }
 
-    public class Skill : IProperty
+    public class Skill : ICharacterProperty
     {
-        private sealed class API : IJSAPI
+        protected class API : IJSAPI
         {
             private readonly Skill _outer;
 
@@ -69,6 +69,58 @@ namespace GameLogic.CharacterSystem
             {
                 _outer = outer;
             }
+
+            public string getName()
+            {
+                try
+                {
+                    return _outer.Name;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                    return null;
+                }
+            }
+
+            public void setName(string value)
+            {
+                try
+                {
+                    _outer.Name = value;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                }
+            }
+
+            public string getDescription()
+            {
+                try
+                {
+                    return _outer.Description;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                    return null;
+                }
+            }
+
+            public void setDescription(string name)
+            {
+                try
+                {
+                    _outer.Name = name;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                }
+            }
+
+
 
             public IJSContextProvider Origin(JSContextHelper proof)
             {
@@ -95,8 +147,8 @@ namespace GameLogic.CharacterSystem
         protected SkillType _skillType;
         protected int _level = 0;
 
-        public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(Name)); }
-        public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(Description)); }
+        public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
+        public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
         public Character Belong { get => _belong; set => _belong = value; }
         public SkillType SkillType { get => _skillType; set => _skillType = value; }
         public int Level { get => _level; set => _level = value; }

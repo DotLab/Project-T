@@ -25,13 +25,9 @@ namespace GameLogic.Scene
             {
                 try
                 {
-                    Character originCharacter = JSContextHelper.Instance.GetAPIOrigin(character) as Character;
-                    if (originCharacter != null)
-                    {
-                        ISceneObject sceneObject = _outer.CreateSceneObject(id, originCharacter);
-                        return (IJSAPI)sceneObject.GetContext();
-                    }
-                    return null;
+                    Character originCharacter = (Character)JSContextHelper.Instance.GetAPIOrigin(character);
+                    ISceneObject sceneObject = _outer.CreateSceneObject(id, originCharacter);
+                    return (IJSAPI)sceneObject.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -44,12 +40,8 @@ namespace GameLogic.Scene
             {
                 try
                 {
-                    ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj) as ISceneObject;
-                    if (originSceneObj != null)
-                    {
-                        return _outer.AddIntoScene(originSceneObj);
-                    }
-                    return false;
+                    ISceneObject originSceneObj = (ISceneObject)JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+                    return _outer.AddIntoScene(originSceneObj);
                 }
                 catch (Exception e)
                 {
@@ -76,12 +68,8 @@ namespace GameLogic.Scene
             {
                 try
                 {
-                    ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj) as ISceneObject;
-                    if (originSceneObj != null)
-                    {
-                        return _outer.ObjInSceneList.Contains(originSceneObj);
-                    }
-                    return false;
+                    ISceneObject originSceneObj = (ISceneObject)JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+                    return _outer.ObjInSceneList.Contains(originSceneObj);
                 }
                 catch (Exception e)
                 {
@@ -107,12 +95,8 @@ namespace GameLogic.Scene
             {
                 try
                 {
-                    ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj) as ISceneObject;
-                    if (originSceneObj != null)
-                    {
-                        return _outer.RemoveFromScene(originSceneObj);
-                    }
-                    return false;
+                    ISceneObject originSceneObj = (ISceneObject)JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+                    return _outer.RemoveFromScene(originSceneObj);
                 }
                 catch (Exception e)
                 {
@@ -297,7 +281,7 @@ namespace GameLogic.Scene.Story
     public class SceneObject : ISceneObject
     {
         #region Javascript API class
-        private sealed class API : IJSAPI
+        protected class API : IJSAPI
         {
             private readonly SceneObject _outer;
 
@@ -515,7 +499,7 @@ namespace GameLogic.Scene.Story
         public Command CreateAdvantage { get => _createAdvantage; set => _createAdvantage = value; }
         public Command Attack { get => _attack; set => _attack = value; }
         public Command Support { get => _support; set => _support = value; }
-        public Character CharacterRef { get => _characterRef; set => _characterRef = value ?? throw new ArgumentNullException(nameof(CharacterRef)); }
+        public Character CharacterRef { get => _characterRef; set => _characterRef = value ?? throw new ArgumentNullException(nameof(value)); }
         public Layout Layout => _layout;
         public PortraitStyle Style => _style;
         public StoryViewEffect Effect => _effect;
@@ -552,7 +536,7 @@ namespace GameLogic.Scene.Story
         {
             if (_attack != null)
             {
-                JSEngineManager.Run(_attack);
+                _attack.DoAction();
             }
         }
 
@@ -560,7 +544,7 @@ namespace GameLogic.Scene.Story
         {
             if (_createAdvantage != null)
             {
-                JSEngineManager.Run(_createAdvantage);
+                _createAdvantage.DoAction();
             }
         }
 
@@ -568,7 +552,7 @@ namespace GameLogic.Scene.Story
         {
             if (_interact != null)
             {
-                JSEngineManager.Run(_interact);
+                _interact.DoAction();
             }
         }
 
@@ -576,7 +560,7 @@ namespace GameLogic.Scene.Story
         {
             if (_support != null)
             {
-                JSEngineManager.Run(_support);
+                _support.DoAction();
             }
         }
 
@@ -744,7 +728,7 @@ namespace GameLogic.Scene.Story
     public class TextItem : ITextItem
     {
         #region Javascript API class
-        private sealed class API : IJSAPI
+        protected class API : IJSAPI
         {
             private readonly TextItem _outer;
 
@@ -800,7 +784,7 @@ namespace GameLogic.Scene.Story
         protected string _text;
 
         public bool IsReactable => false;
-        public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException(nameof(Text)); }
+        public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException(nameof(value)); }
 
         public TextItem(string text = "")
         {
@@ -821,7 +805,7 @@ namespace GameLogic.Scene.Story
     public class SelectionItem : ITextItem
     {
         #region Javascript API class
-        private sealed class API : IJSAPI
+        protected class API : IJSAPI
         {
             private readonly SelectionItem _outer;
 
@@ -890,7 +874,7 @@ namespace GameLogic.Scene.Story
         protected Command _action;
 
         public bool IsReactable => true;
-        public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException(nameof(Text)); }
+        public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException(nameof(value)); }
         public Command Action { get => _action; set => _action = value; }
 
         public SelectionItem(string text = "", string actionCode = null)
@@ -911,7 +895,7 @@ namespace GameLogic.Scene.Story
         {
             if (_action != null)
             {
-                JSEngineManager.Run(_action);
+                _action.DoAction();
             }
         }
 
@@ -1020,10 +1004,10 @@ namespace GameLogic.Scene.Story
         private readonly API _apiObj;
 
         private readonly List<ITextItem> _textItems;
-        private int _playerIndex;
+        private readonly int _playerIndex;
 
         public List<ITextItem> TextItems => _textItems;
-        public int PlayerIndex { get => _playerIndex; set => _playerIndex = value; }
+        public int PlayerIndex => _playerIndex;
 
         public TextBox(int index)
         {

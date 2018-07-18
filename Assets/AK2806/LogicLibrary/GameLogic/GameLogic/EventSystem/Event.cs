@@ -11,18 +11,18 @@ namespace GameLogic.EventSystem
 
         public bool Swallowed { get => _swallowed; set => _swallowed = value; }
 
-        public void SendContext(JSEngine engine)
+        public void SendContext()
         {
             IEventInfo eventInfo = (IEventInfo)this.GetContext();
             eventInfo.swallowed = _swallowed;
             this.SetContext(eventInfo);
-            engine.SynchronizeContext("$__eventArgs__", this);
+            JSEngineManager.Engine.SynchronizeContext("$__eventArgs__", this);
         }
 
-        public void RetrieveContext(JSEngine engine)
+        public void RetrieveContext()
         {
-            engine.SynchronizeContext("$__eventArgs__", this);
-            engine.RemoveContext("$__eventArgs__");
+            JSEngineManager.Engine.SynchronizeContext("$__eventArgs__", this);
+            JSEngineManager.Engine.RemoveContext("$__eventArgs__");
             IEventInfo eventInfo = (IEventInfo)this.GetContext();
             _swallowed = eventInfo.swallowed;
         }

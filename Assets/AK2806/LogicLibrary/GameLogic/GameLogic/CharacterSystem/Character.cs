@@ -6,10 +6,36 @@ using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.CharacterSystem
 {
-    public abstract class Character : IProperty, IIdentifiable
+    public interface ICharacterProperty : IDescribable, IAttachable<Character> { }
+
+    public sealed class ReadonlyCharacterPropertyList<T> : CharacterPropertyList<T> where T : class, ICharacterProperty
+    {
+        public ReadonlyCharacterPropertyList(Character owner, IEnumerable<T> properties) :
+            base(owner)
+        {
+            if (properties != null)
+            {
+                _container.AddRange(properties);
+            }
+        }
+
+        public override void Add(T item) { }
+        public override void Clear() { }
+        public override void Insert(int index, T item) { }
+        public override bool Remove(T item) { return false; }
+        public override void RemoveAt(int index) { }
+        public override void Reverse() { }
+    }
+
+    public class CharacterPropertyList<T> : AttachableList<Character, T> where T : class, ICharacterProperty
+    {
+        public CharacterPropertyList(Character owner) : base(owner) { }
+    }
+
+    public abstract class Character : IExtraProperty, IIdentifiable
     {
         #region Javascript API class
-        private sealed class API : IJSAPI
+        protected class API : IJSAPI
         {
             private readonly Character _outer;
 
@@ -81,7 +107,7 @@ namespace GameLogic.CharacterSystem
                 }
             }
 
-            public IJSAPI getBelong()
+            public IJSAPI getBelongExtra()
             {
                 try
                 {
@@ -309,8 +335,7 @@ namespace GameLogic.CharacterSystem
                     JSEngineManager.Engine.Log(e.Message);
                 }
             }
-
-
+            
             public IJSContextProvider Origin(JSContextHelper proof)
             {
                 try
@@ -333,13 +358,13 @@ namespace GameLogic.CharacterSystem
         protected readonly string _id;
         protected string _name = "";
         protected string _description = "";
-        protected Character _belong = null;
+        protected Extra _belong = null;
         protected readonly Viewable _view;
 
         public string ID => _id;
-        public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(Name)); }
-        public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(Description)); }
-        public Character Belong { get => _belong; set => _belong = value; }
+        public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
+        public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
+        public Extra Belong { get => _belong; set => _belong = value; }
         public Viewable View => _view;
 
         public Character(string id, Viewable view)
@@ -348,12 +373,12 @@ namespace GameLogic.CharacterSystem
             _view = view ?? throw new ArgumentNullException(nameof(view));
             _apiObj = new API(this);
         }
-
-        public abstract PropertyList<Aspect> Aspects { get; }
-        public abstract PropertyList<Skill> Skills { get; }
-        public abstract PropertyList<Stunt> Stunts { get; }
-        public abstract PropertyList<Extra> Extras { get; }
-        public abstract PropertyList<Consequence> Consequences { get; }
+        
+        public abstract CharacterPropertyList<Aspect> Aspects { get; }
+        public abstract CharacterPropertyList<Skill> Skills { get; }
+        public abstract CharacterPropertyList<Stunt> Stunts { get; }
+        public abstract CharacterPropertyList<Extra> Extras { get; }
+        public abstract CharacterPropertyList<Consequence> Consequences { get; }
         public abstract int Refresh { get; set; }
         public abstract int Fate { get; set; }
         public abstract int PhysicsStress { get; set; }
@@ -391,37 +416,37 @@ namespace GameLogic.CharacterSystem
 
     public class TemporaryCharacter : Character
     {
-        protected readonly PropertyList<Aspect> _aspects;
-        protected readonly PropertyList<Skill> _skills;
+        protected readonly CharacterPropertyList<Aspect> _aspects;
+        protected readonly CharacterPropertyList<Skill> _skills;
         protected int _physicsStress = 0;
         protected int _physicsStressMax = 0;
         protected int _mentalStress = 0;
         protected int _mentalStressMax = 0;
 
-        private readonly ReadonlyPropertyList<Stunt> _stunts;
-        private readonly ReadonlyPropertyList<Extra> _extras;
-        private readonly ReadonlyPropertyList<Consequence> _consequences;
+        private readonly ReadonlyCharacterPropertyList<Stunt> _stunts;
+        private readonly ReadonlyCharacterPropertyList<Extra> _extras;
+        private readonly ReadonlyCharacterPropertyList<Consequence> _consequences;
 
-        public override PropertyList<Aspect> Aspects => _aspects;
-        public override PropertyList<Skill> Skills => _skills;
-        public override int PhysicsStress { get => _physicsStress; set => _physicsStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(PhysicsStress), "Physics stress is less than 0."); }
-        public override int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(PhysicsStressMax), "Max physics stress is less than 1."); }
-        public override int MentalStress { get => _mentalStress; set => _mentalStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(MentalStress), "Mental stress is less than 0."); }
-        public override int MentalStressMax { get => _mentalStressMax; set => _mentalStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(MentalStressMax), "Max mental stress is less than 1."); }
+        public override CharacterPropertyList<Aspect> Aspects => _aspects;
+        public override CharacterPropertyList<Skill> Skills => _skills;
+        public override int PhysicsStress { get => _physicsStress; set => _physicsStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Physics stress is less than 0."); }
+        public override int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max physics stress is less than 1."); }
+        public override int MentalStress { get => _mentalStress; set => _mentalStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Mental stress is less than 0."); }
+        public override int MentalStressMax { get => _mentalStressMax; set => _mentalStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max mental stress is less than 1."); }
 
-        public override PropertyList<Stunt> Stunts => _stunts;
+        public override CharacterPropertyList<Stunt> Stunts => _stunts;
         public override int Refresh { get => 0; set { } }
         public override int Fate { get => 0; set { } }
-        public override PropertyList<Extra> Extras => _extras;
-        public override PropertyList<Consequence> Consequences => _consequences;
+        public override CharacterPropertyList<Extra> Extras => _extras;
+        public override CharacterPropertyList<Consequence> Consequences => _consequences;
 
         public TemporaryCharacter(string id, Viewable view) : base(id, view)
         {
-            _aspects = new PropertyList<Aspect>(this);
-            _skills = new PropertyList<Skill>(this);
-            _stunts = new ReadonlyPropertyList<Stunt>(this, null);
-            _extras = new ReadonlyPropertyList<Extra>(this, null);
-            _consequences = new ReadonlyPropertyList<Consequence>(this, null);
+            _aspects = new CharacterPropertyList<Aspect>(this);
+            _skills = new CharacterPropertyList<Skill>(this);
+            _stunts = new ReadonlyCharacterPropertyList<Stunt>(this, null);
+            _extras = new ReadonlyCharacterPropertyList<Extra>(this, null);
+            _consequences = new ReadonlyCharacterPropertyList<Consequence>(this, null);
         }
 
         public int RollDice(SkillType skillType)
@@ -448,31 +473,31 @@ namespace GameLogic.CharacterSystem
     {
         protected int _refresh = 0;
         protected int _fate = 0;
-        protected readonly PropertyList<Stunt> _stunts;
-        protected readonly PropertyList<Extra> _extras;
+        protected readonly CharacterPropertyList<Stunt> _stunts;
+        protected readonly CharacterPropertyList<Extra> _extras;
         
-        public override PropertyList<Stunt> Stunts => _stunts;
-        public override PropertyList<Extra> Extras => _extras;
-        public override int Refresh { get => _refresh; set => _refresh = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(Refresh), "Refresh point is less than 1."); }
-        public override int Fate { get => _fate; set => _fate = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(Fate), "Fate point is less than 0."); }
+        public override CharacterPropertyList<Stunt> Stunts => _stunts;
+        public override CharacterPropertyList<Extra> Extras => _extras;
+        public override int Refresh { get => _refresh; set => _refresh = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Refresh point is less than 1."); }
+        public override int Fate { get => _fate; set => _fate = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Fate point is less than 0."); }
 
         public CommonCharacter(string id, Viewable view) : base(id, view)
         {
-            _stunts = new PropertyList<Stunt>(this);
-            _extras = new PropertyList<Extra>(this);
+            _stunts = new CharacterPropertyList<Stunt>(this);
+            _extras = new CharacterPropertyList<Extra>(this);
         }
 
     }
 
     public class KeyCharacter : CommonCharacter
     {
-        protected readonly PropertyList<Consequence> _consequences;
+        protected readonly CharacterPropertyList<Consequence> _consequences;
 
-        public override PropertyList<Consequence> Consequences => _consequences;
+        public override CharacterPropertyList<Consequence> Consequences => _consequences;
 
         public KeyCharacter(string id, Viewable view) : base(id, view)
         {
-            _consequences = new PropertyList<Consequence>(this);
+            _consequences = new CharacterPropertyList<Consequence>(this);
         }
 
     }

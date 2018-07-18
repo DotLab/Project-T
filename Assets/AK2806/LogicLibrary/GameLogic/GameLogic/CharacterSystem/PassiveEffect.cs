@@ -9,21 +9,55 @@ namespace GameLogic.CharacterSystem
 {
     public class PassiveEffect : Trigger, IExtraProperty
     {
-        protected Extra _belong;
+        #region Javascript API class
+        protected new class API : Trigger.API
+        {
+            private readonly PassiveEffect _outer;
 
+            public API(PassiveEffect outer) :
+                base(outer)
+            {
+                _outer = outer;
+            }
+
+            public IJSAPI getBelongExtra()
+            {
+                try
+                {
+                    if (_outer.Belong != null) return (IJSAPI)_outer.Belong.GetContext();
+                    else return null;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                    return null;
+                }
+            }
+        }
+        #endregion
+        private readonly API _apiObj;
+
+        protected Extra _belong = null;
+        
         public PassiveEffect(string boundEventID, Command command) :
             base(boundEventID, command)
         {
-
+            _apiObj = new API(this);
         }
 
-        public override void Notify(JSEngine engine)
+        public override void Notify()
         {
             JSEngineManager.Engine.SynchronizeContext("$__belongExtra__", _belong);
-            base.Notify(engine);
+            base.Notify();
             JSEngineManager.Engine.RemoveContext("$__belongExtra__");
         }
 
-        public Extra Belong { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public Extra Belong { get => _belong; set => _belong = value; }
+
+        public override IJSContext GetContext()
+        {
+            return _apiObj;
+        }
+
     }
 }

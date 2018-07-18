@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 using GameLogic.EventSystem.Events;
 
@@ -116,9 +117,9 @@ namespace GameLogic.EventSystem
                     {
                         if (trigger.Active)
                         {
-                            e.SendContext(JSEngineManager.Engine);
-                            trigger.Notify(JSEngineManager.Engine);
-                            e.RetrieveContext(JSEngineManager.Engine);
+                            e.SendContext();
+                            trigger.Notify();
+                            e.RetrieveContext();
                         }
                         if (e.Swallowed) return;
                     }

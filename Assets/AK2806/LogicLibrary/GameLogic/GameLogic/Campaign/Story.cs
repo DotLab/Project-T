@@ -1,16 +1,16 @@
-﻿using GameLogic.Core.ScriptSystem;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GameLogic.Core;
 
 namespace GameLogic.Campaign
 {
     public sealed class Story : CampaignBlock
     {
-        private readonly List<Action> _actions;
+        private readonly List<SceneAction> _actions;
         private int _currentActionIndex;
 
-        public List<Action> Actions => _actions;
+        public List<SceneAction> Actions => _actions;
         public int CurrentActionIndex => _currentActionIndex;
 
         public override CBType Type => CBType.Story;
@@ -18,14 +18,14 @@ namespace GameLogic.Campaign
         public override Battle BattleBlock => null;
         public override Movie MovieBlock => null;
 
-        public Story(List<Action> actions, List<CampaignBlock> nexts) :
+        public Story(List<SceneAction> actions, List<CampaignBlock> nexts) :
             base(nexts)
         {
             _actions = actions ?? throw new ArgumentNullException(nameof(actions));
             _currentActionIndex = -1;
         }
         
-        public Action NextAction()
+        public SceneAction NextAction()
         {
             if (_actions != null)
             {
@@ -38,7 +38,7 @@ namespace GameLogic.Campaign
             return null;
         }
 
-        public Action CurrentAction()
+        public SceneAction CurrentAction()
         {
             if (_actions != null)
             {
@@ -65,7 +65,7 @@ namespace GameLogic.Campaign
         }
     }
     
-    public sealed class Action
+    public sealed class SceneAction
     {
         private Command _command;
         private string _comment;
@@ -73,7 +73,7 @@ namespace GameLogic.Campaign
         public Command Command { get => _command; set => _command = value; }
         public string Comment { get => _comment; set => _comment = value ?? throw new ArgumentNullException(nameof(Comment)); }
 
-        public Action(Command command = null, string comment = "")
+        public SceneAction(Command command = null, string comment = "")
         {
             _command = command;
             _comment = comment ?? throw new ArgumentNullException(nameof(comment));
@@ -83,7 +83,7 @@ namespace GameLogic.Campaign
         {
             if (_command != null)
             {
-                JSEngineManager.Run(_command);
+                _command.DoAction();
             }
         }
     }

@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.EventSystem
 {
     public class Trigger : IJSContextProvider
     {
-        private sealed class API : IJSAPI
+        #region Javascript API class
+        protected class API : IJSAPI
         {
             private readonly Trigger _outer;
 
@@ -94,7 +96,7 @@ namespace GameLogic.EventSystem
                 }
             }
         }
-
+        #endregion
         private readonly API _apiObj;
 
         protected Command _command;
@@ -102,7 +104,7 @@ namespace GameLogic.EventSystem
         protected bool _active;
         
         public string BoundEventID => _boundEventID;
-        public Command Command { get => _command; set => _command = value ?? throw new ArgumentNullException(nameof(Command)); }
+        public Command Command { get => _command; set => _command = value ?? throw new ArgumentNullException(nameof(value)); }
         public bool Active { get => _active; set => _active = value; }
 
         public Trigger(string boundEventID, Command command, bool autoReg = true)
@@ -124,9 +126,9 @@ namespace GameLogic.EventSystem
             GameEventBus.Instance.Unregister(this);
         }
 
-        public virtual void Notify(JSEngine engine)
+        public virtual void Notify()
         {
-            _command.DoAction(engine);
+            _command.DoAction();
         }
 
         public virtual IJSContext GetContext()

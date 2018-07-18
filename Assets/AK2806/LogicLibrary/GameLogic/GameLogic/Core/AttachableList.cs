@@ -15,7 +15,7 @@ namespace GameLogic.Core
         where TItem : class, IAttachable<TOwner>
     {
         #region Javascript API class
-        private sealed class API : IJSAPI
+        protected class API : IJSAPI
         {
             private readonly AttachableList<TOwner, TItem> _outer;
 
@@ -250,7 +250,18 @@ namespace GameLogic.Core
         public TOwner Owner => _owner;
         public int Count => _container.Count;
 
-        public TItem this[int i] { get => _container[i]; set => _container[i] = value; }
+        public TItem this[int i]
+        {
+            get => _container[i];
+            set
+            {
+                if (value == null) throw new ArgumentNullException(nameof(value));
+                if (value.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(value));
+                _container[i].Belong = null;
+                _container[i] = value;
+                value.Belong = _owner;
+            }
+        }
         
         public AttachableList(TOwner owner)
         {
@@ -259,8 +270,12 @@ namespace GameLogic.Core
             _container = new List<TItem>();
         }
 
+        ~AttachableList() => this.ForEach(item => item.Belong = null);
+
         public virtual void Add(TItem item)
         {
+            if (item == null) throw new ArgumentNullException(nameof(item));
+            if (item.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(item));
             _container.Add(item);
             item.Belong = _owner;
         }
@@ -292,6 +307,8 @@ namespace GameLogic.Core
 
         public virtual void Insert(int index, TItem item)
         {
+            if (item == null) throw new ArgumentNullException(nameof(item));
+            if (item.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(item));
             _container.Insert(index, item);
             item.Belong = _owner;
         }

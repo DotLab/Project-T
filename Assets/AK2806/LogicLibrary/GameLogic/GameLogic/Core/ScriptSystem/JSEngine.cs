@@ -115,9 +115,5 @@ namespace GameLogic.Core.ScriptSystem
         public static IJSEngineRaw EngineRaw => _engineRaw;
         public static JSEngine Engine => _engine;
         
-        public static void Run(Command command)
-        {
-            command.DoAction(_engine);
-        }
     }
 }

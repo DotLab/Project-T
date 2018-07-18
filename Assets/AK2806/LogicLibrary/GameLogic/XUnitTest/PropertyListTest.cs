@@ -8,7 +8,7 @@ using Xunit.Abstractions;
 
 namespace XUnitTest
 {
-    public class TestElement : IProperty
+    public class TestElement : ICharacterProperty
     {
         public static IJSAPI createTestElement()
         {
@@ -60,12 +60,12 @@ namespace XUnitTest
             _description = description;
         }
 
-        public object GetContext()
+        public IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(object context)
+        public void SetContext(IJSContext context)
         {
 
         }
@@ -83,7 +83,7 @@ namespace XUnitTest
         [Fact]
         public void Add_Get_Remove_Test()
         {
-            PropertyList<TestElement> testList = new PropertyList<TestElement>(null);
+            CharacterPropertyList<TestElement> testList = new CharacterPropertyList<TestElement>(null);
             JSEngineManager.EngineRaw.SetVar(nameof(TestElement.createTestElement), new Func<IJSAPI>(TestElement.createTestElement));
             JSEngineManager.Engine.SynchronizeContext(nameof(testList), testList);
             JSEngineManager.Engine.Execute("var ae = createTestElement(); ae.description = 'AddTest'; testList.add(ae);");
@@ -101,7 +101,7 @@ namespace XUnitTest
         [Fact]
         public void Foreach_Test()
         {
-            PropertyList<TestElement> testList = new PropertyList<TestElement>(null);
+            CharacterPropertyList<TestElement> testList = new CharacterPropertyList<TestElement>(null);
             JSEngineManager.EngineRaw.SetVar("log", new Action<string>(_output.WriteLine));
             JSEngineManager.Engine.SynchronizeContext(nameof(testList), testList);
             testList.Add(new TestElement("A"));

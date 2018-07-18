@@ -19,10 +19,10 @@ namespace GameLogic.CharacterSystem
         Positive = 1
     }
 
-    public class Aspect : IProperty
+    public class Aspect : ICharacterProperty
     {
         #region Javascript API class
-        private sealed class API : IJSAPI
+        protected class API : IJSAPI
         {
             private readonly Aspect _outer;
 
@@ -176,8 +176,8 @@ namespace GameLogic.CharacterSystem
             _apiObj = new API(this);
         }
 
-        public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(Name)); }
-        public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(Description)); }
+        public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
+        public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
         public PersistenceType PersistenceType { get => _persistenceType; set => _persistenceType = value; }
         public EffectType EffectType { get => _effectType; set => _effectType = value; }
         public Character Belong { get => _belong; set => _belong = value; }
@@ -193,129 +193,15 @@ namespace GameLogic.CharacterSystem
     public class Consequence : Aspect
     {
         #region Javascript API class
-        private sealed class API : IJSAPI
+        protected new class API : Aspect.API
         {
             private readonly Consequence _outer;
 
-            public API(Consequence outer)
+            public API(Consequence outer) : base(outer)
             {
                 _outer = outer;
             }
-
-            public string getName()
-            {
-                try
-                {
-                    return _outer.Name;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return null;
-                }
-            }
-
-            public void setName(string value)
-            {
-                try
-                {
-                    _outer.Name = value;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                }
-            }
-
-            public string getDescription()
-            {
-                try
-                {
-                    return _outer.Description;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return null;
-                }
-            }
-
-            public void setDescription(string value)
-            {
-                try
-                {
-                    _outer.Description = value;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                }
-            }
-
-            public int getPersistenceType()
-            {
-                try
-                {
-                    return (int)_outer.PersistenceType;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return -1;
-                }
-            }
-
-            public void setPersistenceType(int value)
-            {
-                try
-                {
-                    _outer.PersistenceType = (PersistenceType)value;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                }
-            }
-
-            public int getEffectType()
-            {
-                try
-                {
-                    return (int)_outer.EffectType;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return -1;
-                }
-            }
-
-            public void setEffectType(int value)
-            {
-                try
-                {
-                    _outer.EffectType = (EffectType)value;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                }
-            }
-
-            public IJSAPI getBelong()
-            {
-                try
-                {
-                    if (_outer.Belong != null) return (IJSAPI)_outer.Belong.GetContext();
-                    else return null;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return null;
-                }
-            }
-
+            
             public int getCounteractLevel()
             {
                 try
@@ -340,29 +226,14 @@ namespace GameLogic.CharacterSystem
                     JSEngineManager.Engine.Log(e.Message);
                 }
             }
-
-            public IJSContextProvider Origin(JSContextHelper proof)
-            {
-                try
-                {
-                    if (proof == JSContextHelper.Instance)
-                    {
-                        return _outer;
-                    }
-                    return null;
-                }
-                catch (Exception)
-                {
-                    return null;
-                }
-            }
+            
         }
         #endregion
         private readonly API _apiObj;
 
         protected int _counteractLevel = 0;
         
-        public int CounteractLevel { get => _counteractLevel; set => _counteractLevel = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(CounteractLevel), "Counteract level is less than 0."); }
+        public int CounteractLevel { get => _counteractLevel; set => _counteractLevel = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Counteract level is less than 0."); }
 
         public Consequence(string id) :
             base(id)

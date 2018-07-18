@@ -198,7 +198,7 @@ namespace TestConsoleApp
     {
         A,B,C,D
     }
-    public class TestElement : IProperty
+    public class TestElement : ICharacterProperty
     {
         public static IJSAPI createTestElement()
         {
@@ -250,12 +250,12 @@ namespace TestConsoleApp
             _description = description;
         }
 
-        public object GetContext()
+        public IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(object context)
+        public void SetContext(IJSContext context)
         {
 
         }
