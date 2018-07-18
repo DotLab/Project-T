@@ -107,7 +107,6 @@ namespace GameLogic.EventSystem
         public void Publish(Event e)
         {
             string[] eventIDs = e.NotifyList;
-            e.SendContext(JSEngineManager.Engine);
             foreach (string id in eventIDs)
             {
                 List<Trigger> triggers;
@@ -117,12 +116,14 @@ namespace GameLogic.EventSystem
                     {
                         if (trigger.Active)
                         {
+                            e.SendContext(JSEngineManager.Engine);
                             trigger.Notify(JSEngineManager.Engine);
+                            e.RetrieveContext(JSEngineManager.Engine);
                         }
+                        if (e.Swallowed) return;
                     }
                 }
             }
-            e.RetrieveContext(JSEngineManager.Engine);
         }
 
         public void Register(Trigger trigger)
