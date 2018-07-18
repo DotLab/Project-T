@@ -7,6 +7,10 @@ namespace GameLogic.CharacterSystem
 {
     public class InitiativeEffect : Command
     {
+        protected bool _dmCheck = false;
+
+        public bool DMCheck { get => _dmCheck; set => _dmCheck = value; }
+
         public InitiativeEffect(string jscode) :
             base(jscode)
         {

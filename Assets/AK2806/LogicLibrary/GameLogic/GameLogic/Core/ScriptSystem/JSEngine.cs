@@ -79,7 +79,7 @@ namespace GameLogic.Core.ScriptSystem
 
         public void SynchronizeContext(string varname, IJSContextProvider provider)
         {
-            object context = _engine.GetVar(varname);
+            IJSContext context = (IJSContext)_engine.GetVar(varname);
             if (context == null) _engine.SetVar(varname, provider.GetContext());
             else
             {

@@ -4,13 +4,15 @@ using System.Text;
 
 namespace GameLogic.Core.ScriptSystem
 {
+    public interface IJSContext { }
+
     public interface IJSContextProvider
     {
-        object GetContext();
-        void SetContext(object context);
+        IJSContext GetContext();
+        void SetContext(IJSContext context);
     }
     
-    public interface IJSAPI
+    public interface IJSAPI : IJSContext
     {
         IJSContextProvider Origin(JSContextHelper proof);
     }

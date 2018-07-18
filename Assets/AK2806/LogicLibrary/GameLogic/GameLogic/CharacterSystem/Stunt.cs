@@ -18,7 +18,20 @@ namespace GameLogic.CharacterSystem
             {
                 _outer = outer;
             }
-
+            /*
+            public void setInitiativeEffect(string jscode)
+            {
+                try
+                {
+                    if (jscode == null) _outer.Command = null;
+                    else _outer.Command = new Command(jscode);
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                }
+            }
+            */
             public IJSContextProvider Origin(JSContextHelper proof)
             {
                 try
@@ -41,12 +54,12 @@ namespace GameLogic.CharacterSystem
         protected string _name = "";
         protected string _description = "";
         protected Character _belong = null;
-        protected Command _command;
-        protected bool _dmCheck = false;
+        protected InitiativeEffect _initiativeEffect;
 
-        public Stunt(Command command = null, string description = "")
+        public Stunt(InitiativeEffect effect = null, string name = "", string description = "")
         {
-            _command = command;
+            _initiativeEffect = effect;
+            _name = name ?? throw new ArgumentNullException(nameof(name));
             _description = description ?? throw new ArgumentNullException(nameof(description));
             _apiObj = new API(this);
         }
@@ -54,14 +67,13 @@ namespace GameLogic.CharacterSystem
         public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(Name)); }
         public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(Description)); }
         public Character Belong { get => _belong; set => _belong = value; }
-        public Command Command { get => _command; set => _command = value; }
-        public bool DMCheck { get => _dmCheck; set => _dmCheck = value; }
+        public InitiativeEffect InitiativeEffect { get => _initiativeEffect; set => _initiativeEffect = value; }
 
-        public virtual object GetContext()
+        public virtual IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(object context) { }
+        public void SetContext(IJSContext context) { }
     }
 }

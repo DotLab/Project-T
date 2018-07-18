@@ -361,12 +361,12 @@ namespace GameLogic.CharacterSystem
         public abstract int MentalStress { get; set; }
         public abstract int MentalStressMax { get; set; }
 
-        public object GetContext()
+        public IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(object context) { }
+        public void SetContext(IJSContext context) { }
         
         protected Dictionary<SkillType, SkillType[]> againstOvercome = new Dictionary<SkillType, SkillType[]>();
         protected Dictionary<SkillType, SkillType[]> againstAdvantage = new Dictionary<SkillType, SkillType[]>();
@@ -544,11 +544,11 @@ namespace GameLogic.CharacterSystem
 
 
 
-        public object GetContext()
+        public IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(object context) { }
+        public void SetContext(IJSContext context) { }
     }
 }

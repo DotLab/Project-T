@@ -10,7 +10,7 @@ namespace GameLogic.Core
         string ID { get; }
     }
     
-    public interface IDescribable : IJSContextProvider
+    public interface IDescribable
     {
         string Name { get; set; }
         string Description { get; set; }

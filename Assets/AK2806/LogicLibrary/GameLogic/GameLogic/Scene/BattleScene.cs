@@ -43,11 +43,11 @@ namespace GameLogic.Scene
             _apiObj = new API(this);
         }
 
-        public object GetContext()
+        public IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(object context) { }
+        public void SetContext(IJSContext context) { }
     }
 }

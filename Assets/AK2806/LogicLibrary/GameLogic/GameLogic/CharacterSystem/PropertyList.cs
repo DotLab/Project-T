@@ -31,9 +31,6 @@ namespace GameLogic.CharacterSystem
 
     public class PropertyList<T> : AttachableList<Character, T> where T : class, IProperty
     {
-        public PropertyList(Character owner) :
-            base(owner)
-        {
-        }
+        public PropertyList(Character owner) : base(owner) { }
     }
 }

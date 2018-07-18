@@ -129,11 +129,11 @@ namespace GameLogic.EventSystem
             _command.DoAction(engine);
         }
 
-        public virtual object GetContext()
+        public virtual IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(object context) { }
+        public void SetContext(IJSContext context) { }
     }
 }

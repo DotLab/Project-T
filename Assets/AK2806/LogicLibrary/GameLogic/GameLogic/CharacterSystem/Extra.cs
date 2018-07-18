@@ -7,6 +7,7 @@ using GameLogic.EventSystem;
 
 namespace GameLogic.CharacterSystem
 {
+    public interface IExtraProperty : IAttachable<Extra> { }
 
     public class Extra : IProperty
     {
@@ -47,19 +48,6 @@ namespace GameLogic.CharacterSystem
                 }
             }
 
-            public void setInitiativeEffect(string jscode)
-            {
-                try
-                {
-                    if (jscode == null) _outer.Command = null;
-                    else _outer.Command = new Command(jscode);
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                }
-            }
-            
             public IJSContextProvider Origin(JSContextHelper proof)
             {
                 try
@@ -80,33 +68,32 @@ namespace GameLogic.CharacterSystem
         private readonly API _apiObj;
         
         protected Character _belong = null;
-        protected bool _dmCheck = false;
         protected readonly Character _item;
-        protected readonly List<Trigger> _triggers;
-        protected Command _command = null;
+        protected readonly ExtraPropertyList<PassiveEffect> _passiveEffects;
 
         public Extra(Character item)
         {
             _item = item ?? throw new ArgumentNullException(nameof(item));
-            _triggers = new List<Trigger>();
+            _passiveEffects = new ExtraPropertyList<PassiveEffect>(this);
             _apiObj = new API(this);
         }
 
         public string Name { get => _item.Name; set => _item.Name = value; }
         public string Description { get => _item.Description; set => _item.Description = value; }
         public Character Belong { get => _belong; set => _belong = value; }
-        public bool DMCheck { get => _dmCheck; set => _dmCheck = value; }
         public Character Item => _item;
-        public List<Trigger> Triggers => _triggers;
-        public Command Command { get => _command; set => _command = value; }
+        public ExtraPropertyList<PassiveEffect> PassiveEffects => _passiveEffects;
 
-        public virtual object GetContext()
+        public virtual IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public virtual void SetContext(object context) { }
+        public virtual void SetContext(IJSContext context) { }
     }
 
-
+    public class ExtraPropertyList<T> : AttachableList<Extra, T> where T : class, IExtraProperty
+    {
+        public ExtraPropertyList(Extra owner) : base(owner) { }
+    }
 }

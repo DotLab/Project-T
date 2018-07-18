@@ -182,12 +182,12 @@ namespace GameLogic.CharacterSystem
         public EffectType EffectType { get => _effectType; set => _effectType = value; }
         public Character Belong { get => _belong; set => _belong = value; }
 
-        public virtual object GetContext()
+        public virtual IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(object context) { }
+        public void SetContext(IJSContext context) { }
     }
 
     public class Consequence : Aspect
@@ -371,7 +371,7 @@ namespace GameLogic.CharacterSystem
             _apiObj = new API(this);
         }
 
-        public override object GetContext()
+        public override IJSContext GetContext()
         {
             return _apiObj;
         }

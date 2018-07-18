@@ -31,12 +31,12 @@ namespace GameLogic.EventSystem.Events
         
         public override string[] NotifyList => _info.notifyList ?? _idList;
 
-        public override object GetContext()
+        public override IJSContext GetContext()
         {
             return _info;
         }
 
-        public override void SetContext(object context)
+        public override void SetContext(IJSContext context)
         {
             _info = (EventInfo)context;
         }

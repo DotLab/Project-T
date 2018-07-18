@@ -7,7 +7,7 @@ namespace GameLogic.EventSystem
 {
     public abstract class Event : IJSContextProvider
     {
-        protected bool _swallowed;
+        protected bool _swallowed = false;
 
         public bool Swallowed { get => _swallowed; set => _swallowed = value; }
 
@@ -16,24 +16,24 @@ namespace GameLogic.EventSystem
             IEventInfo eventInfo = (IEventInfo)this.GetContext();
             eventInfo.swallowed = _swallowed;
             this.SetContext(eventInfo);
-            engine.SynchronizeContext("_eventArgs", this);
+            engine.SynchronizeContext("$__eventArgs__", this);
         }
 
         public void RetrieveContext(JSEngine engine)
         {
-            engine.SynchronizeContext("_eventArgs", this);
-            engine.RemoveContext("_eventArgs");
+            engine.SynchronizeContext("$__eventArgs__", this);
+            engine.RemoveContext("$__eventArgs__");
             IEventInfo eventInfo = (IEventInfo)this.GetContext();
             _swallowed = eventInfo.swallowed;
         }
 
         public abstract string[] NotifyList { get; }
 
-        public abstract object GetContext();
-        public abstract void SetContext(object context);
+        public abstract IJSContext GetContext();
+        public abstract void SetContext(IJSContext context);
     }
 
-    public interface IEventInfo
+    public interface IEventInfo : IJSContext
     {
         bool swallowed { get; set; }
     }

@@ -269,12 +269,12 @@ namespace GameLogic.Scene
             throw new NotImplementedException();
         }
 
-        public object GetContext()
+        public IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(object context) { }
+        public void SetContext(IJSContext context) { }
     }
 }
 
@@ -580,12 +580,12 @@ namespace GameLogic.Scene.Story
             }
         }
 
-        public virtual object GetContext()
+        public virtual IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public virtual void SetContext(object context) { }
+        public virtual void SetContext(IJSContext context) { }
     }
 
     public sealed class Camera : IJSContextProvider
@@ -726,12 +726,12 @@ namespace GameLogic.Scene.Story
             throw new NotImplementedException();
         }
 
-        public object GetContext()
+        public IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(object context) { }
+        public void SetContext(IJSContext context) { }
     }
 
     public interface ITextItem : IJSContextProvider
@@ -810,12 +810,12 @@ namespace GameLogic.Scene.Story
 
         public virtual void React() { }
 
-        public virtual object GetContext()
+        public virtual IJSContext GetContext()
         {
             return _apiObj;
         }
         
-        public virtual void SetContext(object context) { }
+        public virtual void SetContext(IJSContext context) { }
     }
 
     public class SelectionItem : ITextItem
@@ -915,12 +915,12 @@ namespace GameLogic.Scene.Story
             }
         }
 
-        public virtual object GetContext()
+        public virtual IJSContext GetContext()
         {
             return _apiObj;
         }
         
-        public virtual void SetContext(object context) { }
+        public virtual void SetContext(IJSContext context) { }
     }
 
     public sealed class TextBox : IJSContextProvider
@@ -1057,12 +1057,12 @@ namespace GameLogic.Scene.Story
             throw new NotImplementedException();
         }
 
-        public object GetContext()
+        public IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(object context) { }
+        public void SetContext(IJSContext context) { }
     }
     
 }

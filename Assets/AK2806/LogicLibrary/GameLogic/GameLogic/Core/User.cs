@@ -55,11 +55,11 @@ namespace GameLogic.Core
             _level = level;
         }
         
-        public object GetContext()
+        public IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(object context) { }
+        public void SetContext(IJSContext context) { }
     }
 }

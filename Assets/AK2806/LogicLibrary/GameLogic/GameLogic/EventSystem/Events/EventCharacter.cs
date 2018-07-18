@@ -14,12 +14,12 @@ namespace GameLogic.EventSystem.Events
         
         public override string[] NotifyList => _idList;
 
-        public override object GetContext()
+        public override IJSContext GetContext()
         {
             throw new NotImplementedException();
         }
         
-        public override void SetContext(object context)
+        public override void SetContext(IJSContext context)
         {
             throw new NotImplementedException();
         }

@@ -7,12 +7,12 @@ namespace GameLogic.Campaign
 {
     public class Player : IJSContextProvider
     {
-        public object GetContext()
+        public IJSContext GetContext()
         {
             throw new NotImplementedException();
         }
 
-        public void SetContext(object context)
+        public void SetContext(IJSContext context)
         {
             throw new NotImplementedException();
         }
