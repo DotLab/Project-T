@@ -12,7 +12,7 @@ namespace GameLogic.CharacterSystem
     public class Stunt : ICharacterProperty
     {
         #region Javascript API class
-        protected class API : IJSAPI
+        protected class API : IJSAPI<Stunt>
         {
             private readonly Stunt _outer;
 
@@ -71,11 +71,11 @@ namespace GameLogic.CharacterSystem
                 }
             }
             
-            public IJSAPI getBelong()
+            public IJSAPI<Character> getBelong()
             {
                 try
                 {
-                    if (_outer.Belong != null) return (IJSAPI)_outer.Belong.GetContext();
+                    if (_outer.Belong != null) return (IJSAPI<Character>)_outer.Belong.GetContext();
                     else return null;
                 }
                 catch (Exception e)
@@ -84,12 +84,24 @@ namespace GameLogic.CharacterSystem
                     return null;
                 }
             }
-            
-            public IJSAPI getInitiativeEffect()
+
+            public void setInitiativeEffect(IJSAPI<InitiativeEffect> effect)
             {
                 try
                 {
-                    return (IJSAPI)_outer.InitiativeEffect.GetContext();
+                    _outer.InitiativeEffect = JSContextHelper.Instance.GetAPIOrigin(effect);
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                }
+            }
+
+            public IJSAPI<InitiativeEffect> getInitiativeEffect()
+            {
+                try
+                {
+                    return (IJSAPI<InitiativeEffect>)_outer.InitiativeEffect.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -98,7 +110,7 @@ namespace GameLogic.CharacterSystem
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public Stunt Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -121,12 +133,14 @@ namespace GameLogic.CharacterSystem
         protected string _description = "";
         protected Character _belong = null;
         protected InitiativeEffect _initiativeEffect;
+        protected SkillType _boundSkillType;
 
-        public Stunt(InitiativeEffect effect, string name = "", string description = "")
+        public Stunt(InitiativeEffect effect, SkillType boundSkillType, string name = "", string description = "")
         {
             _initiativeEffect = effect ?? throw new ArgumentNullException(nameof(name));
             if (effect.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(effect));
             effect.Belong = this;
+            _boundSkillType = boundSkillType ?? throw new ArgumentNullException(nameof(boundSkillType));
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _description = description ?? throw new ArgumentNullException(nameof(description));
             _apiObj = new API(this);

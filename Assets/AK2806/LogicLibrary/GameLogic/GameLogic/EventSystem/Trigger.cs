@@ -9,7 +9,7 @@ namespace GameLogic.EventSystem
     public class Trigger : IJSContextProvider
     {
         #region Javascript API class
-        protected class API : IJSAPI
+        protected class API : IJSAPI<Trigger>
         {
             private readonly Trigger _outer;
 
@@ -80,7 +80,7 @@ namespace GameLogic.EventSystem
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public Trigger Origin(JSContextHelper proof)
             {
                 try
                 {

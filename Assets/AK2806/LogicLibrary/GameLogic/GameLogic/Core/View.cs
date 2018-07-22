@@ -1,10 +1,17 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 
-namespace GameLogic.Scene
+namespace GameLogic.Core
 {
+    public sealed class View
+    {
+        public string id;
+        public string battle;
+        public string story;
+    }
+
     public enum AnimateType
     {
         None, Shake

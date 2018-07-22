@@ -5,7 +5,7 @@ using GameLogic.Core;
 
 namespace GameLogic.Campaign
 {
-    public sealed class Story : CampaignBlock
+    public sealed class StoryShot : Shot
     {
         private readonly List<SceneAction> _actions;
         private int _currentActionIndex;
@@ -13,13 +13,12 @@ namespace GameLogic.Campaign
         public List<SceneAction> Actions => _actions;
         public int CurrentActionIndex => _currentActionIndex;
 
-        public override CBType Type => CBType.Story;
-        public override Story StoryBlock => this;
-        public override Battle BattleBlock => null;
-        public override Movie MovieBlock => null;
+        public override ShotType Type => ShotType.Story;
+        public override StoryShot Story => this;
+        public override BattleShot Battle => null;
+        public override MapShot Map => null;
 
-        public Story(List<SceneAction> actions, List<CampaignBlock> nexts) :
-            base(nexts)
+        public StoryShot(List<SceneAction> actions)
         {
             _actions = actions ?? throw new ArgumentNullException(nameof(actions));
             _currentActionIndex = -1;

@@ -9,7 +9,7 @@ namespace GameLogic.CharacterSystem
     public class InitiativeEffect : Command, IStuntProperty
     {
         #region Javascript API class
-        protected class API : IJSAPI
+        protected class API : IJSAPI<InitiativeEffect>
         {
             private readonly InitiativeEffect _outer;
 
@@ -18,11 +18,11 @@ namespace GameLogic.CharacterSystem
                 _outer = outer;
             }
             
-            public IJSAPI getBelongStunt()
+            public IJSAPI<Stunt> getBelongStunt()
             {
                 try
                 {
-                    if (_outer.Belong != null) return (IJSAPI)_outer.Belong.GetContext();
+                    if (_outer.Belong != null) return (IJSAPI<Stunt>)_outer.Belong.GetContext();
                     else return null;
                 }
                 catch (Exception e)
@@ -32,7 +32,20 @@ namespace GameLogic.CharacterSystem
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public bool getDMCheckResult()
+            {
+                try
+                {
+                    return _outer.DMCheckResult;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                    return false;
+                }
+            }
+
+            public InitiativeEffect Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -54,9 +67,11 @@ namespace GameLogic.CharacterSystem
         protected Stunt _belong = null;
 
         protected bool _dmCheck = false;
+        protected bool _dmCheckResult = true;
 
         public bool DMCheck { get => _dmCheck; set => _dmCheck = value; }
         public Stunt Belong { get => _belong; set => _belong = value; }
+        public bool DMCheckResult { get => _dmCheck ? _dmCheckResult : true; set { if (_dmCheck) _dmCheckResult = value; } }
 
         public InitiativeEffect(Action action) : this(false, action, null) { }
 

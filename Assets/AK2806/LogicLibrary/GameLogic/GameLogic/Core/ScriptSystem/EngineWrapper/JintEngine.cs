@@ -51,9 +51,9 @@ namespace GameLogic.Core.ScriptSystem.EngineWrapper
             _jsEngine.SetValue(name, array);
         }
 
-        public void SetVar(string name, object poco)
+        public void SetVar(string name, object obj)
         {
-            _jsEngine.SetValue(name, poco);
+            _jsEngine.SetValue(name, obj);
         }
 
         public void SetVar(string name, double number)

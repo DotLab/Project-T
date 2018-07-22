@@ -5,51 +5,58 @@ using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.Campaign
 {
-    public enum CBType
+    public enum ShotType
     {
-        Story, Battle, Movie
+        Story, Battle, Map
     }
 
-    public abstract class CampaignBlock
+    public abstract class Shot : IDescribable
     {
-        protected readonly List<CampaignBlock> _nexts;
-        protected string _comment;
+        protected List<Shot> _nexts;
+        protected string _description;
         protected string _name;
 
-        public abstract CBType Type { get; }
-        public abstract Story StoryBlock { get; }
-        public abstract Battle BattleBlock { get; }
-        public abstract Movie MovieBlock { get; }
+        public abstract ShotType Type { get; }
+        public abstract StoryShot Story { get; }
+        public abstract BattleShot Battle { get; }
+        public abstract MapShot Map { get; }
 
-        public List<CampaignBlock> Nexts => _nexts;
-        public string Comment { get => _comment; set => _comment = value; }
+        public List<Shot> Nexts { get => _nexts; set => _nexts = value; }
+        public string Description { get => _description; set => _description = value; }
         public string Name { get => _name; set => _name = value; }
 
-        public CampaignBlock(List<CampaignBlock> nexts, string name = "", string comment = "")
+        public Shot(string name = "", string description = "")
         {
-            _nexts = nexts ?? throw new ArgumentNullException(nameof(nexts));
             _name = name ?? throw new ArgumentNullException(nameof(name));
-            _comment = comment ?? throw new ArgumentNullException(nameof(comment));
+            _description = description ?? throw new ArgumentNullException(nameof(description));
         }
     }
 
     public sealed class Campaign : IDescribable
     {
-        private List<CampaignBlock> _blocks;
-        private CampaignBlock _startup;
-        private List<Campaign> _endings;
-        private string _comment;
+        private Dictionary<string, Shot> _shots;
+        private Dictionary<string, Shot> _backupShots;
+        private Shot _startup;
+        private List<Campaign> _nexts;
+        private string _description;
         private string _name;
 
-        public List<CampaignBlock> Blocks { get => _blocks; set => _blocks = value; }
-        public CampaignBlock Startup { get => _startup; set => _startup = value; }
-        public List<Campaign> Endings { get => _endings; set => _endings = value; }
-        public string Comment { get => _comment; set => _comment = value; }
+        public Dictionary<string, Shot> Shots { get => _shots; set => _shots = value; }
+        public Dictionary<string, Shot> BackupShots { get => _backupShots; set => _backupShots = value; }
+        public Shot Startup { get => _startup; set => _startup = value; }
+        public List<Campaign> Nexts { get => _nexts; set => _nexts = value; }
+        public string Description { get => _description; set => _description = value; }
         public string Name { get => _name; set => _name = value; }
 
-        private string _description;
-        public string Description { get => _description; set => _description = value; }
-        
+        public void JumpTo(string name)
+        {
+
+        }
+
+        public void UseBackupShot(string name)
+        {
+
+        }
 
         public Campaign()
         {
@@ -71,7 +78,7 @@ namespace GameLogic.Campaign
 
     public sealed class CampaignManager : IJSContextProvider
     {
-        private sealed class API : IJSAPI
+        private sealed class API : IJSAPI<CampaignManager>
         {
             private CampaignManager _outer;
 
@@ -80,7 +87,7 @@ namespace GameLogic.Campaign
                 _outer = outer;
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public CampaignManager Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -102,22 +109,17 @@ namespace GameLogic.Campaign
         private static readonly CampaignManager _instance = new CampaignManager();
         public static CampaignManager Instance => _instance;
 
-        private CampaignBlock _currentCampaign;
-        private CampaignBlock _currentBlock;
+        private Shot _currentCampaign;
+        private Shot _currentBlock;
 
         private CampaignManager()
         {
             _apiObj = new API(this);
         }
 
-        public CampaignBlock CurrentCampaign { get => _currentCampaign; set => _currentCampaign = value; }
-        public CampaignBlock CurrentBlock { get => _currentBlock; set => _currentBlock = value; }
-        /*
-        public void Load(string json)
-        {
-            //this.mSceneList = JsonConvert.DeserializeObject<SceneListFile>(json);
-        }
-        */
+        public Shot CurrentCampaign { get => _currentCampaign; set => _currentCampaign = value; }
+        public Shot CurrentBlock { get => _currentBlock; set => _currentBlock = value; }
+        
         public IJSContext GetContext()
         {
             return _apiObj;

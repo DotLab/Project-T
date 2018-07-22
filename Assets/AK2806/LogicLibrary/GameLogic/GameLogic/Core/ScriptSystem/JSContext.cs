@@ -12,9 +12,9 @@ namespace GameLogic.Core.ScriptSystem
         void SetContext(IJSContext context);
     }
     
-    public interface IJSAPI : IJSContext
+    public interface IJSAPI<out T> : IJSContext where T : IJSContextProvider
     {
-        IJSContextProvider Origin(JSContextHelper proof);
+        T Origin(JSContextHelper proof);
     }
 
     public sealed class JSContextHelper
@@ -28,7 +28,7 @@ namespace GameLogic.Core.ScriptSystem
 
         }
 
-        public IJSContextProvider GetAPIOrigin(IJSAPI jsApi)
+        public T GetAPIOrigin<T>(IJSAPI<T> jsApi) where T : IJSContextProvider
         {
             return jsApi.Origin(this);
         }

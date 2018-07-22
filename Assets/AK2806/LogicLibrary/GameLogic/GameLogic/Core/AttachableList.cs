@@ -15,7 +15,7 @@ namespace GameLogic.Core
         where TItem : class, IAttachable<TOwner>
     {
         #region Javascript API class
-        protected class API : IJSAPI
+        protected class API : IJSAPI<AttachableList<TOwner, TItem>>
         {
             private readonly AttachableList<TOwner, TItem> _outer;
 
@@ -24,11 +24,11 @@ namespace GameLogic.Core
                 _outer = outer;
             }
 
-            public IJSAPI getOwner()
+            public IJSAPI<TOwner> getOwner()
             {
                 try
                 {
-                    return (IJSAPI)_outer.Owner.GetContext();
+                    return (IJSAPI<TOwner>)_outer.Owner.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -50,11 +50,11 @@ namespace GameLogic.Core
                 }
             }
 
-            public IJSAPI get(int index)
+            public IJSAPI<TItem> get(int index)
             {
                 try
                 {
-                    return (IJSAPI)_outer[index].GetContext();
+                    return (IJSAPI<TItem>)_outer[index].GetContext();
                 }
                 catch (Exception e)
                 {
@@ -63,11 +63,11 @@ namespace GameLogic.Core
                 }
             }
 
-            public void set(int index, IJSAPI item)
+            public void set(int index, IJSAPI<TItem> item)
             {
                 try
                 {
-                    TItem originItem = (TItem)JSContextHelper.Instance.GetAPIOrigin(item);
+                    TItem originItem = JSContextHelper.Instance.GetAPIOrigin(item);
                     _outer[index] = originItem;
                 }
                 catch (Exception e)
@@ -76,11 +76,11 @@ namespace GameLogic.Core
                 }
             }
 
-            public void add(IJSAPI item)
+            public void add(IJSAPI<TItem> item)
             {
                 try
                 {
-                    TItem originItem = (TItem)JSContextHelper.Instance.GetAPIOrigin(item);
+                    TItem originItem = JSContextHelper.Instance.GetAPIOrigin(item);
                     _outer.Add(originItem);
                 }
                 catch (Exception e)
@@ -89,6 +89,23 @@ namespace GameLogic.Core
                 }
             }
 
+            public void addRange(IJSAPI<TItem>[] items)
+            {
+                try
+                {
+                    TItem[] originItems = new TItem[items.Length];
+                    for (int i = 0; i < items.Length; ++i)
+                    {
+                        originItems[i] = JSContextHelper.Instance.GetAPIOrigin(items[i]);
+                    }
+                    _outer.AddRange(originItems);
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                }
+            }
+            
             public void clear()
             {
                 try
@@ -101,11 +118,11 @@ namespace GameLogic.Core
                 }
             }
 
-            public bool contains(IJSAPI item)
+            public bool contains(IJSAPI<TItem> item)
             {
                 try
                 {
-                    TItem originItem = (TItem)JSContextHelper.Instance.GetAPIOrigin(item);
+                    TItem originItem = JSContextHelper.Instance.GetAPIOrigin(item);
                     return _outer.Contains(originItem);
                 }
                 catch (Exception e)
@@ -127,11 +144,11 @@ namespace GameLogic.Core
                 }
             }
 
-            public int indexOf(IJSAPI item, int index = 0, int count = -1)
+            public int indexOf(IJSAPI<TItem> item, int index = 0, int count = -1)
             {
                 try
                 {
-                    TItem originItem = (TItem)JSContextHelper.Instance.GetAPIOrigin(item);
+                    TItem originItem = JSContextHelper.Instance.GetAPIOrigin(item);
                     return _outer.IndexOf(originItem, index, count);
                 }
                 catch (Exception e)
@@ -141,11 +158,11 @@ namespace GameLogic.Core
                 }
             }
 
-            public void insert(int index, IJSAPI item)
+            public void insert(int index, IJSAPI<TItem> item)
             {
                 try
                 {
-                    TItem originItem = (TItem)JSContextHelper.Instance.GetAPIOrigin(item);
+                    TItem originItem = JSContextHelper.Instance.GetAPIOrigin(item);
                     _outer.Insert(index, originItem);
                 }
                 catch (Exception e)
@@ -154,11 +171,11 @@ namespace GameLogic.Core
                 }
             }
 
-            public int lastIndexOf(IJSAPI item, int index = 0, int count = -1)
+            public int lastIndexOf(IJSAPI<TItem> item, int index = 0, int count = -1)
             {
                 try
                 {
-                    TItem originItem = (TItem)JSContextHelper.Instance.GetAPIOrigin(item);
+                    TItem originItem = JSContextHelper.Instance.GetAPIOrigin(item);
                     return _outer.LastIndexOf(originItem, index, count);
                 }
                 catch (Exception e)
@@ -168,11 +185,11 @@ namespace GameLogic.Core
                 }
             }
 
-            public bool remove(IJSAPI item)
+            public bool remove(IJSAPI<TItem> item)
             {
                 try
                 {
-                    TItem originItem = (TItem)JSContextHelper.Instance.GetAPIOrigin(item);
+                    TItem originItem = JSContextHelper.Instance.GetAPIOrigin(item);
                     return _outer.Remove(originItem);
                 }
                 catch (Exception e)
@@ -206,15 +223,15 @@ namespace GameLogic.Core
                 }
             }
 
-            public IJSAPI[] toArray()
+            public IJSAPI<TItem>[] toArray()
             {
                 try
                 {
                     TItem[] origins = _outer.ToArray();
-                    IJSAPI[] ret = new IJSAPI[origins.Length];
+                    IJSAPI<TItem>[] ret = new IJSAPI<TItem>[origins.Length];
                     for (int i = 0; i < ret.Length; ++i)
                     {
-                        ret[i] = (IJSAPI)origins[i].GetContext();
+                        ret[i] = (IJSAPI<TItem>)origins[i].GetContext();
                     }
                     return ret;
                 }
@@ -225,7 +242,7 @@ namespace GameLogic.Core
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public AttachableList<TOwner, TItem> Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -280,6 +297,20 @@ namespace GameLogic.Core
             item.Belong = _owner;
         }
 
+        public virtual void AddRange(IEnumerable<TItem> items)
+        {
+            foreach (TItem item in items)
+            {
+                if (item == null) throw new ArgumentNullException(nameof(item));
+                if (item.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(item));
+            }
+            _container.AddRange(items);
+            foreach (TItem item in items)
+            {
+                item.Belong = _owner;
+            }
+        }
+        
         public virtual void Clear()
         {
             foreach (TItem item in _container)

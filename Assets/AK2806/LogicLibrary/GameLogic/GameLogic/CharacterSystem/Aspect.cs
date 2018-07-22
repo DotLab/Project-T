@@ -13,16 +13,10 @@ namespace GameLogic.CharacterSystem
         Boost = 2
     }
 
-    public enum EffectType
-    {
-        Negative = 0,
-        Positive = 1
-    }
-
     public class Aspect : ICharacterProperty
     {
         #region Javascript API class
-        protected class API : IJSAPI
+        protected class API : IJSAPI<Aspect>
         {
             private readonly Aspect _outer;
 
@@ -106,36 +100,11 @@ namespace GameLogic.CharacterSystem
                 }
             }
 
-            public int getEffectType()
+            public IJSAPI<Character> getBelong()
             {
                 try
                 {
-                    return (int)_outer.EffectType;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return -1;
-                }
-            }
-
-            public void setEffectType(int value)
-            {
-                try
-                {
-                    _outer.EffectType = (EffectType)value;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                }
-            }
-
-            public IJSAPI getBelong()
-            {
-                try
-                {
-                    if (_outer.Belong != null) return (IJSAPI)_outer.Belong.GetContext();
+                    if (_outer.Belong != null) return (IJSAPI<Character>)_outer.Belong.GetContext();
                     else return null;
                 }
                 catch (Exception e)
@@ -145,7 +114,7 @@ namespace GameLogic.CharacterSystem
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public Aspect Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -167,20 +136,21 @@ namespace GameLogic.CharacterSystem
         protected string _name = "";
         protected string _description = "";
         protected PersistenceType _persistenceType = PersistenceType.Common;
-        protected EffectType _effectType = EffectType.Positive;
+        protected Character _benefit = null;
+        protected int _benefitTimes = 0;
         protected Character _belong = null;
 
-        public Aspect(string description)
+        public Aspect()
         {
-            _description = description ?? throw new ArgumentNullException(nameof(description));
             _apiObj = new API(this);
         }
 
         public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
         public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
         public PersistenceType PersistenceType { get => _persistenceType; set => _persistenceType = value; }
-        public EffectType EffectType { get => _effectType; set => _effectType = value; }
         public Character Belong { get => _belong; set => _belong = value; }
+        public Character Benefit { get => _benefit; set => _benefit = value; }
+        public int BenefitTimes { get => _benefitTimes; set => _benefitTimes = value; }
 
         public virtual IJSContext GetContext()
         {
@@ -188,12 +158,13 @@ namespace GameLogic.CharacterSystem
         }
 
         public void SetContext(IJSContext context) { }
+        
     }
 
     public class Consequence : Aspect
     {
         #region Javascript API class
-        protected new class API : Aspect.API
+        protected new class API : Aspect.API, IJSAPI<Consequence>
         {
             private readonly Consequence _outer;
 
@@ -226,7 +197,22 @@ namespace GameLogic.CharacterSystem
                     JSEngineManager.Engine.Log(e.Message);
                 }
             }
-            
+
+            Consequence IJSAPI<Consequence>.Origin(JSContextHelper proof)
+            {
+                try
+                {
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+            }
         }
         #endregion
         private readonly API _apiObj;
@@ -235,10 +221,8 @@ namespace GameLogic.CharacterSystem
         
         public int CounteractLevel { get => _counteractLevel; set => _counteractLevel = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Counteract level is less than 0."); }
 
-        public Consequence(string id) :
-            base(id)
+        public Consequence()
         {
-            _effectType = EffectType.Negative;
             _apiObj = new API(this);
         }
 

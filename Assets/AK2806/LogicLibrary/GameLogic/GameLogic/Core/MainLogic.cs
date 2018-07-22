@@ -12,11 +12,11 @@ namespace GameLogic.Core
 {
     public class JavascriptGlobalObject
     {
-        public IJSAPI characterManager = (IJSAPI)CharacterManager.Instance.GetContext();
-        public IJSAPI campaignManager = (IJSAPI)CampaignManager.Instance.GetContext();
-        public IJSAPI storyScene = (IJSAPI)StoryScene.Instance.GetContext();
-        public IJSAPI battleScene = (IJSAPI)BattleScene.Instance.GetContext();
-        public IJSAPI gameEventBus = (IJSAPI)GameEventBus.Instance.GetContext();
+        public IJSAPI<CharacterManager> characterManager = (IJSAPI<CharacterManager>)CharacterManager.Instance.GetContext();
+        public IJSAPI<CampaignManager> campaignManager = (IJSAPI<CampaignManager>)CampaignManager.Instance.GetContext();
+        public IJSAPI<StoryScene> storyScene = (IJSAPI<StoryScene>)StoryScene.Instance.GetContext();
+        public IJSAPI<BattleScene> battleScene = (IJSAPI<BattleScene>)BattleScene.Instance.GetContext();
+        public IJSAPI<GameEventBus> gameEventBus = (IJSAPI<GameEventBus>)GameEventBus.Instance.GetContext();
 
     }
 
@@ -24,6 +24,8 @@ namespace GameLogic.Core
     {
         private static bool _gameOver = true;
         private static readonly JavascriptGlobalObject globalObject = new JavascriptGlobalObject();
+
+        private static List<User> users = new List<User>();
 
         public static void Init()
         {
@@ -35,6 +37,8 @@ namespace GameLogic.Core
             engineRaw.BindType("Quat", typeof(Quaternion));
             engineRaw.SetVar("$", globalObject);
             
+            
+
             _gameOver = false;
         }
 
@@ -43,7 +47,7 @@ namespace GameLogic.Core
             return _gameOver;
         }
 
-        public static void Loop()
+        public static void Update()
         {
 
         }

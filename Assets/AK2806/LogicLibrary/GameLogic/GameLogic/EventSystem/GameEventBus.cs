@@ -10,7 +10,7 @@ namespace GameLogic.EventSystem
     public sealed class GameEventBus : IJSContextProvider
     {
         #region Javascript API class
-        private sealed class API : IJSAPI
+        private sealed class API : IJSAPI<GameEventBus>
         {
             private readonly GameEventBus _outer;
 
@@ -19,12 +19,12 @@ namespace GameLogic.EventSystem
                 _outer = outer;
             }
             
-            public IJSAPI createTrigger(string eventID, string jscode, bool autoReg = true)
+            public IJSAPI<Trigger> createTrigger(string eventID, Action action, bool autoReg = true)
             {
                 try
                 {
-                    Trigger trigger = new Trigger(eventID, new Command(jscode), autoReg);
-                    return (IJSAPI)trigger.GetContext();
+                    Trigger trigger = new Trigger(eventID, new Command(action), autoReg);
+                    return (IJSAPI<Trigger>)trigger.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -47,11 +47,11 @@ namespace GameLogic.EventSystem
                 }
             }
 
-            public void register(IJSAPI trigger)
+            public void register(IJSAPI<Trigger> trigger)
             {
                 try
                 {
-                    Trigger originEvent = (Trigger)JSContextHelper.Instance.GetAPIOrigin(trigger);
+                    Trigger originEvent = JSContextHelper.Instance.GetAPIOrigin(trigger);
                     _outer.Register(originEvent);
                 }
                 catch (Exception e)
@@ -60,11 +60,11 @@ namespace GameLogic.EventSystem
                 }
             }
 
-            public bool unregister(IJSAPI trigger)
+            public bool unregister(IJSAPI<Trigger> trigger)
             {
                 try
                 {
-                    Trigger originEvent = (Trigger)JSContextHelper.Instance.GetAPIOrigin(trigger);
+                    Trigger originEvent = JSContextHelper.Instance.GetAPIOrigin(trigger);
                     return _outer.Unregister(originEvent);
                 }
                 catch (Exception e)
@@ -74,7 +74,7 @@ namespace GameLogic.EventSystem
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public GameEventBus Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -97,11 +97,11 @@ namespace GameLogic.EventSystem
 
         public static GameEventBus Instance => _instance;
 
-        private readonly Dictionary<string, List<Trigger> > _triggerPools;
+        private readonly Dictionary<string, List<Trigger>> _triggerPools;
 
         private GameEventBus()
         {
-            _triggerPools = new Dictionary<string, List<Trigger> >();
+            _triggerPools = new Dictionary<string, List<Trigger>>();
             _apiObj = new API(this);
         }
 
@@ -110,8 +110,7 @@ namespace GameLogic.EventSystem
             string[] eventIDs = e.NotifyList;
             foreach (string id in eventIDs)
             {
-                List<Trigger> triggers;
-                if (_triggerPools.TryGetValue(id, out triggers))
+                if (_triggerPools.TryGetValue(id, out List<Trigger> triggers))
                 {
                     foreach (Trigger trigger in triggers)
                     {

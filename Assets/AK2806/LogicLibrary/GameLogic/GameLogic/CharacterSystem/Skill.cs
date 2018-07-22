@@ -6,62 +6,94 @@ using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.CharacterSystem
 {
-    public enum CharacterAction
+    public sealed class SkillType : IEquatable<SkillType>
     {
-        Overcome = 0b0001,
-        Advantage = 0b0010,
-        Attack = 0b0100,
-        Support = 0b1000
-    }
-
-    public sealed class SkillType
-    {
-        /*
-        private static SkillType Athletics = new SkillType("运动");
-        private static SkillType Burglary = new SkillType("盗窃");
-        private static SkillType Contacts = new SkillType("人脉");
-        private static SkillType Crafts = new SkillType("工艺");
-        private static SkillType Deceive = new SkillType("欺诈");
-        private static SkillType Drive = new SkillType("驾驶");
-        private static SkillType Empathy = new SkillType("共情");
-        private static SkillType Fight = new SkillType("战斗");
-        private static SkillType Investigate = new SkillType("调查");
-        private static SkillType Lore = new SkillType("学识");
-        private static SkillType Notice = new SkillType("洞察");
-        private static SkillType Physique = new SkillType("体格");
-        private static SkillType Provoke = new SkillType("煽动");
-        private static SkillType Rapport = new SkillType("交际");
-        private static SkillType Resources = new SkillType("资源");
-        private static SkillType Shoot = new SkillType("射击");
-        private static SkillType Stealth = new SkillType("潜行");
-        private static SkillType Will = new SkillType("意志");
-        */
-        private static List<SkillType> skillTypes = new List<SkillType>();
-
-        public static List<SkillType> SkillTypes => skillTypes;
+        public static readonly SkillType Athletics = new SkillType("Athletics", "运动", false, true, true);
+        public static readonly SkillType Burglary = new SkillType("Burglary", "盗窃");
+        public static readonly SkillType Contacts = new SkillType("Contacts", "人脉");
+        public static readonly SkillType Crafts = new SkillType("Crafts", "工艺");
+        public static readonly SkillType Deceive = new SkillType("Deceive", "欺诈");
+        public static readonly SkillType Drive = new SkillType("Drive", "驾驶", false, false, true);
+        public static readonly SkillType Empathy = new SkillType("Empathy", "共情");
+        public static readonly SkillType Fight = new SkillType("Fight", "战斗", true, true);
+        public static readonly SkillType Investigate = new SkillType("Investigate", "调查");
+        public static readonly SkillType Lore = new SkillType("Lore", "学识");
+        public static readonly SkillType Notice = new SkillType("Notice", "洞察");
+        public static readonly SkillType Physique = new SkillType("Physique", "体格", false, true);
+        public static readonly SkillType Provoke = new SkillType("Provoke", "威胁", true);
+        public static readonly SkillType Rapport = new SkillType("Rapport", "交际");
+        public static readonly SkillType Resources = new SkillType("Resources", "资源");
+        public static readonly SkillType Shoot = new SkillType("Shoot", "射击", true);
+        public static readonly SkillType Stealth = new SkillType("Stealth", "潜行");
+        public static readonly SkillType Will = new SkillType("Will", "意志", false, true);
+        
+        private static readonly Dictionary<string, SkillType> skillTypes = new Dictionary<string, SkillType>();
+        public static Dictionary<string, SkillType> SkillTypes => skillTypes;
         
         static SkillType()
         {
-            
+            skillTypes.Add(Athletics.Name, Athletics);
+            skillTypes.Add(Burglary.Name, Burglary);
+            skillTypes.Add(Contacts.Name, Contacts);
+            skillTypes.Add(Crafts.Name, Crafts);
+            skillTypes.Add(Deceive.Name, Deceive);
+            skillTypes.Add(Drive.Name, Drive);
+            skillTypes.Add(Empathy.Name, Empathy);
+            skillTypes.Add(Fight.Name, Fight);
+            skillTypes.Add(Investigate.Name, Investigate);
+            skillTypes.Add(Lore.Name, Lore);
+            skillTypes.Add(Notice.Name, Notice);
+            skillTypes.Add(Physique.Name, Physique);
+            skillTypes.Add(Provoke.Name, Provoke);
+            skillTypes.Add(Rapport.Name, Rapport);
+            skillTypes.Add(Resources.Name, Resources);
+            skillTypes.Add(Shoot.Name, Shoot);
+            skillTypes.Add(Stealth.Name, Stealth);
+            skillTypes.Add(Will.Name, Will);
         }
 
-        private string _name;
-        private CharacterAction _cando;
+        private readonly string _id;
+        private readonly string _name;
+        private readonly bool _canAttack;
+        private readonly bool _canDefend;
+        private readonly bool _canMove;
 
-        public string Name { get => _name; set => _name = value; }
-        public CharacterAction Cando { get => _cando; set => _cando = value; }
-
-        public SkillType(string name, CharacterAction cando)
+        public string Id => _id;
+        public string Name => _name;
+        public bool CanAttack => _canAttack;
+        public bool CanDefend => _canDefend;
+        public bool CanMove => _canMove;
+        
+        private SkillType(string id, string name, bool canAttack = false, bool canDefend = false, bool canMove = false)
         {
-            this._name = name;
-            this._cando = cando;
+            _id = id ?? throw new ArgumentNullException(nameof(id));
+            _name = name ?? throw new ArgumentNullException(nameof(name));
+            _canAttack = canAttack;
+            _canDefend = canDefend;
+            _canMove = canMove;
+        }
+
+        public bool Equals(SkillType other)
+        {
+            return other != null && _id == other._id;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return this.Equals(obj as SkillType);
+        }
+
+        public override int GetHashCode()
+        {
+            return _id.GetHashCode();
         }
         
     }
 
     public class Skill : ICharacterProperty
     {
-        protected class API : IJSAPI
+        #region Javascript API class
+        protected class API : IJSAPI<Skill>
         {
             private readonly Skill _outer;
 
@@ -82,19 +114,7 @@ namespace GameLogic.CharacterSystem
                     return null;
                 }
             }
-
-            public void setName(string value)
-            {
-                try
-                {
-                    _outer.Name = value;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                }
-            }
-
+            
             public string getDescription()
             {
                 try
@@ -120,9 +140,57 @@ namespace GameLogic.CharacterSystem
                 }
             }
 
+            public int getLevel()
+            {
+                try
+                {
+                    return _outer.Level;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                    return -1;
+                }
+            }
 
+            public void setLevel(int value)
+            {
+                try
+                {
+                    _outer.Level = value;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                }
+            }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public string getSkillType()
+            {
+                try
+                {
+                    return _outer.SkillType.Id;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                    return null;
+                }
+            }
+
+            public void setSkillType(string id)
+            {
+                try
+                {
+                    _outer.SkillType = SkillType.SkillTypes[id];
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                }
+            }
+
+            public Skill Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -138,24 +206,33 @@ namespace GameLogic.CharacterSystem
                 }
             }
         }
-
+        #endregion
         private readonly API _apiObj;
-
-        protected string _name = "";
+        
         protected string _description = "";
         protected Character _belong = null;
         protected SkillType _skillType;
         protected int _level = 0;
+        protected bool _canAttack;
+        protected bool _canDefend;
+        protected bool _canMove;
 
-        public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
+        public string Name { get => _skillType.Name; set { } }
         public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
         public Character Belong { get => _belong; set => _belong = value; }
-        public SkillType SkillType { get => _skillType; set => _skillType = value; }
+        public SkillType SkillType { get => _skillType; set => _skillType = value ?? throw new ArgumentNullException(nameof(value)); }
         public int Level { get => _level; set => _level = value; }
+        public bool CanAttack { get => _canAttack; set => _canAttack = value; }
+        public bool CanDefend { get => _canDefend; set => _canDefend = value; }
+        public bool CanMove { get => _canMove; set => _canMove = value; }
 
-        public Skill()
+        public Skill(SkillType skillType)
         {
             _apiObj = new API(this);
+            _skillType = skillType ?? throw new ArgumentNullException(nameof(skillType));
+            _canAttack = skillType.CanAttack;
+            _canDefend = skillType.CanDefend;
+            _canMove = skillType.CanMove;
         }
 
         public IJSContext GetContext()
@@ -164,5 +241,6 @@ namespace GameLogic.CharacterSystem
         }
 
         public void SetContext(IJSContext context) { }
+        
     }
 }

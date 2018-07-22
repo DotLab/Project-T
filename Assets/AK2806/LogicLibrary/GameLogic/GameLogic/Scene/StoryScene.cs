@@ -12,7 +12,7 @@ namespace GameLogic.Scene
     public sealed class StoryScene : IJSContextProvider
     {
         #region Javascript API class
-        private sealed class API : IJSAPI
+        private sealed class API : IJSAPI<StoryScene>
         {
             private readonly StoryScene _outer;
 
@@ -21,13 +21,13 @@ namespace GameLogic.Scene
                 _outer = outer;
             }
 
-            public IJSAPI createObject(string id, IJSAPI character)
+            public IJSAPI<SceneObject> createSceneObject(string id, IJSAPI<Character> character)
             {
                 try
                 {
                     Character originCharacter = (Character)JSContextHelper.Instance.GetAPIOrigin(character);
-                    ISceneObject sceneObject = _outer.CreateSceneObject(id, originCharacter);
-                    return (IJSAPI)sceneObject.GetContext();
+                    SceneObject sceneObject = _outer.CreateSceneObject(id, originCharacter);
+                    return (IJSAPI<SceneObject>)sceneObject.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -36,11 +36,11 @@ namespace GameLogic.Scene
                 }
             }
 
-            public bool addToScene(IJSAPI sceneObj)
+            public bool addToScene(IJSAPI<ISceneObject> sceneObj)
             {
                 try
                 {
-                    ISceneObject originSceneObj = (ISceneObject)JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+                    ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
                     return _outer.AddIntoScene(originSceneObj);
                 }
                 catch (Exception e)
@@ -50,12 +50,12 @@ namespace GameLogic.Scene
                 }
             }
 
-            public IJSAPI getObject(string id)
+            public IJSAPI<ISceneObject> getObject(string id)
             {
                 try
                 {
                     ISceneObject sceneObject = _outer.ObjList[id];
-                    return (IJSAPI)sceneObject.GetContext();
+                    return (IJSAPI<ISceneObject>)sceneObject.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -64,11 +64,11 @@ namespace GameLogic.Scene
                 }
             }
             
-            public bool isInScene(IJSAPI sceneObj)
+            public bool isInScene(IJSAPI<ISceneObject> sceneObj)
             {
                 try
                 {
-                    ISceneObject originSceneObj = (ISceneObject)JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+                    ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
                     return _outer.ObjInSceneList.Contains(originSceneObj);
                 }
                 catch (Exception e)
@@ -91,11 +91,11 @@ namespace GameLogic.Scene
                 }
             }
 
-            public bool removeFromScene(IJSAPI sceneObj)
+            public bool removeFromScene(IJSAPI<ISceneObject> sceneObj)
             {
                 try
                 {
-                    ISceneObject originSceneObj = (ISceneObject)JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+                    ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
                     return _outer.RemoveFromScene(originSceneObj);
                 }
                 catch (Exception e)
@@ -130,11 +130,11 @@ namespace GameLogic.Scene
                 }
             }
             
-            public IJSAPI getCamera()
+            public IJSAPI<Camera> getCamera()
             {
                 try
                 {
-                    return (IJSAPI)_outer.Camera.GetContext();
+                    return (IJSAPI<Camera>)_outer.Camera.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -143,11 +143,11 @@ namespace GameLogic.Scene
                 }
             }
 
-            public IJSAPI getTextBox(int index)
+            public IJSAPI<TextBox> getTextBox(int index)
             {
                 try
                 {
-                    return (IJSAPI)_outer.TextBoxes[index].GetContext();
+                    return (IJSAPI<TextBox>)_outer.TextBoxes[index].GetContext();
                 }
                 catch (Exception e)
                 {
@@ -156,11 +156,11 @@ namespace GameLogic.Scene
                 }
             }
 
-            public IJSAPI getPlayer(int index)
+            public IJSAPI<Player> getPlayer(int index)
             {
                 try
                 {
-                    return (IJSAPI)_outer.Players[index].GetContext();
+                    return (IJSAPI<Player>)_outer.Players[index].GetContext();
                 }
                 catch (Exception e)
                 {
@@ -169,7 +169,7 @@ namespace GameLogic.Scene
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public StoryScene Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -213,7 +213,7 @@ namespace GameLogic.Scene
             _apiObj = new API(this);
         }
 
-        public ISceneObject CreateSceneObject(string id, Character character)
+        public SceneObject CreateSceneObject(string id, Character character)
         {
             SceneObject ret = new SceneObject(id, character);
             _objList.Add(ret);
@@ -248,7 +248,7 @@ namespace GameLogic.Scene
             foreach (TextBox box in _textBoxes)
             {
                 box.Clear();
-                box.Display();
+                box.DisplayText();
             }
             throw new NotImplementedException();
         }
@@ -267,9 +267,9 @@ namespace GameLogic.Scene.Story
     public interface ISceneObject : IIdentifiable
     {
         void OnInteract();
-        void OnCreateAdvantage();
+        void OnCreateAspect();
         void OnAttack();
-        void OnSupport();
+        void OnHinder();
         Character CharacterRef { get; }
         Layout Layout { get; }
         PortraitStyle Style { get; }
@@ -281,7 +281,7 @@ namespace GameLogic.Scene.Story
     public class SceneObject : ISceneObject
     {
         #region Javascript API class
-        protected class API : IJSAPI
+        protected class API : IJSAPI<SceneObject>
         {
             private readonly SceneObject _outer;
 
@@ -303,11 +303,11 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public void setInteractCode(string jscode)
+            public void setInteractReaction(Action callback)
             {
                 try
                 {
-                    _outer.Interact = new Command(jscode);
+                    _outer.Interact = new Command(callback);
                 }
                 catch (Exception e)
                 {
@@ -315,11 +315,11 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public void setCreateAdvantageCode(string jscode)
+            public void setCreateAspectReaction(Action callback)
             {
                 try
                 {
-                    _outer.CreateAdvantage = new Command(jscode);
+                    _outer.CreateAspect = new Command(callback);
                 }
                 catch (Exception e)
                 {
@@ -327,11 +327,11 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public void setAttackCode(string jscode)
+            public void setAttackReaction(Action callback)
             {
                 try
                 {
-                    _outer.Attack = new Command(jscode);
+                    _outer.Attack = new Command(callback);
                 }
                 catch (Exception e)
                 {
@@ -339,11 +339,11 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public void setSupportCode(string jscode)
+            public void setHinderReaction(Action callback)
             {
                 try
                 {
-                    _outer.Support = new Command(jscode);
+                    _outer.Hinder = new Command(callback);
                 }
                 catch (Exception e)
                 {
@@ -351,11 +351,11 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public IJSAPI getCharacter()
+            public IJSAPI<Character> getCharacter()
             {
                 try
                 {
-                    return (IJSAPI)_outer.CharacterRef.GetContext();
+                    return (IJSAPI<Character>)_outer.CharacterRef.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -465,7 +465,7 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public SceneObject Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -488,18 +488,18 @@ namespace GameLogic.Scene.Story
         protected Command _interact;
         protected Command _createAdvantage;
         protected Command _attack;
-        protected Command _support;
-        protected Character _characterRef;
+        protected Command _hinder;
+        protected readonly Character _characterRef;
         protected Layout _layout;
         protected PortraitStyle _style;
         protected StoryViewEffect _effect;
 
         public string ID => _id;
         public Command Interact { get => _interact; set => _interact = value; }
-        public Command CreateAdvantage { get => _createAdvantage; set => _createAdvantage = value; }
+        public Command CreateAspect { get => _createAdvantage; set => _createAdvantage = value; }
         public Command Attack { get => _attack; set => _attack = value; }
-        public Command Support { get => _support; set => _support = value; }
-        public Character CharacterRef { get => _characterRef; set => _characterRef = value ?? throw new ArgumentNullException(nameof(value)); }
+        public Command Hinder { get => _hinder; set => _hinder = value; }
+        public Character CharacterRef => _characterRef;
         public Layout Layout => _layout;
         public PortraitStyle Style => _style;
         public StoryViewEffect Effect => _effect;
@@ -540,7 +540,7 @@ namespace GameLogic.Scene.Story
             }
         }
 
-        public virtual void OnCreateAdvantage()
+        public virtual void OnCreateAspect()
         {
             if (_createAdvantage != null)
             {
@@ -556,11 +556,11 @@ namespace GameLogic.Scene.Story
             }
         }
 
-        public virtual void OnSupport()
+        public virtual void OnHinder()
         {
-            if (_support != null)
+            if (_hinder != null)
             {
-                _support.DoAction();
+                _hinder.DoAction();
             }
         }
 
@@ -569,13 +569,65 @@ namespace GameLogic.Scene.Story
             return _apiObj;
         }
 
-        public virtual void SetContext(IJSContext context) { }
+        public void SetContext(IJSContext context) { }
+    }
+
+    public class PictureObject : SceneObject
+    {
+        #region Javascript API class
+        protected new class API : SceneObject.API, IJSAPI<PictureObject>
+        {
+            private readonly PictureObject _outer;
+
+            public API(PictureObject outer) :
+                base(outer)
+            {
+                _outer = outer;
+            }
+
+            PictureObject IJSAPI<PictureObject>.Origin(JSContextHelper proof)
+            {
+                try
+                {
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+            }
+        }
+        #endregion
+        private readonly API _apiObj;
+        
+        protected readonly Camera _cameraRef;
+        
+        public PictureObject(string id, Character character) :
+            base(id, character)
+        {
+        }
+        
+        public override void TransTo(Layout layout)
+        {
+            _layout = layout;
+            throw new NotImplementedException();
+        }
+        
+        public override IJSContext GetContext()
+        {
+            return _apiObj;
+        }
+        
     }
 
     public sealed class Camera : IJSContextProvider
     {
         #region Javascript API class
-        private sealed class API : IJSAPI
+        private sealed class API : IJSAPI<Camera>
         {
             private readonly Camera _outer;
 
@@ -659,7 +711,7 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public Camera Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -728,7 +780,7 @@ namespace GameLogic.Scene.Story
     public class TextItem : ITextItem
     {
         #region Javascript API class
-        protected class API : IJSAPI
+        protected class API : IJSAPI<TextItem>
         {
             private readonly TextItem _outer;
 
@@ -762,7 +814,7 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public TextItem Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -802,23 +854,23 @@ namespace GameLogic.Scene.Story
         public virtual void SetContext(IJSContext context) { }
     }
 
-    public class SelectionItem : ITextItem
+    public class ClickableItem : ITextItem
     {
         #region Javascript API class
-        protected class API : IJSAPI
+        protected class API : IJSAPI<ClickableItem>
         {
-            private readonly SelectionItem _outer;
+            private readonly ClickableItem _outer;
 
-            public API(SelectionItem outer)
+            public API(ClickableItem outer)
             {
                 _outer = outer;
             }
 
-            public void setActionCode(string jscode)
+            public void setAction(Action action)
             {
                 try
                 {
-                    _outer.Action = new Command(jscode);
+                    _outer.Action = new Command(action);
                 }
                 catch (Exception e)
                 {
@@ -851,7 +903,7 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public ClickableItem Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -877,7 +929,7 @@ namespace GameLogic.Scene.Story
         public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException(nameof(value)); }
         public Command Action { get => _action; set => _action = value; }
 
-        public SelectionItem(string text = "", string actionCode = null)
+        public ClickableItem(string text = "", string actionCode = null)
         {
             _text = text ?? throw new ArgumentNullException(nameof(text));
             if (actionCode != null)
@@ -910,7 +962,7 @@ namespace GameLogic.Scene.Story
     public sealed class TextBox : IJSContextProvider
     {
         #region Javascript API class
-        private sealed class API : IJSAPI
+        private sealed class API : IJSAPI<TextBox>
         {
             private readonly TextBox _outer;
 
@@ -919,12 +971,12 @@ namespace GameLogic.Scene.Story
                 _outer = outer;
             }
 
-            public IJSAPI generateText()
+            public IJSAPI<TextItem> generateText()
             {
                 try
                 {
                     ITextItem textItem = _outer.GenerateText();
-                    return (IJSAPI)textItem.GetContext();
+                    return (IJSAPI<TextItem>)textItem.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -933,12 +985,12 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public IJSAPI generateSelection()
+            public IJSAPI<ClickableItem> generateButton()
             {
                 try
                 {
-                    ITextItem selectionItem = _outer.GenerateSelection();
-                    return (IJSAPI)selectionItem.GetContext();
+                    ITextItem buttonItem = _outer.GenerateButton();
+                    return (IJSAPI<ClickableItem>)buttonItem.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -976,7 +1028,7 @@ namespace GameLogic.Scene.Story
             {
                 try
                 {
-                    _outer.Display();
+                    _outer.DisplayText();
                 }
                 catch (Exception e)
                 {
@@ -984,7 +1036,7 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public TextBox Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -1004,10 +1056,13 @@ namespace GameLogic.Scene.Story
         private readonly API _apiObj;
 
         private readonly List<ITextItem> _textItems;
+        private View _portrait;
+        private PortraitStyle _portraitStyle;
         private readonly int _playerIndex;
-
-        public List<ITextItem> TextItems => _textItems;
+        
         public int PlayerIndex => _playerIndex;
+        public View Portrait => _portrait;
+        public PortraitStyle PortraitStyle => _portraitStyle;
 
         public TextBox(int index)
         {
@@ -1024,9 +1079,9 @@ namespace GameLogic.Scene.Story
             return ret;
         }
 
-        public ITextItem GenerateSelection()
+        public ITextItem GenerateButton()
         {
-            SelectionItem ret = new SelectionItem();
+            ClickableItem ret = new ClickableItem();
             _textItems.Add(ret);
             return ret;
         }
@@ -1036,8 +1091,20 @@ namespace GameLogic.Scene.Story
             _textItems.Clear();
         }
 
-        public void Display()
+        public void DisplayText()
         {
+            throw new NotImplementedException();
+        }
+
+        public void UpdatePortrait(View view)
+        {
+            _portrait = view;
+            throw new NotImplementedException();
+        }
+
+        public void UpdatePortraitStyle(PortraitStyle style)
+        {
+            _portraitStyle = style;
             throw new NotImplementedException();
         }
 

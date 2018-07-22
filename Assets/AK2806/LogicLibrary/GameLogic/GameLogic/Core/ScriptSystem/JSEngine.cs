@@ -83,7 +83,7 @@ namespace GameLogic.Core.ScriptSystem
             if (context == null) _engine.SetVar(varname, provider.GetContext());
             else
             {
-                if (!(context is IJSAPI))
+                if (!(context is IJSAPI<IJSContextProvider>))
                 {
                     provider.SetContext(context);
                 }

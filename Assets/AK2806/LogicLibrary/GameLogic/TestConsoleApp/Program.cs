@@ -1,17 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using Jint;
-using Jint.Native;
-using Newtonsoft.Json;
 using System.Numerics;
-using GameLogic.CharacterSystem;
-using GameLogic.Core;
-using GameLogic.Core.ScriptSystem;
-using GameLogic.Core.ScriptSystem.EngineWrapper;
-using Jint.Parser;
-using Jint.Runtime;
 using System.Dynamic;
+using System.Text;
 
 namespace TestConsoleApp
 {
@@ -74,7 +66,7 @@ namespace TestConsoleApp
             this.str = str;
         }
     }
-
+    /*
     public class VarTest : IJSContextProvider
     {
         public struct Var
@@ -260,6 +252,7 @@ namespace TestConsoleApp
 
         }
     }
+    */
 
     class Program
     {
@@ -280,7 +273,7 @@ namespace TestConsoleApp
             testList.Add(new TestElement("D"));
             JSEngineManager.Engine.Execute("function foo(e){ e.description += ' Engine'; log(e.description); }  testList.forEach(foo);");
             */
-            
+            /*
             JintEngine engine = new JintEngine();
             int[] intarray = { 1, 5, 3, 4, 5 };
             dynamic expandoObject = new ExpandoObject();
@@ -302,6 +295,11 @@ namespace TestConsoleApp
                         log($[i]);
                 })();
             ");
+            */
+            IEnumerable<object> objs = new object[] { "33", "44" };
+            IEnumerable<string> strs = new string[] { "33", "44" };
+            Console.WriteLine(strs is IEnumerable<object>);
+            
             /*
             string json = @"
                 {

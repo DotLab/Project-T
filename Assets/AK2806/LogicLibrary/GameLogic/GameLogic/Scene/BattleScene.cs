@@ -7,7 +7,7 @@ namespace GameLogic.Scene
 {
     public class BattleScene : IJSContextProvider
     {
-        private sealed class API : IJSAPI
+        private sealed class API : IJSAPI<BattleScene>
         {
             private readonly BattleScene _outer;
 
@@ -16,7 +16,7 @@ namespace GameLogic.Scene
                 _outer = outer;
             }
             
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public BattleScene Origin(JSContextHelper proof)
             {
                 try
                 {

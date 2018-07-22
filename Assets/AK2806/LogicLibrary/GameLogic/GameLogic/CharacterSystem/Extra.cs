@@ -17,7 +17,7 @@ namespace GameLogic.CharacterSystem
     public class Extra : ICharacterProperty
     {
         #region Javascript API class
-        protected class API : IJSAPI
+        protected class API : IJSAPI<Extra>
         {
             private readonly Extra _outer;
 
@@ -26,11 +26,11 @@ namespace GameLogic.CharacterSystem
                 _outer = outer;
             }
             
-            public IJSAPI getItem()
+            public IJSAPI<Character> getItem()
             {
                 try
                 {
-                    return (IJSAPI)_outer.Item.GetContext();
+                    return (IJSAPI<Character>)_outer.Item.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -39,11 +39,11 @@ namespace GameLogic.CharacterSystem
                 }
             }
 
-            public void setItem(IJSAPI item)
+            public void setItem(IJSAPI<Character> item)
             {
                 try
                 {
-                    _outer.Item = (Character)JSContextHelper.Instance.GetAPIOrigin(item);
+                    _outer.Item = JSContextHelper.Instance.GetAPIOrigin(item);
                 }
                 catch (Exception e)
                 {
@@ -51,11 +51,11 @@ namespace GameLogic.CharacterSystem
                 }
             }
 
-            public IJSAPI getBelong()
+            public IJSAPI<Character> getBelong()
             {
                 try
                 {
-                    if (_outer.Belong != null) return (IJSAPI)_outer.Belong.GetContext();
+                    if (_outer.Belong != null) return (IJSAPI<Character>)_outer.Belong.GetContext();
                     else return null;
                 }
                 catch (Exception e)
@@ -65,11 +65,23 @@ namespace GameLogic.CharacterSystem
                 }
             }
 
-            public IJSAPI getPassiveEffectList()
+            public void setCustomData(object value)
             {
                 try
                 {
-                    return (IJSAPI)_outer.PassiveEffects.GetContext();
+                    _outer.CustomData = value;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                }
+            }
+
+            public object getCustomData()
+            {
+                try
+                {
+                    return _outer.CustomData;
                 }
                 catch (Exception e)
                 {
@@ -78,7 +90,20 @@ namespace GameLogic.CharacterSystem
                 }
             }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public IJSAPI<ExtraPropertyList<PassiveEffect>> getPassiveEffectList()
+            {
+                try
+                {
+                    return (IJSAPI<ExtraPropertyList<PassiveEffect>>)_outer.PassiveEffects.GetContext();
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                    return null;
+                }
+            }
+
+            public Extra Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -99,6 +124,10 @@ namespace GameLogic.CharacterSystem
         
         protected Character _belong = null;
         protected Character _item;
+        protected bool _isTool;
+        protected bool _isLongRangeWeapon;
+        protected bool _isVehicle;
+        protected object _customData = null;
         protected readonly ExtraPropertyList<PassiveEffect> _passiveEffects;
 
         public Extra(Character item)
@@ -127,6 +156,10 @@ namespace GameLogic.CharacterSystem
                 value.Belong = this;
             }
         }
+        public bool IsTool { get => _isTool; set { _isTool = value; if (!value) _isLongRangeWeapon = _isVehicle = false; } }
+        public bool IsLongRangeWeapon { get => _isLongRangeWeapon; set { _isLongRangeWeapon = value; if (value) _isTool = true; } }
+        public bool IsVehicle { get => _isVehicle; set { _isVehicle = value; if (value) _isTool = true; } }
+        public object CustomData { get => _customData; set => _customData = value; }
         public ExtraPropertyList<PassiveEffect> PassiveEffects => _passiveEffects;
 
         public virtual IJSContext GetContext()
@@ -134,7 +167,7 @@ namespace GameLogic.CharacterSystem
             return _apiObj;
         }
 
-        public virtual void SetContext(IJSContext context) { }
+        public void SetContext(IJSContext context) { }
     }
 
 }
