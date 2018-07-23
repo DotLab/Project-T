@@ -1,11 +1,12 @@
 ﻿using GameLogic.CharacterSystem;
+using GameLogic.Core;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace GameLogic.Scene
+namespace GameLogic.Container
 {
-    public sealed class CheckLayer
+    public sealed class SkillCheckLayerContainer
     {
         public enum CharacterAction
         {
@@ -14,12 +15,33 @@ namespace GameLogic.Scene
             HINDER
         }
 
+        public enum CheckResult
+        {
+            CANCEL,
+            FAIL,
+            TIE,
+            SUCCEED,
+            SUCCEED_WITH_STYLE
+        }
+
+        private static Range FAIL;
+        private static Range TIE;
+        private static Range SUCCEED;
+        private static Range SUCCEED_WITH_STYLE;
+
         public static readonly Dictionary<SkillType, List<SkillType>> Overcome = new Dictionary<SkillType, List<SkillType>>();
         public static readonly Dictionary<SkillType, List<SkillType>> Evade = new Dictionary<SkillType, List<SkillType>>();
         public static readonly Dictionary<SkillType, List<SkillType>> Defend = new Dictionary<SkillType, List<SkillType>>();
         
-        static CheckLayer()
+        static SkillCheckLayerContainer()
         {
+            FAIL = new Range(float.NegativeInfinity, 0);
+            TIE = new Range(0, 0);
+            TIE.highOpen = false;
+            SUCCEED = new Range(0, 3);
+            SUCCEED.lowOpen = true;
+            SUCCEED_WITH_STYLE = new Range(3, float.PositiveInfinity);
+
             Overcome.Add(SkillType.Athletics, new List<SkillType>(new SkillType[] { SkillType.Athletics }));
             Overcome.Add(SkillType.Burglary, new List<SkillType>(new SkillType[] { SkillType.Burglary }));
             Overcome.Add(SkillType.Contacts, new List<SkillType>(new SkillType[] { SkillType.Contacts }));
@@ -63,6 +85,14 @@ namespace GameLogic.Scene
             Defend.Add(SkillType.Fight, new List<SkillType>(new SkillType[] { SkillType.Fight }));
             Defend.Add(SkillType.Will, new List<SkillType>(new SkillType[] { SkillType.Provoke }));
         }
+        
+        public static void SetShifts(Range fail, Range tie, Range succeed, Range succeedWithStyle)
+        {
+            FAIL = fail;
+            TIE = tie;
+            SUCCEED = succeed;
+            SUCCEED_WITH_STYLE = succeedWithStyle;
+        }
 
         private Character _initiative;
         private Character _passive;
@@ -72,13 +102,18 @@ namespace GameLogic.Scene
         private int _initiativePoint = 0;
         private int _passivePoint = 0;
 
-        public CheckLayer(Character initiative, Character passive, CharacterAction action)
+        public SkillCheckLayerContainer(Character initiative, Character passive, CharacterAction action)
         {
             _initiative = initiative ?? throw new ArgumentNullException(nameof(initiative));
             _passive = passive ?? throw new ArgumentNullException(nameof(passive));
             _action = action;
         }
         
+        public void StartCheck(Action<CheckResult> initiative, Action<CheckResult> passive)
+        {
+            
+        }
+
         private bool CanResistSkill(SkillType initiative, SkillType resist)
         {
             Dictionary<SkillType, List<SkillType>> resistTable;
@@ -115,15 +150,9 @@ namespace GameLogic.Scene
             }
         }
         
-        public bool InitiativeCanUseSkill(SkillType skillType)
+        private int[] RollDice()
         {
-            return this.CanUseSkill(skillType);
-        }
-
-        public bool PassiveCanUseSkill(SkillType skillType)
-        {
-            if (_initiativeSkill != null) return this.CanResistSkill(_initiativeSkill.SkillType, skillType);
-            else return false;
+            return FateDice.Roll();
         }
 
         public void InitiativeUseSkill(SkillType skillType)

@@ -360,15 +360,15 @@ namespace GameLogic.CharacterSystem
         protected string _name = "";
         protected string _description = "";
         protected Extra _belong = null;
-        protected readonly View _view;
+        protected readonly CharacterView _view;
 
         public string ID => _id;
         public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
         public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
         public Extra Belong { get => _belong; set => _belong = value; }
-        public View View => _view;
+        public CharacterView View => _view;
 
-        protected Character(string id, View view)
+        protected Character(string id, CharacterView view)
         {
             _id = id ?? throw new ArgumentNullException(nameof(id));
             _view = view ?? throw new ArgumentNullException(nameof(view));
@@ -434,7 +434,7 @@ namespace GameLogic.CharacterSystem
         public override CharacterPropertyList<Extra> Extras => _extras;
         public override CharacterPropertyList<Consequence> Consequences => _consequences;
 
-        public TemporaryCharacter(string id, View view) :
+        public TemporaryCharacter(string id, CharacterView view) :
             base(id, view)
         {
             _aspects = new CharacterPropertyList<Aspect>(this);
@@ -499,7 +499,7 @@ namespace GameLogic.CharacterSystem
 
         public override CharacterPropertyList<Consequence> Consequences => _consequences;
 
-        public CommonCharacter(string id, View view) :
+        public CommonCharacter(string id, CharacterView view) :
             base(id, view)
         {
             _aspects = new CharacterPropertyList<Aspect>(this);
@@ -540,7 +540,7 @@ namespace GameLogic.CharacterSystem
 
         public override CharacterPropertyList<Consequence> Consequences => _consequences;
 
-        public KeyCharacter(string id, View view) :
+        public KeyCharacter(string id, CharacterView view) :
             base(id, view)
         {
             _aspects = new CharacterPropertyList<Aspect>(this);
@@ -582,6 +582,8 @@ namespace GameLogic.CharacterSystem
 
         private readonly API _apiObj;
 
+        private ulong _autoIncrement = 0L;
+
         public enum DataLevel
         {
             Temporary,
@@ -605,14 +607,21 @@ namespace GameLogic.CharacterSystem
             _apiObj = new API(this);
         }
         
-        public Character CreateCharacterWithSaving(DataLevel dataLevel, string id, View view)
+        public Character CreateCharacterWithSaving(DataLevel dataLevel, string id, CharacterView view)
         {
             Character ret = CreateCharacter(dataLevel, id, view);
             _savingCharacters.Add(ret);
             return ret;
         }
 
-        public Character CreateCharacter(DataLevel dataLevel, string id, View view)
+        public Character CreateTemporaryCharacter(DataLevel dataLevel, CharacterView view)
+        {
+            string id = "Character_" + _autoIncrement++;
+            Character ret = CreateCharacter(dataLevel, id, view);
+            return ret;
+        }
+
+        private Character CreateCharacter(DataLevel dataLevel, string id, CharacterView view)
         {
             Character ret = null;
             switch (dataLevel)

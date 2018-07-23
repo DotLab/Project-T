@@ -286,9 +286,7 @@ namespace GameLogic.Core
             _owner = owner;
             _container = new List<TItem>();
         }
-
-        ~AttachableList() => this.ForEach(item => item.Belong = null);
-
+        
         public virtual void Add(TItem item)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));

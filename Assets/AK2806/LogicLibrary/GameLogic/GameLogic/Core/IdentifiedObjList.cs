@@ -65,6 +65,11 @@ namespace GameLogic.Core
             }
         }
 
+        public bool TryGetValue(string id, out T value)
+        {
+            return _table.TryGetValue(id, out value);
+        }
+
         public T[] ToArray()
         {
             T[] ret = new T[_table.Count];

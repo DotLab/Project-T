@@ -9,10 +9,10 @@ namespace GameLogic.CharacterSystem
 {
     public interface IStuntProperty : IAttachable<Stunt> { }
 
-    public class Stunt : ICharacterProperty
+    public sealed class Stunt : AutogenIdentifiable, ICharacterProperty
     {
         #region Javascript API class
-        protected class API : IJSAPI<Stunt>
+        private sealed class API : IJSAPI<Stunt>
         {
             private readonly Stunt _outer;
 
@@ -129,11 +129,11 @@ namespace GameLogic.CharacterSystem
         #endregion
         private readonly API _apiObj;
 
-        protected string _name = "";
-        protected string _description = "";
-        protected Character _belong = null;
-        protected InitiativeEffect _initiativeEffect;
-        protected SkillType _boundSkillType;
+        private string _name = "";
+        private string _description = "";
+        private Character _belong = null;
+        private InitiativeEffect _initiativeEffect;
+        private SkillType _boundSkillType;
 
         public Stunt(InitiativeEffect effect, SkillType boundSkillType, string name = "", string description = "")
         {
@@ -145,9 +145,7 @@ namespace GameLogic.CharacterSystem
             _description = description ?? throw new ArgumentNullException(nameof(description));
             _apiObj = new API(this);
         }
-
-        ~Stunt() => _initiativeEffect.Belong = null;
-
+        
         public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
         public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
         public Character Belong { get => _belong; set => _belong = value; }
@@ -164,12 +162,14 @@ namespace GameLogic.CharacterSystem
             }
         }
 
-        public virtual IJSContext GetContext()
+        public override string BaseID => "Stunt";
+
+        public override IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(IJSContext context) { }
+        public override void SetContext(IJSContext context) { }
     }
     
 }

@@ -11,12 +11,12 @@ namespace XUnitTest
 {
     public class TestElement : ICharacterProperty
     {
-        public static IJSAPI createTestElement()
+        public static IJSAPI<TestElement> createTestElement()
         {
-            return (IJSAPI)new TestElement().GetContext();
+            return (IJSAPI<TestElement>)new TestElement().GetContext();
         }
 
-        private class API : IJSAPI
+        private class API : IJSAPI<TestElement>
         {
             private TestElement _outer;
 
@@ -28,7 +28,7 @@ namespace XUnitTest
             public string name { get => _outer.Name; set => _outer.Name = value; }
             public string description { get => _outer.Description; set => _outer.Description = value; }
 
-            public IJSContextProvider Origin(JSContextHelper proof)
+            public TestElement Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -91,7 +91,7 @@ namespace XUnitTest
             JSEngine engine = new JSEngine(engineRaw);
 
             CharacterPropertyList<TestElement> testList = new CharacterPropertyList<TestElement>(null);
-            engineRaw.SetVar(nameof(TestElement.createTestElement), new Func<IJSAPI>(TestElement.createTestElement));
+            engineRaw.SetVar(nameof(TestElement.createTestElement), new Func<IJSAPI<TestElement>>(TestElement.createTestElement));
             engine.SynchronizeContext(nameof(testList), testList);
             engine.Execute("var ae = createTestElement(); ae.description = 'AddTest'; testList.add(ae);");
             Assert.True(testList.Count == 1);

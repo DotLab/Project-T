@@ -1,122 +1,127 @@
-﻿using GameLogic.Core;
+﻿using GameLogic.Core.Network;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace GameLogic.Client
 {
-    public abstract class Client
+    public class Client
     {
+        protected readonly Connection _networkRef;
+
+        protected Client(Connection connection)
+        {
+            _networkRef = connection ?? throw new ArgumentNullException(nameof(connection));
+        }
+        
+        public virtual void Update()
+        {
+            _networkRef.UpdateReceiver();
+        }
+    }
+
+    public sealed class PlayerClient : Client
+    {
+        public enum PlayerClientScene
+        {
+            STORYBOARD,
+            BATTLEGROUND
+        }
+
+        private readonly PlayerStoryScene _storyboard;
+        private readonly PlayerBattleground _battleground;
+
+        public PlayerStoryScene Storyboard => _storyboard;
+        public PlayerBattleground Battleground => _battleground;
+
+        public PlayerClient(Connection connection) :
+            base(connection)
+        {
+            _storyboard = new PlayerStoryScene(connection, this);
+            _battleground = new PlayerBattleground(this);
+        }
+
+        public void UseScene(PlayerClientScene scene)
+        {
+            switch (scene)
+            {
+                case PlayerClientScene.STORYBOARD:
+                    break;
+                case PlayerClientScene.BATTLEGROUND:
+                    break;
+                default:
+                    break;
+            }
+        }
 
     }
 
-    public abstract class Battleground
+    public sealed class DMClient : Client
     {
-
-        public void Reset()
+        public enum DMClientScene
         {
+            STORYBOARD,
+            BATTLEGROUND,
+            CAMPAIGNMAP
+        }
+        
+        private readonly DMStoryScene _storyboard;
+        private readonly DMBattleground _battleground;
+        private readonly Queue<DMCheckInfo> _checkInfos;
+        
+        public DMStoryScene Storyboard => _storyboard;
+        public DMBattleground Battleground => _battleground;
 
+        public DMClient(Connection connection) :
+            base(connection)
+        {
+            _storyboard = new DMStoryScene(connection, this);
+            _battleground = new DMBattleground(this);
+            _checkInfos = new Queue<DMCheckInfo>();
+        }
+
+        public void UseScene(DMClientScene scene)
+        {
+            switch (scene)
+            {
+                case DMClientScene.STORYBOARD:
+                    break;
+                case DMClientScene.BATTLEGROUND:
+                    break;
+                case DMClientScene.CAMPAIGNMAP:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public override void Update()
+        {
+            base.Update();
+            if (_checkInfos.Count > 0 && !_checkInfos.Peek().isSent)
+            {
+
+            }
+        }
+
+        public void DMCheck(DMCheckInfo checkInfo)
+        {
+            _checkInfos.Enqueue(checkInfo);
         }
     }
 
-    public abstract class Storyboard
+    public struct DMCheckInfo
     {
-        public event EventHandler<TextClickEventArgs> OnTextClick;
+        public string info;
+        public Action<bool> callback;
+        public bool isSent;
 
-        public void Reset()
+        public DMCheckInfo(string info, Action<bool> callback)
         {
-
+            this.info = info;
+            this.callback = callback;
+            this.isSent = false;
         }
-
-        public void AddObject(string id, View view)
-        {
-
-        }
-
-        public void TransformObject(string id, Layout layout)
-        {
-
-        }
-
-        public void ShowObject(string id)
-        {
-
-        }
-
-        public void HideObject(string id)
-        {
-
-        }
-
-        public void ChangeObjViewEffect(string id, StoryViewEffect effect)
-        {
-
-        }
-
-        public void ChangeObjPortraitStyle(string id, PortraitStyle portrait)
-        {
-
-        }
-
-        public void RemoveObject(string id)
-        {
-
-        }
-
-        public void TransformCamera(Layout layout)
-        {
-
-        }
-
-        public void ChangeCameraViewEffect(StoryViewEffect effect)
-        {
-
-        }
-
-        public void AddParagraph(string text)
-        {
-
-        }
-
-        public void AddClickableParagraph(string text, int code)
-        {
-
-        }
-
-        public void ClearAllText()
-        {
-
-        }
-
-        public void AttachPortraitToTextBox(View view)
-        {
-
-        }
-
-        public void ChangeTextBoxPortraitStyle(PortraitStyle portrait)
-        {
-
-        }
-
-        public void RemovePortraitFromTextBox()
-        {
-
-        }
-
-        public void PlayBGM(string id)
-        {
-
-        }
-
-        public void StopBGM()
-        {
-
-        }
-
-        public void PlaySE(string id)
-        {
-
-        }
-
     }
+    
 }

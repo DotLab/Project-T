@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using GameLogic.Scene;
+using GameLogic.Container;
 
 namespace GameLogic.Campaign
 {
-    public class BattleShot : Shot
+    public sealed class BattleShot : Shot
     {
         public override ShotType Type => ShotType.Battle;
         public override StoryShot Story => null;
@@ -17,7 +17,7 @@ namespace GameLogic.Campaign
 
         }
 
-        public void InitBattleScene(BattleScene scene)
+        public void InitBattleScene(BattleSceneContainer scene)
         {
 
         }

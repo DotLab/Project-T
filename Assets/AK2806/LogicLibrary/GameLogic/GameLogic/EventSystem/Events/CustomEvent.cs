@@ -9,7 +9,7 @@ namespace GameLogic.EventSystem.Events
     {
         public struct EventInfo : IEventInfo
         {
-            public bool swallowed { get; set; }
+            public bool swallowed;
             public string[] notifyList;
             public object message;
 
@@ -18,6 +18,16 @@ namespace GameLogic.EventSystem.Events
                 this.message = message;
                 this.notifyList = notifyList;
                 this.swallowed = false;
+            }
+
+            public void setSwallowed(bool value)
+            {
+                swallowed = value;
+            }
+
+            public bool isSwallowed()
+            {
+                return swallowed;
             }
         }
 

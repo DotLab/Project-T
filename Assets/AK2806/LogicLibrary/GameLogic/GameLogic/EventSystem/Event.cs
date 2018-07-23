@@ -14,7 +14,7 @@ namespace GameLogic.EventSystem
         public void SendContext()
         {
             IEventInfo eventInfo = (IEventInfo)this.GetContext();
-            eventInfo.swallowed = _swallowed;
+            eventInfo.setSwallowed(_swallowed);
             this.SetContext(eventInfo);
             JSEngineManager.Engine.SynchronizeContext("$__eventArgs__", this);
         }
@@ -24,7 +24,7 @@ namespace GameLogic.EventSystem
             JSEngineManager.Engine.SynchronizeContext("$__eventArgs__", this);
             JSEngineManager.Engine.RemoveContext("$__eventArgs__");
             IEventInfo eventInfo = (IEventInfo)this.GetContext();
-            _swallowed = eventInfo.swallowed;
+            _swallowed = eventInfo.isSwallowed();
         }
 
         public abstract string[] NotifyList { get; }
@@ -35,6 +35,7 @@ namespace GameLogic.EventSystem
 
     public interface IEventInfo : IJSContext
     {
-        bool swallowed { get; set; }
+        void setSwallowed(bool value);
+        bool isSwallowed();
     }
 }

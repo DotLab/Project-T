@@ -14,10 +14,10 @@ namespace GameLogic.CharacterSystem
         public ExtraPropertyList(Extra owner) : base(owner) { }
     }
 
-    public class Extra : ICharacterProperty
+    public sealed class Extra : AutogenIdentifiable, ICharacterProperty
     {
         #region Javascript API class
-        protected class API : IJSAPI<Extra>
+        private sealed class API : IJSAPI<Extra>
         {
             private readonly Extra _outer;
 
@@ -122,13 +122,13 @@ namespace GameLogic.CharacterSystem
         #endregion
         private readonly API _apiObj;
         
-        protected Character _belong = null;
-        protected Character _item;
-        protected bool _isTool;
-        protected bool _isLongRangeWeapon;
-        protected bool _isVehicle;
-        protected object _customData = null;
-        protected readonly ExtraPropertyList<PassiveEffect> _passiveEffects;
+        private Character _belong = null;
+        private Character _item;
+        private bool _isTool;
+        private bool _isLongRangeWeapon;
+        private bool _isVehicle;
+        private object _customData = null;
+        private readonly ExtraPropertyList<PassiveEffect> _passiveEffects;
 
         public Extra(Character item)
         {
@@ -138,9 +138,7 @@ namespace GameLogic.CharacterSystem
             _passiveEffects = new ExtraPropertyList<PassiveEffect>(this);
             _apiObj = new API(this);
         }
-
-        ~Extra() => _item.Belong = null;
-
+        
         public string Name { get => _item.Name; set => _item.Name = value; }
         public string Description { get => _item.Description; set => _item.Description = value; }
         public Character Belong { get => _belong; set => _belong = value; }
@@ -162,12 +160,14 @@ namespace GameLogic.CharacterSystem
         public object CustomData { get => _customData; set => _customData = value; }
         public ExtraPropertyList<PassiveEffect> PassiveEffects => _passiveEffects;
 
-        public virtual IJSContext GetContext()
+        public override string BaseID => "Extra";
+
+        public override IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(IJSContext context) { }
+        public override void SetContext(IJSContext context) { }
     }
 
 }

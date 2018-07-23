@@ -6,10 +6,10 @@ using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.CharacterSystem
 {
-    public class InitiativeEffect : Command, IStuntProperty
+    public sealed class InitiativeEffect : Command, IStuntProperty
     {
         #region Javascript API class
-        protected class API : IJSAPI<InitiativeEffect>
+        private sealed class API : IJSAPI<InitiativeEffect>
         {
             private readonly InitiativeEffect _outer;
 
@@ -64,10 +64,10 @@ namespace GameLogic.CharacterSystem
         #endregion
         private readonly API _apiObj;
 
-        protected Stunt _belong = null;
+        private Stunt _belong = null;
 
-        protected bool _dmCheck = false;
-        protected bool _dmCheckResult = true;
+        private bool _dmCheck = false;
+        private bool _dmCheckResult = true;
 
         public bool DMCheck { get => _dmCheck; set => _dmCheck = value; }
         public Stunt Belong { get => _belong; set => _belong = value; }
@@ -90,7 +90,7 @@ namespace GameLogic.CharacterSystem
             JSEngineManager.Engine.RemoveContext("$__belongStunt__");
         }
 
-        public virtual IJSContext GetContext()
+        public IJSContext GetContext()
         {
             return _apiObj;
         }

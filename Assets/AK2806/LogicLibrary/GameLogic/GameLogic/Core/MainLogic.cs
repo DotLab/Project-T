@@ -2,7 +2,7 @@
 using GameLogic.CharacterSystem;
 using GameLogic.Core.ScriptSystem;
 using GameLogic.EventSystem;
-using GameLogic.Scene;
+using GameLogic.Container;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -14,8 +14,8 @@ namespace GameLogic.Core
     {
         public IJSAPI<CharacterManager> characterManager = (IJSAPI<CharacterManager>)CharacterManager.Instance.GetContext();
         public IJSAPI<CampaignManager> campaignManager = (IJSAPI<CampaignManager>)CampaignManager.Instance.GetContext();
-        public IJSAPI<StoryScene> storyScene = (IJSAPI<StoryScene>)StoryScene.Instance.GetContext();
-        public IJSAPI<BattleScene> battleScene = (IJSAPI<BattleScene>)BattleScene.Instance.GetContext();
+        public IJSAPI<StorySceneContainer> storyScene = (IJSAPI<StorySceneContainer>)StorySceneContainer.Instance.GetContext();
+        public IJSAPI<BattleSceneContainer> battleScene = (IJSAPI<BattleSceneContainer>)BattleSceneContainer.Instance.GetContext();
         public IJSAPI<GameEventBus> gameEventBus = (IJSAPI<GameEventBus>)GameEventBus.Instance.GetContext();
 
     }
@@ -30,11 +30,12 @@ namespace GameLogic.Core
         public static void Init()
         {
             IJSEngineRaw engineRaw = JSEngineManager.EngineRaw;
-            engineRaw.BindType("Layout", typeof(Layout));
-            engineRaw.BindType("PortraitStyle", typeof(PortraitStyle));
-            engineRaw.BindType("StoryViewEffect", typeof(StoryViewEffect));
-            engineRaw.BindType("Vec3", typeof(Vector3));
-            engineRaw.BindType("Quat", typeof(Quaternion));
+            engineRaw.BindType(nameof(CharacterView), typeof(CharacterView));
+            engineRaw.BindType(nameof(Layout), typeof(Layout));
+            engineRaw.BindType(nameof(PortraitStyle), typeof(PortraitStyle));
+            engineRaw.BindType(nameof(CharacterViewEffect), typeof(CharacterViewEffect));
+            engineRaw.BindType(nameof(Vector3), typeof(Vector3));
+            engineRaw.BindType(nameof(Quaternion), typeof(Quaternion));
             engineRaw.SetVar("$", globalObject);
             
             
@@ -42,10 +43,7 @@ namespace GameLogic.Core
             _gameOver = false;
         }
 
-        public static bool IsGameover()
-        {
-            return _gameOver;
-        }
+        public static bool GameOver => _gameOver;
 
         public static void Update()
         {

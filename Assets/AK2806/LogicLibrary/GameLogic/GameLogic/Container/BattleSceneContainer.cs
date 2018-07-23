@@ -3,20 +3,20 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace GameLogic.Scene
+namespace GameLogic.Container
 {
-    public class BattleScene : IJSContextProvider
+    public class BattleSceneContainer : IJSContextProvider
     {
-        private sealed class API : IJSAPI<BattleScene>
+        private sealed class API : IJSAPI<BattleSceneContainer>
         {
-            private readonly BattleScene _outer;
+            private readonly BattleSceneContainer _outer;
 
-            public API(BattleScene outer)
+            public API(BattleSceneContainer outer)
             {
                 _outer = outer;
             }
             
-            public BattleScene Origin(JSContextHelper proof)
+            public BattleSceneContainer Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -35,10 +35,10 @@ namespace GameLogic.Scene
 
         private readonly API _apiObj;
 
-        private static readonly BattleScene _instance = new BattleScene();
-        public static BattleScene Instance => _instance;
+        private static readonly BattleSceneContainer _instance = new BattleSceneContainer();
+        public static BattleSceneContainer Instance => _instance;
 
-        public BattleScene()
+        public BattleSceneContainer()
         {
             _apiObj = new API(this);
         }

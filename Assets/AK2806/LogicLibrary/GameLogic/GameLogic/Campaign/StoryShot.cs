@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GameLogic.CharacterSystem;
 using GameLogic.Core;
+using GameLogic.Container;
 
 namespace GameLogic.Campaign
 {
@@ -17,7 +19,7 @@ namespace GameLogic.Campaign
         public override StoryShot Story => this;
         public override BattleShot Battle => null;
         public override MapShot Map => null;
-
+        
         public StoryShot(List<SceneAction> actions)
         {
             _actions = actions ?? throw new ArgumentNullException(nameof(actions));

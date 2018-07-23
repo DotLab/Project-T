@@ -3,31 +3,31 @@ using System.Collections.Generic;
 using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 using GameLogic.CharacterSystem;
-using GameLogic.Scene.Story;
+using GameLogic.Container.Story;
 using GameLogic.Campaign;
 using System.Numerics;
 
-namespace GameLogic.Scene
+namespace GameLogic.Container
 {
-    public sealed class StoryScene : IJSContextProvider
+    public sealed class StorySceneContainer : IJSContextProvider
     {
         #region Javascript API class
-        private sealed class API : IJSAPI<StoryScene>
+        private sealed class API : IJSAPI<StorySceneContainer>
         {
-            private readonly StoryScene _outer;
+            private readonly StorySceneContainer _outer;
 
-            public API(StoryScene outer)
+            public API(StorySceneContainer outer)
             {
                 _outer = outer;
             }
 
-            public IJSAPI<SceneObject> createSceneObject(string id, IJSAPI<Character> character)
+            public IJSAPI<StoryObject> createStoryObject(IJSAPI<Character> character)
             {
                 try
                 {
                     Character originCharacter = (Character)JSContextHelper.Instance.GetAPIOrigin(character);
-                    SceneObject sceneObject = _outer.CreateSceneObject(id, originCharacter);
-                    return (IJSAPI<SceneObject>)sceneObject.GetContext();
+                    StoryObject sceneObject = _outer.CreateStoryObject(originCharacter);
+                    return (IJSAPI<StoryObject>)sceneObject.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -36,11 +36,11 @@ namespace GameLogic.Scene
                 }
             }
 
-            public bool addToScene(IJSAPI<ISceneObject> sceneObj)
+            public bool addToScene(IJSAPI<IStoryObject> sceneObj)
             {
                 try
                 {
-                    ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+                    IStoryObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
                     return _outer.AddIntoScene(originSceneObj);
                 }
                 catch (Exception e)
@@ -50,12 +50,12 @@ namespace GameLogic.Scene
                 }
             }
 
-            public IJSAPI<ISceneObject> getObject(string id)
+            public IJSAPI<IStoryObject> getObject(string id)
             {
                 try
                 {
-                    ISceneObject sceneObject = _outer.ObjList[id];
-                    return (IJSAPI<ISceneObject>)sceneObject.GetContext();
+                    IStoryObject sceneObject = _outer.ObjList[id];
+                    return (IJSAPI<IStoryObject>)sceneObject.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -64,11 +64,11 @@ namespace GameLogic.Scene
                 }
             }
             
-            public bool isInScene(IJSAPI<ISceneObject> sceneObj)
+            public bool isInScene(IJSAPI<IStoryObject> sceneObj)
             {
                 try
                 {
-                    ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+                    IStoryObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
                     return _outer.ObjInSceneList.Contains(originSceneObj);
                 }
                 catch (Exception e)
@@ -91,11 +91,11 @@ namespace GameLogic.Scene
                 }
             }
 
-            public bool removeFromScene(IJSAPI<ISceneObject> sceneObj)
+            public bool removeFromScene(IJSAPI<IStoryObject> sceneObj)
             {
                 try
                 {
-                    ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+                    IStoryObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
                     return _outer.RemoveFromScene(originSceneObj);
                 }
                 catch (Exception e)
@@ -169,7 +169,7 @@ namespace GameLogic.Scene
                 }
             }
 
-            public StoryScene Origin(JSContextHelper proof)
+            public StorySceneContainer Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -188,39 +188,39 @@ namespace GameLogic.Scene
         #endregion
         private readonly API _apiObj;
 
-        private static readonly StoryScene _instance = new StoryScene();
-        public static StoryScene Instance => _instance;
+        private static readonly StorySceneContainer _instance = new StorySceneContainer();
+        public static StorySceneContainer Instance => _instance;
         
-        private readonly IdentifiedObjList<ISceneObject> _objList;
-        private readonly IdentifiedObjList<ISceneObject> _objInSceneList;
+        private readonly IdentifiedObjList<IStoryObject> _objList;
+        private readonly IdentifiedObjList<IStoryObject> _objInSceneList;
         private readonly Camera _camera;
         private readonly List<TextBox> _textBoxes;
         private readonly List<Player> _players;
 
-        public IdentifiedObjList<ISceneObject> ObjList => _objList;
-        public IdentifiedObjList<ISceneObject> ObjInSceneList => _objInSceneList;
+        public IdentifiedObjList<IStoryObject> ObjList => _objList;
+        public IdentifiedObjList<IStoryObject> ObjInSceneList => _objInSceneList;
         public Camera Camera => _camera;
         public List<TextBox> TextBoxes => _textBoxes;
         public List<Player> Players => _players;
 
-        public StoryScene()
+        public StorySceneContainer()
         {
-            _objList = new IdentifiedObjList<ISceneObject>();
-            _objInSceneList = new IdentifiedObjList<ISceneObject>();
+            _objList = new IdentifiedObjList<IStoryObject>();
+            _objInSceneList = new IdentifiedObjList<IStoryObject>();
             _camera = new Camera();
             _textBoxes = new List<TextBox>();
             _players = new List<Player>();
             _apiObj = new API(this);
         }
 
-        public SceneObject CreateSceneObject(string id, Character character)
+        public StoryObject CreateStoryObject(Character character)
         {
-            SceneObject ret = new SceneObject(id, character);
+            StoryObject ret = new StoryObject(character);
             _objList.Add(ret);
             return ret;
         }
 
-        public bool AddIntoScene(ISceneObject sceneObject)
+        public bool AddIntoScene(IStoryObject sceneObject)
         {
             if (!_objList.Contains(sceneObject)) throw new ArgumentException("Scene object is not created by the container.", nameof(sceneObject));
             _objInSceneList.Add(sceneObject);
@@ -228,7 +228,7 @@ namespace GameLogic.Scene
             return true;
         }
         
-        public bool RemoveFromScene(ISceneObject sceneObject)
+        public bool RemoveFromScene(IStoryObject sceneObject)
         {
             return this.RemoveFromScene(sceneObject.ID);
         }
@@ -262,9 +262,9 @@ namespace GameLogic.Scene
     }
 }
 
-namespace GameLogic.Scene.Story
+namespace GameLogic.Container.Story
 {
-    public interface ISceneObject : IIdentifiable
+    public interface IStoryObject : IIdentifiable
     {
         void OnInteract();
         void OnCreateAspect();
@@ -275,17 +275,17 @@ namespace GameLogic.Scene.Story
         PortraitStyle Style { get; }
         void TransTo(Layout layout);
         void ChangeStyle(PortraitStyle style);
-        void ApplyEffect(StoryViewEffect effect);
+        void ApplyEffect(CharacterViewEffect effect);
     }
 
-    public class SceneObject : ISceneObject
+    public class StoryObject : IStoryObject
     {
         #region Javascript API class
-        protected class API : IJSAPI<SceneObject>
+        protected class API : IJSAPI<StoryObject>
         {
-            private readonly SceneObject _outer;
+            private readonly StoryObject _outer;
 
-            public API(SceneObject outer)
+            public API(StoryObject outer)
             {
                 _outer = outer;
             }
@@ -453,7 +453,7 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public void applyEffect(StoryViewEffect effect)
+            public void applyEffect(CharacterViewEffect effect)
             {
                 try
                 {
@@ -465,7 +465,7 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public SceneObject Origin(JSContextHelper proof)
+            public StoryObject Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -483,38 +483,36 @@ namespace GameLogic.Scene.Story
         }
         #endregion
         private readonly API _apiObj;
-
-        protected readonly string _id;
+        
         protected Command _interact;
-        protected Command _createAdvantage;
+        protected Command _createAspect;
         protected Command _attack;
         protected Command _hinder;
         protected readonly Character _characterRef;
         protected Layout _layout;
         protected PortraitStyle _style;
-        protected StoryViewEffect _effect;
+        protected CharacterViewEffect _effect;
 
-        public string ID => _id;
+        public string ID => _characterRef.ID;
         public Command Interact { get => _interact; set => _interact = value; }
-        public Command CreateAspect { get => _createAdvantage; set => _createAdvantage = value; }
+        public Command CreateAspect { get => _createAspect; set => _createAspect = value; }
         public Command Attack { get => _attack; set => _attack = value; }
         public Command Hinder { get => _hinder; set => _hinder = value; }
         public Character CharacterRef => _characterRef;
         public Layout Layout => _layout;
         public PortraitStyle Style => _style;
-        public StoryViewEffect Effect => _effect;
+        public CharacterViewEffect Effect => _effect;
         
-        public SceneObject(string id, Character character)
+        public StoryObject(Character character)
         {
-            _id = id ?? throw new ArgumentNullException(nameof(id));
             _characterRef = character ?? throw new ArgumentNullException(nameof(character));
             _layout = Layout.INIT;
             _style = PortraitStyle.INIT;
-            _effect = StoryViewEffect.INIT;
+            _effect = CharacterViewEffect.INIT;
             _apiObj = new API(this);
         }
 
-        public virtual void ApplyEffect(StoryViewEffect effect)
+        public virtual void ApplyEffect(CharacterViewEffect effect)
         {
             _effect = effect;
             throw new NotImplementedException();
@@ -542,9 +540,9 @@ namespace GameLogic.Scene.Story
 
         public virtual void OnCreateAspect()
         {
-            if (_createAdvantage != null)
+            if (_createAspect != null)
             {
-                _createAdvantage.DoAction();
+                _createAspect.DoAction();
             }
         }
 
@@ -572,10 +570,10 @@ namespace GameLogic.Scene.Story
         public void SetContext(IJSContext context) { }
     }
 
-    public class PictureObject : SceneObject
+    public class PictureObject : StoryObject
     {
         #region Javascript API class
-        protected new class API : SceneObject.API, IJSAPI<PictureObject>
+        protected new class API : StoryObject.API, IJSAPI<PictureObject>
         {
             private readonly PictureObject _outer;
 
@@ -606,9 +604,10 @@ namespace GameLogic.Scene.Story
         
         protected readonly Camera _cameraRef;
         
-        public PictureObject(string id, Character character) :
-            base(id, character)
+        public PictureObject(Character character) :
+            base(character)
         {
+            _apiObj = new API(this);
         }
         
         public override void TransTo(Layout layout)
@@ -687,7 +686,7 @@ namespace GameLogic.Scene.Story
                 }
             }
 
-            public void applyEffect(StoryViewEffect effect)
+            public void applyEffect(CharacterViewEffect effect)
             {
                 try
                 {
@@ -731,15 +730,15 @@ namespace GameLogic.Scene.Story
         private readonly API _apiObj;
 
         private Layout _layout;
-        private StoryViewEffect _effect;
+        private CharacterViewEffect _effect;
 
         public Layout Layout => _layout;
-        public StoryViewEffect Effect => _effect;
+        public CharacterViewEffect Effect => _effect;
 
         public Camera()
         {
             _layout = Layout.INIT;
-            _effect = StoryViewEffect.INIT;
+            _effect = CharacterViewEffect.INIT;
             _apiObj = new API(this);
         }
 
@@ -749,7 +748,7 @@ namespace GameLogic.Scene.Story
             throw new NotImplementedException();
         }
 
-        public void ApplyEffect(StoryViewEffect effect)
+        public void ApplyEffect(CharacterViewEffect effect)
         {
             _effect = effect;
             throw new NotImplementedException();
@@ -758,7 +757,7 @@ namespace GameLogic.Scene.Story
         public void Reset()
         {
             _layout = Layout.INIT;
-            _effect = StoryViewEffect.INIT;
+            _effect = CharacterViewEffect.INIT;
             throw new NotImplementedException();
         }
 
@@ -1056,12 +1055,12 @@ namespace GameLogic.Scene.Story
         private readonly API _apiObj;
 
         private readonly List<ITextItem> _textItems;
-        private View _portrait;
+        private CharacterView _portrait;
         private PortraitStyle _portraitStyle;
         private readonly int _playerIndex;
         
         public int PlayerIndex => _playerIndex;
-        public View Portrait => _portrait;
+        public CharacterView Portrait => _portrait;
         public PortraitStyle PortraitStyle => _portraitStyle;
 
         public TextBox(int index)
@@ -1096,7 +1095,7 @@ namespace GameLogic.Scene.Story
             throw new NotImplementedException();
         }
 
-        public void UpdatePortrait(View view)
+        public void UpdatePortrait(CharacterView view)
         {
             _portrait = view;
             throw new NotImplementedException();

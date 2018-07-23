@@ -1,5 +1,6 @@
 ﻿using GameLogic.CharacterSystem;
 using GameLogic.Client;
+using GameLogic.Core.Network;
 using GameLogic.Core.ScriptSystem;
 using System;
 using System.Collections.Generic;
@@ -19,11 +20,24 @@ namespace GameLogic.Core
                 _outer = outer;
             }
 
-            public IJSAPI<Character> getCharacter()
+            public int getCharacterCount()
             {
                 try
                 {
-                    return (IJSAPI<Character>)_outer.Character.GetContext();
+                    return _outer.Characters.Count;
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
+                    return -1;
+                }
+            }
+
+            public IJSAPI<Character> getCharacter(int index)
+            {
+                try
+                {
+                    return (IJSAPI<Character>)_outer.Characters[index].GetContext();
                 }
                 catch (Exception e)
                 {
@@ -65,18 +79,18 @@ namespace GameLogic.Core
         private readonly API _apiObj;
         
         private readonly PlayerClient _client;
-        private readonly Character _character;
+        private readonly List<Character> _characters;
         private readonly int _index;
         
         public PlayerClient Client => _client;
-        public Character Character => _character;
+        public List<Character> Characters => _characters;
         public int Index => _index;
 
-        public Player(Character character, int index)
+        public Player(Connection connection, int index)
         {
             _apiObj = new API(this);
-            _client = new PlayerClient();
-            _character = character ?? throw new ArgumentNullException(nameof(character));
+            _client = new PlayerClient(connection);
+            _characters = new List<Character>();
             _index = index;
         }
 
@@ -95,9 +109,9 @@ namespace GameLogic.Core
         public DMClient Client => _client;
         public int Index => 0;
 
-        public DM()
+        public DM(Connection connection)
         {
-            _client = new DMClient();
+            _client = new DMClient(connection);
         }
     }
 

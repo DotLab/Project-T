@@ -13,7 +13,7 @@ namespace GameLogic.CharacterSystem
         Boost = 2
     }
 
-    public class Aspect : ICharacterProperty
+    public class Aspect : AutogenIdentifiable, ICharacterProperty
     {
         #region Javascript API class
         protected class API : IJSAPI<Aspect>
@@ -152,19 +152,21 @@ namespace GameLogic.CharacterSystem
         public Character Benefit { get => _benefit; set => _benefit = value; }
         public int BenefitTimes { get => _benefitTimes; set => _benefitTimes = value; }
 
-        public virtual IJSContext GetContext()
+        public override string BaseID => "Aspect";
+
+        public override IJSContext GetContext()
         {
             return _apiObj;
         }
 
-        public void SetContext(IJSContext context) { }
+        public sealed override void SetContext(IJSContext context) { }
         
     }
 
-    public class Consequence : Aspect
+    public sealed class Consequence : Aspect
     {
         #region Javascript API class
-        protected new class API : Aspect.API, IJSAPI<Consequence>
+        private new class API : Aspect.API, IJSAPI<Consequence>
         {
             private readonly Consequence _outer;
 
@@ -217,9 +219,11 @@ namespace GameLogic.CharacterSystem
         #endregion
         private readonly API _apiObj;
 
-        protected int _counteractLevel = 0;
+        private int _counteractLevel = 0;
         
         public int CounteractLevel { get => _counteractLevel; set => _counteractLevel = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Counteract level is less than 0."); }
+
+        public override string BaseID => "Consequence";
 
         public Consequence()
         {

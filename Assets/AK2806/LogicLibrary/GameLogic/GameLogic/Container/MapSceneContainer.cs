@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace GameLogic.Scene
+namespace GameLogic.Container
 {
-    public class MapScene
+    public class MapSceneContainer
     {
     }
 }

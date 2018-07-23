@@ -90,10 +90,10 @@ namespace GameLogic.CharacterSystem
         
     }
 
-    public class Skill : ICharacterProperty
+    public sealed class Skill : ICharacterProperty
     {
         #region Javascript API class
-        protected class API : IJSAPI<Skill>
+        private sealed class API : IJSAPI<Skill>
         {
             private readonly Skill _outer;
 
@@ -209,13 +209,13 @@ namespace GameLogic.CharacterSystem
         #endregion
         private readonly API _apiObj;
         
-        protected string _description = "";
-        protected Character _belong = null;
-        protected SkillType _skillType;
-        protected int _level = 0;
-        protected bool _canAttack;
-        protected bool _canDefend;
-        protected bool _canMove;
+        private string _description = "";
+        private Character _belong = null;
+        private SkillType _skillType;
+        private int _level = 0;
+        private bool _canAttack;
+        private bool _canDefend;
+        private bool _canMove;
 
         public string Name { get => _skillType.Name; set { } }
         public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }

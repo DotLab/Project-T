@@ -7,10 +7,10 @@ using GameLogic.EventSystem;
 
 namespace GameLogic.CharacterSystem
 {
-    public class PassiveEffect : Trigger, IExtraProperty
+    public sealed class PassiveEffect : Trigger, IExtraProperty
     {
         #region Javascript API class
-        protected new class API : Trigger.API, IJSAPI<PassiveEffect>
+        private new class API : Trigger.API, IJSAPI<PassiveEffect>
         {
             private readonly PassiveEffect _outer;
 
@@ -53,7 +53,7 @@ namespace GameLogic.CharacterSystem
         #endregion
         private readonly API _apiObj;
 
-        protected Extra _belong = null;
+        private Extra _belong = null;
         
         public PassiveEffect(string boundEventID, Command command) :
             base(boundEventID, command)

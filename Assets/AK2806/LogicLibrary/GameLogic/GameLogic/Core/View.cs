@@ -5,26 +5,43 @@ using System.Numerics;
 
 namespace GameLogic.Core
 {
-    public sealed class View
+    public sealed class CharacterView
     {
         public string id;
         public string battle;
         public string story;
     }
-
-    public enum AnimateType
+    
+    public struct CameraEffect
     {
-        None, Shake
+        public enum AnimateType
+        {
+            None, Shake
+        }
+
+        public static readonly CameraEffect INIT = new CameraEffect(AnimateType.None);
+
+        public AnimateType animation;
+
+        public CameraEffect(AnimateType animation)
+        {
+            this.animation = animation;
+        }
     }
 
-    public struct StoryViewEffect
+    public struct CharacterViewEffect
     {
-        public static readonly StoryViewEffect INIT = new StoryViewEffect(new Vector4(1, 1, 1, 1), AnimateType.None);
+        public enum AnimateType
+        {
+            None, Shake
+        }
+
+        public static readonly CharacterViewEffect INIT = new CharacterViewEffect(new Vector4(1, 1, 1, 1), AnimateType.None);
 
         public Vector4 tint;
         public AnimateType animation;
 
-        public StoryViewEffect(Vector4 tint, AnimateType animation)
+        public CharacterViewEffect(Vector4 tint, AnimateType animation)
         {
             this.tint = tint;
             this.animation = animation;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using GameLogic.CharacterSystem;
 using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 
@@ -20,7 +21,7 @@ namespace GameLogic.Campaign
         public abstract StoryShot Story { get; }
         public abstract BattleShot Battle { get; }
         public abstract MapShot Map { get; }
-
+        
         public List<Shot> Nexts { get => _nexts; set => _nexts = value; }
         public string Description { get => _description; set => _description = value; }
         public string Name { get => _name; set => _name = value; }
@@ -109,16 +110,16 @@ namespace GameLogic.Campaign
         private static readonly CampaignManager _instance = new CampaignManager();
         public static CampaignManager Instance => _instance;
 
-        private Shot _currentCampaign;
-        private Shot _currentBlock;
+        private Campaign _currentCampaign;
+        private Shot _currentShot;
 
         private CampaignManager()
         {
             _apiObj = new API(this);
         }
 
-        public Shot CurrentCampaign { get => _currentCampaign; set => _currentCampaign = value; }
-        public Shot CurrentBlock { get => _currentBlock; set => _currentBlock = value; }
+        public Campaign CurrentCampaign { get => _currentCampaign; set => _currentCampaign = value; }
+        public Shot CurrentShot { get => _currentShot; set => _currentShot = value; }
         
         public IJSContext GetContext()
         {
