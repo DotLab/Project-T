@@ -1,11 +1,10 @@
-﻿using GameLogic.CharacterSystem;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace GameLogic.Core.Network
+namespace GameLogic.Core.Network.ClientMessages
 {
-    public sealed class StoryboardObjectMessage : Streamable
+    public sealed class StorySceneObjectActionMessage : Streamable
     {
         public enum PlayerAction
         {
@@ -18,18 +17,9 @@ namespace GameLogic.Core.Network
         public static readonly long MESSAGE_ID = 0L;
         public override long MessageID => MESSAGE_ID;
 
-        private readonly string _objID;
-        private readonly PlayerAction _action;
+        public string objectID;
+        public PlayerAction action;
 
-        public string ObjectID => _objID;
-        public PlayerAction Action => _action;
-
-        public StoryboardObjectMessage(string objID, PlayerAction action)
-        {
-            _objID = objID;
-            _action = action;
-        }
-        
     }
 
     public sealed class TextSelectedMessage : Streamable
@@ -37,14 +27,8 @@ namespace GameLogic.Core.Network
         public static readonly long MESSAGE_ID = 1L;
         public override long MessageID => MESSAGE_ID;
 
-        private readonly int _selection;
+        public int selection;
 
-        public int Selection => _selection;
-
-        public TextSelectedMessage(int selection)
-        {
-            _selection = selection;
-        }
     }
 
     public sealed class SkillSelectedMessage : Streamable
@@ -52,14 +36,8 @@ namespace GameLogic.Core.Network
         public static readonly long MESSAGE_ID = 2L;
         public override long MessageID => MESSAGE_ID;
 
-        private readonly SkillType _skillType;
-        
-        public SkillType SkillType => _skillType;
+        public string skillTypeID;
 
-        public SkillSelectedMessage(SkillType skillType)
-        {
-            _skillType = skillType;
-        }
     }
 
     public sealed class AspectsSelectedMessage : Streamable
@@ -73,14 +51,8 @@ namespace GameLogic.Core.Network
             public string[] aspectsID;
         }
 
-        private readonly AspectGroup[] _aspectGroups;
-
-        public AspectGroup[] AspectGroups => _aspectGroups;
-
-        public AspectsSelectedMessage(AspectGroup[] aspectGroups)
-        {
-            _aspectGroups = aspectGroups;
-        }
+        public AspectGroup[] aspectGroups;
+        
     }
 
     public sealed class StuntSelectedMessage : Streamable
@@ -88,13 +60,23 @@ namespace GameLogic.Core.Network
         public static readonly long MESSAGE_ID = 4L;
         public override long MessageID => MESSAGE_ID;
 
-        private readonly string _stuntID;
-
-        public string StuntID => _stuntID;
-
-        public StuntSelectedMessage(string stuntID)
-        {
-            _stuntID = stuntID;
-        }
+        public string stuntID;
+        
     }
+
+    public sealed class StorySceneNextActionMessage : Streamable
+    {
+        public static readonly long MESSAGE_ID = 5L;
+        public override long MessageID => MESSAGE_ID;
+        
+    }
+
+    public sealed class ClientInitMessage : Streamable
+    {
+        public static readonly long MESSAGE_ID = 6L;
+        public override long MessageID => MESSAGE_ID;
+        
+    }
+
+
 }

@@ -23,20 +23,36 @@ namespace GameLogic.Core
     public class MainLogic
     {
         private static bool _gameOver = true;
-        private static readonly JavascriptGlobalObject globalObject = new JavascriptGlobalObject();
+        private static readonly JavascriptGlobalObject _globalObject = new JavascriptGlobalObject();
 
-        private static List<User> users = new List<User>();
+        private static List<User> _players = null;
+        private static User _dm = null;
 
-        public static void Init()
+        public static IEnumerable<User> Players => _players;
+        public static User Dm => _dm;
+
+        public static void Init(User dm, IEnumerable<User> players)
         {
+            _dm = dm ?? throw new ArgumentNullException(nameof(dm));
+            _players = new List<User>(players);
+
+            foreach (User user in _players)
+            {
+                foreach (Character character in user.AsPlayer.Characters)
+                {
+                    CharacterManager.Instance.PlayerCharacters.Add(character);
+                }
+            }
+
             IJSEngineRaw engineRaw = JSEngineManager.EngineRaw;
             engineRaw.BindType(nameof(CharacterView), typeof(CharacterView));
+            engineRaw.BindType(nameof(CameraEffect), typeof(CameraEffect));
             engineRaw.BindType(nameof(Layout), typeof(Layout));
             engineRaw.BindType(nameof(PortraitStyle), typeof(PortraitStyle));
             engineRaw.BindType(nameof(CharacterViewEffect), typeof(CharacterViewEffect));
             engineRaw.BindType(nameof(Vector3), typeof(Vector3));
             engineRaw.BindType(nameof(Quaternion), typeof(Quaternion));
-            engineRaw.SetVar("$", globalObject);
+            engineRaw.SetVar("$", _globalObject);
             
             
 
@@ -46,6 +62,15 @@ namespace GameLogic.Core
         public static bool GameOver => _gameOver;
 
         public static void Update()
+        {
+            foreach (User player in _players)
+            {
+                player.UpdateClient();
+            }
+            _dm.UpdateClient();
+        }
+
+        public static void Cleanup()
         {
 
         }

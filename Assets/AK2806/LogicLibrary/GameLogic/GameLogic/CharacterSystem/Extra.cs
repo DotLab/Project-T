@@ -132,8 +132,8 @@ namespace GameLogic.CharacterSystem
 
         public Extra(Character item)
         {
-            _item = item ?? throw new ArgumentNullException(nameof(item));
             if (item.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(item));
+            _item = item;
             item.Belong = this;
             _passiveEffects = new ExtraPropertyList<PassiveEffect>(this);
             _apiObj = new API(this);
@@ -147,7 +147,6 @@ namespace GameLogic.CharacterSystem
             get => _item;
             set
             {
-                if (value == null) throw new ArgumentNullException(nameof(value));
                 if (value.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(value));
                 _item.Belong = null;
                 _item = value;

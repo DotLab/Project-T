@@ -228,11 +228,11 @@ namespace GameLogic.CharacterSystem
 
         public Skill(SkillType skillType)
         {
-            _apiObj = new API(this);
             _skillType = skillType ?? throw new ArgumentNullException(nameof(skillType));
             _canAttack = skillType.CanAttack;
             _canDefend = skillType.CanDefend;
             _canMove = skillType.CanMove;
+            _apiObj = new API(this);
         }
 
         public IJSContext GetContext()

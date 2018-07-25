@@ -4,21 +4,20 @@ using GameLogic.Container;
 using GameLogic.Container.Story;
 using GameLogic.Core;
 using GameLogic.Core.Network;
+using GameLogic.Core.Network.ClientMessages;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace GameLogic.Client
 {
-    public sealed class SkillCheckLayer : IMessageReceiver
+    public sealed class SkillCheckPanel : ClientComponent, IMessageReceiver
     {
-        private readonly Connection _networkRef;
-
-        public SkillCheckLayer(Connection connection)
+        public SkillCheckPanel(Connection connection, User owner) :
+            base(connection, owner)
         {
-            _networkRef = connection;
-            connection.AddMessageReceiver(SkillSelectedMessage.MESSAGE_ID, this);
-            connection.AddMessageReceiver(AspectsSelectedMessage.MESSAGE_ID, this);
+            _connectionRef.AddMessageReceiver(SkillSelectedMessage.MESSAGE_ID, this);
+            _connectionRef.AddMessageReceiver(AspectsSelectedMessage.MESSAGE_ID, this);
         }
 
         public void MessageReceived(long timestamp, Streamable message)
@@ -26,7 +25,10 @@ namespace GameLogic.Client
             if (message.MessageID == SkillSelectedMessage.MESSAGE_ID)
             {
                 SkillSelectedMessage skillSelectedMessage = (SkillSelectedMessage)message;
-                this.OnSelectSkill(skillSelectedMessage.SkillType);
+                if (SkillType.SkillTypes.TryGetValue(skillSelectedMessage.skillTypeID, out SkillType skillType))
+                {
+                    this.OnSelectSkill(skillType);
+                }
             }
             else if (message.MessageID == StuntSelectedMessage.MESSAGE_ID)
             {
@@ -47,8 +49,9 @@ namespace GameLogic.Client
                     case ShotType.Map:
                         {
                             AspectsSelectedMessage aspectsSelectedMessage = (AspectsSelectedMessage)message;
-                            IdentifiedObjList<IStoryObject> storyObjects = StorySceneContainer.Instance.ObjInSceneList;
-                            foreach (AspectsSelectedMessage.AspectGroup aspectGroup in aspectsSelectedMessage.AspectGroups)
+                            IdentifiedObjList<IStoryObject> storyObjects = StorySceneContainer.Instance.ObjList;
+
+                            foreach (AspectsSelectedMessage.AspectGroup aspectGroup in aspectsSelectedMessage.aspectGroups)
                             {
                                 if (storyObjects.TryGetValue(aspectGroup.characterID, out IStoryObject storyObject))
                                 {
@@ -140,7 +143,7 @@ namespace GameLogic.Client
 
         }
         
-        public void DisplayResult(SkillCheckLayerContainer.CheckResult checkResult)
+        public void DisplayResult(SkillChecker.CheckResult checkResult)
         {
 
         }

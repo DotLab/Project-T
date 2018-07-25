@@ -128,7 +128,6 @@ namespace GameLogic.EventSystem
 
         public void Register(Trigger trigger)
         {
-            if (trigger == null) throw new ArgumentNullException(nameof(trigger));
             if (!_triggerPools.ContainsKey(trigger.BoundEventID))
             {
                 _triggerPools.Add(trigger.BoundEventID, new List<Trigger>());

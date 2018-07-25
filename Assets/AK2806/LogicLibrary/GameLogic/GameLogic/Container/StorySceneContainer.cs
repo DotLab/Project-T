@@ -4,7 +4,6 @@ using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 using GameLogic.CharacterSystem;
 using GameLogic.Container.Story;
-using GameLogic.Campaign;
 using System.Numerics;
 
 namespace GameLogic.Container
@@ -25,7 +24,7 @@ namespace GameLogic.Container
             {
                 try
                 {
-                    Character originCharacter = (Character)JSContextHelper.Instance.GetAPIOrigin(character);
+                    Character originCharacter = JSContextHelper.Instance.GetAPIOrigin(character);
                     StoryObject sceneObject = _outer.CreateStoryObject(originCharacter);
                     return (IJSAPI<StoryObject>)sceneObject.GetContext();
                 }
@@ -35,7 +34,7 @@ namespace GameLogic.Container
                     return null;
                 }
             }
-
+            
             public bool addToScene(IJSAPI<IStoryObject> sceneObj)
             {
                 try
@@ -69,7 +68,7 @@ namespace GameLogic.Container
                 try
                 {
                     IStoryObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
-                    return _outer.ObjInSceneList.Contains(originSceneObj);
+                    return _outer.ObjList.Contains(originSceneObj);
                 }
                 catch (Exception e)
                 {
@@ -82,7 +81,7 @@ namespace GameLogic.Container
             {
                 try
                 {
-                    return _outer.ObjInSceneList.Contains(id);
+                    return _outer.ObjList.Contains(id);
                 }
                 catch (Exception e)
                 {
@@ -155,20 +154,7 @@ namespace GameLogic.Container
                     return null;
                 }
             }
-
-            public IJSAPI<Player> getPlayer(int index)
-            {
-                try
-                {
-                    return (IJSAPI<Player>)_outer.Players[index].GetContext();
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return null;
-                }
-            }
-
+            
             public StorySceneContainer Origin(JSContextHelper proof)
             {
                 try
@@ -192,38 +178,33 @@ namespace GameLogic.Container
         public static StorySceneContainer Instance => _instance;
         
         private readonly IdentifiedObjList<IStoryObject> _objList;
-        private readonly IdentifiedObjList<IStoryObject> _objInSceneList;
+        private readonly IdentifiedObjList<Character> _playerCharacters;
         private readonly Camera _camera;
         private readonly List<TextBox> _textBoxes;
-        private readonly List<Player> _players;
 
         public IdentifiedObjList<IStoryObject> ObjList => _objList;
-        public IdentifiedObjList<IStoryObject> ObjInSceneList => _objInSceneList;
+        public IdentifiedObjList<Character> PlayerCharacters => _playerCharacters;
         public Camera Camera => _camera;
         public List<TextBox> TextBoxes => _textBoxes;
-        public List<Player> Players => _players;
-
+        
         public StorySceneContainer()
         {
             _objList = new IdentifiedObjList<IStoryObject>();
-            _objInSceneList = new IdentifiedObjList<IStoryObject>();
+            _playerCharacters = new IdentifiedObjList<Character>();
             _camera = new Camera();
             _textBoxes = new List<TextBox>();
-            _players = new List<Player>();
             _apiObj = new API(this);
         }
 
         public StoryObject CreateStoryObject(Character character)
         {
             StoryObject ret = new StoryObject(character);
-            _objList.Add(ret);
             return ret;
         }
 
         public bool AddIntoScene(IStoryObject sceneObject)
         {
-            if (!_objList.Contains(sceneObject)) throw new ArgumentException("Scene object is not created by the container.", nameof(sceneObject));
-            _objInSceneList.Add(sceneObject);
+            _objList.Add(sceneObject);
             throw new NotImplementedException();
             return true;
         }
@@ -235,7 +216,7 @@ namespace GameLogic.Container
 
         public bool RemoveFromScene(string id)
         {
-            bool ret = _objInSceneList.Remove(id);
+            bool ret = _objList.Remove(id);
             throw new NotImplementedException();
             return ret;
         }
@@ -243,7 +224,6 @@ namespace GameLogic.Container
         public void ResetScene()
         {
             _objList.Clear();
-            _objInSceneList.Clear();
             _camera.Reset();
             foreach (TextBox box in _textBoxes)
             {
@@ -1065,9 +1045,8 @@ namespace GameLogic.Container.Story
 
         public TextBox(int index)
         {
-            if (index < 0) throw new ArgumentOutOfRangeException(nameof(index), "Player index is less than 0.");
+            _playerIndex = index >= 0 ? index : throw new ArgumentOutOfRangeException(nameof(index), "Player index is less than 0.");
             _textItems = new List<ITextItem>();
-            _playerIndex = index;
             _apiObj = new API(this);
         }
 

@@ -137,8 +137,8 @@ namespace GameLogic.CharacterSystem
 
         public Stunt(InitiativeEffect effect, SkillType boundSkillType, string name = "", string description = "")
         {
-            _initiativeEffect = effect ?? throw new ArgumentNullException(nameof(name));
             if (effect.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(effect));
+            _initiativeEffect = effect;
             effect.Belong = this;
             _boundSkillType = boundSkillType ?? throw new ArgumentNullException(nameof(boundSkillType));
             _name = name ?? throw new ArgumentNullException(nameof(name));
@@ -154,13 +154,13 @@ namespace GameLogic.CharacterSystem
             get => _initiativeEffect;
             set
             {
-                if (value == null) throw new ArgumentNullException(nameof(value));
                 if (value.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(value));
                 _initiativeEffect.Belong = null;
                 _initiativeEffect = value;
                 value.Belong = this;
             }
         }
+        public SkillType BoundSkillType { get => _boundSkillType; set => _boundSkillType = value ?? throw new ArgumentNullException(nameof(value)); }
 
         public override string BaseID => "Stunt";
 

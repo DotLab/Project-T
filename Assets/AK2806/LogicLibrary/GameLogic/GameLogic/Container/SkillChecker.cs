@@ -1,13 +1,42 @@
 ﻿using GameLogic.CharacterSystem;
 using GameLogic.Core;
+using GameLogic.Core.ScriptSystem;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace GameLogic.Container
 {
-    public sealed class SkillCheckLayerContainer
+    public sealed class SkillChecker : IJSContextProvider
     {
+        private sealed class API : IJSAPI<SkillChecker>
+        {
+            private readonly SkillChecker _outer;
+
+            public API(SkillChecker outer)
+            {
+                _outer = outer;
+            }
+
+            public SkillChecker Origin(JSContextHelper proof)
+            {
+                try
+                {
+                    if (proof == JSContextHelper.Instance)
+                    {
+                        return _outer;
+                    }
+                    return null;
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+            }
+        }
+
+        private readonly API _apiObj;
+
         public enum CharacterAction
         {
             CREATE_ASPECT,
@@ -24,6 +53,15 @@ namespace GameLogic.Container
             SUCCEED_WITH_STYLE
         }
 
+        public enum CheckerState
+        {
+            IDLE,
+            INITIATIVE_SKILL,
+            PASSIVE_SKILL,
+            INITIATIVE_ASPECT,
+            PASSIVE_ASPECT
+        }
+
         private static Range FAIL;
         private static Range TIE;
         private static Range SUCCEED;
@@ -33,7 +71,7 @@ namespace GameLogic.Container
         public static readonly Dictionary<SkillType, List<SkillType>> Evade = new Dictionary<SkillType, List<SkillType>>();
         public static readonly Dictionary<SkillType, List<SkillType>> Defend = new Dictionary<SkillType, List<SkillType>>();
         
-        static SkillCheckLayerContainer()
+        static SkillChecker()
         {
             FAIL = new Range(float.NegativeInfinity, 0);
             TIE = new Range(0, 0);
@@ -94,27 +132,103 @@ namespace GameLogic.Container
             SUCCEED_WITH_STYLE = succeedWithStyle;
         }
 
+        private static readonly SkillChecker _skillChecker = new SkillChecker();
+        public static SkillChecker Instance => _skillChecker;
+
         private Character _initiative;
         private Character _passive;
         private CharacterAction _action;
-        private Skill _initiativeSkill = null;
-        private Skill _passiveSkill = null;
-        private int _initiativePoint = 0;
-        private int _passivePoint = 0;
+        private Skill _initiativeSkill;
+        private Skill _passiveSkill;
+        private int _initiativePoint;
+        private int _passivePoint;
+        private Action<CheckResult> _initiativeCallback;
+        private Action<CheckResult> _passiveCallback;
 
-        public SkillCheckLayerContainer(Character initiative, Character passive, CharacterAction action)
+        private CheckerState _state;
+
+        private SkillChecker()
         {
+            _apiObj = new API(this);
+        }
+
+        public void StartCheck(
+            Character initiative, Character passive, CharacterAction action,
+            Action<CheckResult> initiativeCallback, Action<CheckResult> passiveCallback
+            )
+        {
+            _initiativeSkill = null;
+            _passiveSkill = null;
+            _initiativePoint = 0;
+            _passivePoint = 0;
+            if (_state != CheckerState.IDLE) throw new InvalidOperationException("Already in checking state.");
             _initiative = initiative ?? throw new ArgumentNullException(nameof(initiative));
             _passive = passive ?? throw new ArgumentNullException(nameof(passive));
             _action = action;
-        }
-        
-        public void StartCheck(Action<CheckResult> initiative, Action<CheckResult> passive)
-        {
-            
+            _initiativeCallback = initiativeCallback ?? throw new ArgumentNullException(nameof(initiativeCallback));
+            _passiveCallback = passiveCallback ?? throw new ArgumentNullException(nameof(passiveCallback));
+            _state = CheckerState.INITIATIVE_SKILL;
         }
 
-        private bool CanResistSkill(SkillType initiative, SkillType resist)
+        public void CancelCheck()
+        {
+            if (_state == CheckerState.INITIATIVE_SKILL)
+            {
+                _initiativeCallback(CheckResult.CANCEL);
+                _passiveCallback(CheckResult.CANCEL);
+                _state = CheckerState.IDLE;
+            }
+            throw new InvalidOperationException("Cannot cancel at this time.");
+        }
+
+        public void ForceEndCheck(CheckResult initiativeResult, CheckResult passiveResult)
+        {
+            if (_state == CheckerState.IDLE) throw new InvalidOperationException("Skill checking is not working.");
+            _initiativeCallback(initiativeResult);
+            _passiveCallback(passiveResult);
+            _state = CheckerState.IDLE;
+        }
+        
+        public void EndCheck()
+        {
+            if (_state != CheckerState.INITIATIVE_ASPECT || _state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("Cannot make checking over.");
+            int delta = _initiativePoint - _passivePoint;
+            if (FAIL.InRange(delta))
+            {
+                _initiativeCallback(CheckResult.FAIL);
+                if (SUCCEED_WITH_STYLE.InRange(-delta))
+                {
+                    _passiveCallback(CheckResult.SUCCEED_WITH_STYLE);
+                }
+                else
+                {
+                    _passiveCallback(CheckResult.SUCCEED);
+                }
+            }
+            else if (TIE.InRange(delta))
+            {
+                _initiativeCallback(CheckResult.TIE);
+                _passiveCallback(CheckResult.TIE);
+            }
+            else if (SUCCEED.InRange(delta))
+            {
+                _initiativeCallback(CheckResult.SUCCEED);
+                _passiveCallback(CheckResult.FAIL);
+            }
+            else if (SUCCEED_WITH_STYLE.InRange(delta))
+            {
+                _initiativeCallback(CheckResult.SUCCEED_WITH_STYLE);
+                _passiveCallback(CheckResult.FAIL);
+            }
+            else
+            {
+                _initiativeCallback(CheckResult.TIE);
+                _passiveCallback(CheckResult.TIE);
+            }
+            _state = CheckerState.IDLE;
+        }
+
+        public bool CanResistSkill(SkillType initiative, SkillType resist)
         {
             Dictionary<SkillType, List<SkillType>> resistTable;
             switch (_action)
@@ -135,7 +249,7 @@ namespace GameLogic.Container
             else return false;
         }
 
-        private bool CanUseSkill(SkillType skillType)
+        public bool CanUseSkill(SkillType skillType)
         {
             switch (_action)
             {
@@ -150,12 +264,12 @@ namespace GameLogic.Container
             }
         }
         
-        private int[] RollDice()
+        public void InitiativeUseSkill(SkillType skillType)
         {
-            return FateDice.Roll();
+            
         }
 
-        public void InitiativeUseSkill(SkillType skillType)
+        public void InitiativeUseStunt(Stunt stunt)
         {
 
         }
@@ -170,30 +284,21 @@ namespace GameLogic.Container
 
         }
 
+        public void PassiveUseStunt(Stunt stunt)
+        {
+
+        }
+
         public void PassiveUseAspect(Aspect aspect)
         {
 
         }
 
-        public void CheckInitiativeSkill(SkillType skillType, Action<bool> callback)
+        public IJSContext GetContext()
         {
-            
+            return _apiObj;
         }
 
-        public void CheckPassiveSkill(SkillType skillType, Action<bool> callback)
-        {
-
-        }
-
-        public void CheckInitiativeAspect(IEnumerable<Aspect> aspects, Action<bool> callback)
-        {
-
-        }
-
-        public void CheckPassiveAspect(IEnumerable<Aspect> aspects, Action<bool> callback)
-        {
-
-        }
-
+        public void SetContext(IJSContext context) { }
     }
 }

@@ -272,7 +272,6 @@ namespace GameLogic.Core
             get => _container[i];
             set
             {
-                if (value == null) throw new ArgumentNullException(nameof(value));
                 if (value.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(value));
                 _container[i].Belong = null;
                 _container[i] = value;
@@ -289,7 +288,6 @@ namespace GameLogic.Core
         
         public virtual void Add(TItem item)
         {
-            if (item == null) throw new ArgumentNullException(nameof(item));
             if (item.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(item));
             _container.Add(item);
             item.Belong = _owner;
@@ -299,7 +297,6 @@ namespace GameLogic.Core
         {
             foreach (TItem item in items)
             {
-                if (item == null) throw new ArgumentNullException(nameof(item));
                 if (item.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(item));
             }
             _container.AddRange(items);
@@ -336,7 +333,6 @@ namespace GameLogic.Core
 
         public virtual void Insert(int index, TItem item)
         {
-            if (item == null) throw new ArgumentNullException(nameof(item));
             if (item.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(item));
             _container.Insert(index, item);
             item.Belong = _owner;

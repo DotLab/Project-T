@@ -595,15 +595,15 @@ namespace GameLogic.CharacterSystem
         public static CharacterManager Instance => _instance;
         
         private readonly IdentifiedObjList<Character> _savingCharacters;
-        private readonly IdentifiedObjList<Character> _players;
+        private readonly IdentifiedObjList<Character> _playerCharacters;
         
         public IdentifiedObjList<Character> SavingCharacters => _savingCharacters;
-        public IdentifiedObjList<Character> Players => _players;
+        public IdentifiedObjList<Character> PlayerCharacters => _playerCharacters;
 
         private CharacterManager()
         {
             _savingCharacters = new IdentifiedObjList<Character>();
-            _players = new IdentifiedObjList<Character>();
+            _playerCharacters = new IdentifiedObjList<Character>();
             _apiObj = new API(this);
         }
         

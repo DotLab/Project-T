@@ -8,115 +8,61 @@ using System.Text;
 
 namespace GameLogic.Core
 {
-    public sealed class Player : IJSContextProvider
+    public sealed class Player
     {
-        #region Javascript API class
-        private sealed class API : IJSAPI<Player>
-        {
-            private readonly Player _outer;
-
-            public API(Player outer)
-            {
-                _outer = outer;
-            }
-
-            public int getCharacterCount()
-            {
-                try
-                {
-                    return _outer.Characters.Count;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return -1;
-                }
-            }
-
-            public IJSAPI<Character> getCharacter(int index)
-            {
-                try
-                {
-                    return (IJSAPI<Character>)_outer.Characters[index].GetContext();
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return null;
-                }
-            }
-
-            public int getIndex()
-            {
-                try
-                {
-                    return _outer.Index;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return -1;
-                }
-            }
-
-            public Player Origin(JSContextHelper proof)
-            {
-                try
-                {
-                    if (proof == JSContextHelper.Instance)
-                    {
-                        return _outer;
-                    }
-                    return null;
-                }
-                catch (Exception)
-                {
-                    return null;
-                }
-            }
-        }
-        #endregion
-        private readonly API _apiObj;
-        
         private readonly PlayerClient _client;
+        private readonly User _user;
         private readonly List<Character> _characters;
         private readonly int _index;
         
         public PlayerClient Client => _client;
+        public User User => _user;
         public List<Character> Characters => _characters;
         public int Index => _index;
-
-        public Player(Connection connection, int index)
+        
+        public Player(User user, Connection connection, int index)
         {
-            _apiObj = new API(this);
-            _client = new PlayerClient(connection);
+            _user = user ?? throw new ArgumentNullException(nameof(user));
+            _index = index > 0 ? index : throw new ArgumentOutOfRangeException(nameof(index), "Player index is less than 1.");
+            _client = new PlayerClient(connection, user);
             _characters = new List<Character>();
-            _index = index;
         }
-
-        public IJSContext GetContext()
-        {
-            return _apiObj;
-        }
-
-        public void SetContext(IJSContext context) { }
+        
     }
 
     public sealed class DM
     {
         private readonly DMClient _client;
+        private readonly User _user;
         
         public DMClient Client => _client;
-        public int Index => 0;
+        public User User => _user;
 
-        public DM(Connection connection)
+        public DM(User user, Connection connection)
         {
-            _client = new DMClient(connection);
+            _user = user ?? throw new ArgumentNullException(nameof(user));
+            _client = new DMClient(connection, user);
         }
     }
 
     public sealed class User
     {
+        public static User CreatePlayer(string id, string name, Connection connection, int index, IEnumerable<Character> characters)
+        {
+            foreach (Character character in characters)
+            {
+                if (character == null) throw new ArgumentNullException(nameof(character));
+            }
+            User ret = new User(id, name, false, connection, index);
+            ret.AsPlayer.Characters.AddRange(characters);
+            return ret;
+        }
+
+        public static User CreateDM(string id, string name, Connection connection)
+        {
+            return new User(id, name, true, connection, 0);
+        }
+
         private readonly bool _isDM;
         private readonly DM _dm;
         private readonly Player _player;
@@ -124,12 +70,12 @@ namespace GameLogic.Core
         private readonly string _name;
         
         public bool IsDM => _isDM;
-        public DM DM => _dm;
-        public Player Player => _player;
+        public DM AsDM => _dm;
+        public Player AsPlayer => _player;
         public string Id => _id;
         public string Name => _name;
-        
-        public User(string id, string name, bool isDM, Player player, DM dm)
+
+        private User(string id, string name, bool isDM, Connection connection, int index)
         {
             _id = id ?? throw new ArgumentNullException(nameof(id));
             _name = name ?? throw new ArgumentNullException(nameof(name));
@@ -137,12 +83,24 @@ namespace GameLogic.Core
             if (isDM)
             {
                 _player = null;
-                _dm = dm ?? throw new ArgumentNullException(nameof(dm));
+                _dm = new DM(this, connection);
             }
             else
             {
-                _player = player ?? throw new ArgumentNullException(nameof(player));
+                _player = new Player(this, connection, index);
                 _dm = null;
+            }
+        }
+
+        public void UpdateClient()
+        {
+            if (_isDM)
+            {
+                _dm.Client.Update();
+            }
+            else
+            {
+                _player.Client.Update();
             }
         }
 

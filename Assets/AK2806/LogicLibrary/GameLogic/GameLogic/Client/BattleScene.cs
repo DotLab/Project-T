@@ -18,30 +18,14 @@ namespace GameLogic.Client
         }
     }
 
-    public sealed class DMBattleground : BattleScene
+    public sealed class DMBattleScene : BattleScene
     {
-        private readonly DMClient _gameClient;
-
-        public DMClient GameClient => _gameClient;
-
-        public DMBattleground(DMClient parent)
-        {
-            _gameClient = parent;
-        }
-
+        
     }
 
-    public sealed class PlayerBattleground : BattleScene
+    public sealed class PlayerBattleSceme : BattleScene
     {
-        private readonly PlayerClient _gameClient;
-
-        public PlayerClient GameClient => _gameClient;
-
-        public PlayerBattleground(PlayerClient parent)
-        {
-            _gameClient = parent;
-        }
-
+        
     }
 
 }
