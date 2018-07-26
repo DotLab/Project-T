@@ -5,24 +5,25 @@ using GameLogic.Container.Story;
 using GameLogic.Core;
 using GameLogic.Core.Network;
 using GameLogic.Core.Network.ClientMessages;
+using GameLogic.Core.Network.ServerMessages;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace GameLogic.Client
 {
-    public sealed class SkillCheckPanel : ClientComponent, IMessageReceiver
+    public sealed class SkillCheckPanel : ClientComponent
     {
         public SkillCheckPanel(Connection connection, User owner) :
             base(connection, owner)
         {
-            _connectionRef.AddMessageReceiver(SkillSelectedMessage.MESSAGE_ID, this);
-            _connectionRef.AddMessageReceiver(AspectsSelectedMessage.MESSAGE_ID, this);
+            _connection.AddMessageReceiver(SkillSelectedMessage.MESSAGE_TYPE, this);
+            _connection.AddMessageReceiver(AspectsSelectedMessage.MESSAGE_TYPE, this);
         }
 
-        public void MessageReceived(long timestamp, Streamable message)
+        public override void MessageReceived(ulong timestamp, Message message)
         {
-            if (message.MessageID == SkillSelectedMessage.MESSAGE_ID)
+            if (message.MessageType == SkillSelectedMessage.MESSAGE_TYPE)
             {
                 SkillSelectedMessage skillSelectedMessage = (SkillSelectedMessage)message;
                 if (SkillType.SkillTypes.TryGetValue(skillSelectedMessage.skillTypeID, out SkillType skillType))
@@ -30,12 +31,12 @@ namespace GameLogic.Client
                     this.OnSelectSkill(skillType);
                 }
             }
-            else if (message.MessageID == StuntSelectedMessage.MESSAGE_ID)
+            else if (message.MessageType == StuntSelectedMessage.MESSAGE_TYPE)
             {
                 StuntSelectedMessage stuntSelectedMessage = (StuntSelectedMessage)message;
                 //stuntSelectedMessage.StuntID;
             }
-            else if (message.MessageID == AspectsSelectedMessage.MESSAGE_ID)
+            else if (message.MessageType == AspectsSelectedMessage.MESSAGE_TYPE)
             {
                 List<Aspect> result = new List<Aspect>();
                 switch (CampaignManager.Instance.CurrentShot.Type)
@@ -118,27 +119,33 @@ namespace GameLogic.Client
 
         }
 
-        public void Show(Character you, Character him)
+        public void Show(Character initiative, Character passive)
         {
-            
+            SkillCheckPanelShowMessage message = new SkillCheckPanelShowMessage();
+            message.initiativeCharacterID = initiative.ID;
+            message.initiativeView = initiative.View;
+            message.passiveCharacterID = passive.ID;
+            message.passiveView = passive.View;
+            _connection.SendMessage(message);
         }
         
         public void Hide()
         {
-
+            SkillCheckPanelHideMessage message = new SkillCheckPanelHideMessage();
+            _connection.SendMessage(message);
         }
 
-        public void DisplayDicePoint(bool isYou, int[] dicePoints)
+        public void DisplayDicePoint(bool isInitiative, int[] dicePoints)
         {
 
         }
         
-        public void DisplaySkill(bool isYou, SkillType skillType)
+        public void DisplaySkill(bool isInitiative, SkillType skillType)
         {
 
         }
 
-        public void DisplayAspects(bool isYou, IEnumerable<Aspect> aspect)
+        public void DisplayAspects(bool isInitiative, IEnumerable<Aspect> aspect)
         {
 
         }

@@ -10,9 +10,9 @@ using GameLogic.Core.Network.ServerMessages;
 namespace GameLogic.Client
 {
 
-    public sealed class TextBox : ClientComponent, IMessageReceiver
+    public sealed class TextBox : ClientComponent
     {
-        public void MessageReceived(long timestamp, Streamable message)
+        public override void MessageReceived(ulong timestamp, Message message)
         {
             TextSelectedMessage selectedMessage = (TextSelectedMessage)message;
             this.OnSelectItem(selectedMessage.selection);
@@ -26,14 +26,14 @@ namespace GameLogic.Client
         public TextBox(Connection connection, User owner) :
             base(connection, owner)
         {
-            _connectionRef.AddMessageReceiver(TextSelectedMessage.MESSAGE_ID, this);
+            _connection.AddMessageReceiver(TextSelectedMessage.MESSAGE_TYPE, this);
         }
 
         public void AppendParagraph(string text)
         {
             TextBoxAddParagraphMessage message = new TextBoxAddParagraphMessage();
             message.text = text;
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
 
         public void AppendSelectableParagraph(string text, int selection)
@@ -41,39 +41,39 @@ namespace GameLogic.Client
             TextBoxAddSelectionMessage message = new TextBoxAddSelectionMessage();
             message.text = text;
             message.selectionCode = selection;
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
 
         public void Clear()
         {
             TextBoxClearMessage message = new TextBoxClearMessage();
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
 
         public void SetCharacterView(CharacterView view)
         {
             TextBoxSetPortraitMessage message = new TextBoxSetPortraitMessage();
             message.view = view;
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
 
         public void SetCharacterViewEffect(CharacterViewEffect effect)
         {
             TextBoxPortraitEffectMessage message = new TextBoxPortraitEffectMessage();
             message.effect = effect;
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
 
         public void SetPortraitStyle(PortraitStyle portrait)
         {
             TextBoxPortraitStyleMessage messsage = new TextBoxPortraitStyleMessage();
             messsage.style = portrait;
-            _connectionRef.SendMessage(messsage);
+            _connection.SendMessage(messsage);
         }
 
     }
 
-    public class StoryScene : ClientComponent
+    public abstract class StoryScene : ClientComponent
     {
         protected readonly TextBox _textBox;
 
@@ -88,7 +88,7 @@ namespace GameLogic.Client
         public void Reset()
         {
             StorySceneResetMessage message = new StorySceneResetMessage();
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
 
         public void AddObject(IStoryObject obj)
@@ -96,14 +96,14 @@ namespace GameLogic.Client
             StorySceneObjectAddMessage message = new StorySceneObjectAddMessage();
             message.objID = obj.ID;
             message.view = obj.CharacterRef.View;
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
 
         public void RemoveObject(IStoryObject obj)
         {
             StorySceneObjectRemoveMessage message = new StorySceneObjectRemoveMessage();
             message.objID = obj.ID;
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
 
         public void TransformObject(IStoryObject obj, Layout to)
@@ -111,7 +111,7 @@ namespace GameLogic.Client
             StorySceneObjectTransformMessage message = new StorySceneObjectTransformMessage();
             message.objID = obj.ID;
             message.to = to;
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
         
         public void SetObjectViewEffect(IStoryObject obj, CharacterViewEffect effect)
@@ -119,7 +119,7 @@ namespace GameLogic.Client
             StorySceneObjectViewEffectMessage message = new StorySceneObjectViewEffectMessage();
             message.objID = obj.ID;
             message.effect = effect;
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
 
         public void SetObjectPortraitStyle(IStoryObject obj, PortraitStyle portrait)
@@ -127,34 +127,34 @@ namespace GameLogic.Client
             StorySceneObjectPortraitStyleMessage message = new StorySceneObjectPortraitStyleMessage();
             message.objID = obj.ID;
             message.portrait = portrait;
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
 
         public void TransformCamera(Layout to)
         {
             StorySceneCameraTransformMessage message = new StorySceneCameraTransformMessage();
             message.to = to;
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
 
         public void SetCameraEffect(CameraEffect effect)
         {
             StorySceneCameraEffectMessage message = new StorySceneCameraEffectMessage();
             message.effect = effect;
-            _connectionRef.SendMessage(message);
+            _connection.SendMessage(message);
         }
 
     }
 
-    public sealed class DMStoryScene : StoryScene, IMessageReceiver
+    public sealed class DMStoryScene : StoryScene
     {
         public DMStoryScene(Connection connection, User owner) :
             base(connection, owner)
         {
-            _connectionRef.AddMessageReceiver(StorySceneNextActionMessage.MESSAGE_ID, this);
+            _connection.AddMessageReceiver(StorySceneNextActionMessage.MESSAGE_TYPE, this);
         }
 
-        public void MessageReceived(long timestamp, Streamable message)
+        public override void MessageReceived(ulong timestamp, Message message)
         {
             this.OnNextAction();
         }
@@ -166,15 +166,15 @@ namespace GameLogic.Client
 
     }
 
-    public sealed class PlayerStoryScene : StoryScene, IMessageReceiver
+    public sealed class PlayerStoryScene : StoryScene
     {
         public PlayerStoryScene(Connection connection, User owner) :
             base(connection, owner)
         {
-            _connectionRef.AddMessageReceiver(StorySceneObjectActionMessage.MESSAGE_ID, this);
+            _connection.AddMessageReceiver(StorySceneObjectActionMessage.MESSAGE_TYPE, this);
         }
         
-        public void MessageReceived(long timestamp, Streamable message)
+        public override void MessageReceived(ulong timestamp, Message message)
         {
             StorySceneObjectActionMessage objectMessage = (StorySceneObjectActionMessage)message;
             switch (objectMessage.action)

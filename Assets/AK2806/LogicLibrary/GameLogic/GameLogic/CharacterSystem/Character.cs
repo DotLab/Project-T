@@ -554,6 +554,7 @@ namespace GameLogic.CharacterSystem
 
     public sealed class CharacterManager : IJSContextProvider
     {
+        #region Javascript API class
         private sealed class API : IJSAPI<CharacterManager>
         {
             private readonly CharacterManager _outer;
@@ -579,7 +580,7 @@ namespace GameLogic.CharacterSystem
                 }
             }
         }
-
+        #endregion
         private readonly API _apiObj;
 
         private ulong _autoIncrement = 0L;

@@ -168,6 +168,7 @@ namespace GameLogic.Container
             _initiativeCallback = initiativeCallback ?? throw new ArgumentNullException(nameof(initiativeCallback));
             _passiveCallback = passiveCallback ?? throw new ArgumentNullException(nameof(passiveCallback));
             _state = CheckerState.INITIATIVE_SKILL;
+
         }
 
         public void CancelCheck()
