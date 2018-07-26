@@ -8,6 +8,20 @@ namespace GameLogic.Core.Network
 {
     public abstract class Message : Streamable
     {
+        public static Message New(long messageType)
+        {
+            switch (messageType)
+            {
+                case 0L:
+                    return new StorySceneObjectActionMessage();
+                case 1L:
+                    return new TextSelectedMessage();
+                // ...
+                default:
+                    return null;
+            }
+        }
+
         public abstract long MessageType { get; }
     }
     
@@ -31,22 +45,5 @@ namespace GameLogic.Core.Network
         public string message;
         // ...
     }
-    
-    public static class MessageHelper
-    {
-        public static Message NewMessage(long messageType)
-        {
-            switch (messageType)
-            {
-                case 0L:
-                    return new StorySceneObjectActionMessage();
-                case 1L:
-                    return new TextSelectedMessage();
-                // ...
-                default:
-                    return null;
-            }
-        }
 
-    }
 }
