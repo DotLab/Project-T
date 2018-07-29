@@ -5,7 +5,7 @@ using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.Core
 {
-    public interface IIdentifiable : IJSContextProvider
+    public interface IIdentifiable : IDescribable, IJSContextProvider
     {
         string ID { get; }
     }
@@ -16,9 +16,12 @@ namespace GameLogic.Core
 
         private readonly ulong _thisNumber;
 
-        public abstract string BaseID { get; }
+        protected abstract string BaseID { get; }
 
         public string ID => this.BaseID + "_" + _thisNumber;
+
+        public abstract string Name { get; set; }
+        public abstract string Description { get; set; }
 
         public AutogenIdentifiable()
         {
@@ -33,5 +36,11 @@ namespace GameLogic.Core
     {
         string Name { get; set; }
         string Description { get; set; }
+    }
+
+    public struct Describable : IDescribable
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
     }
 }

@@ -17,11 +17,11 @@ namespace GameLogic.CharacterSystem
     public sealed class Extra : AutogenIdentifiable, ICharacterProperty
     {
         #region Javascript API class
-        private sealed class API : IJSAPI<Extra>
+        private sealed class JSAPI : IJSAPI<Extra>
         {
             private readonly Extra _outer;
 
-            public API(Extra outer)
+            public JSAPI(Extra outer)
             {
                 _outer = outer;
             }
@@ -120,7 +120,7 @@ namespace GameLogic.CharacterSystem
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
         
         private Character _belong = null;
         private Character _item;
@@ -136,11 +136,13 @@ namespace GameLogic.CharacterSystem
             _item = item;
             item.Belong = this;
             _passiveEffects = new ExtraPropertyList<PassiveEffect>(this);
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
-        
-        public string Name { get => _item.Name; set => _item.Name = value; }
-        public string Description { get => _item.Description; set => _item.Description = value; }
+
+        protected override string BaseID => "Extra";
+
+        public override string Name { get => _item.Name; set => _item.Name = value; }
+        public override string Description { get => _item.Description; set => _item.Description = value; }
         public Character Belong { get => _belong; set => _belong = value; }
         public Character Item
         {
@@ -158,8 +160,6 @@ namespace GameLogic.CharacterSystem
         public bool IsVehicle { get => _isVehicle; set { _isVehicle = value; if (value) _isTool = true; } }
         public object CustomData { get => _customData; set => _customData = value; }
         public ExtraPropertyList<PassiveEffect> PassiveEffects => _passiveEffects;
-
-        public override string BaseID => "Extra";
 
         public override IJSContext GetContext()
         {

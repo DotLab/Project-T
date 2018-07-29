@@ -1,5 +1,5 @@
 ﻿using GameLogic.Core;
-using GameLogic.Container.Story;
+using GameLogic.Container.StoryComponent;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -66,9 +66,9 @@ namespace GameLogic.Client
 
         public void SetPortraitStyle(PortraitStyle portrait)
         {
-            TextBoxPortraitStyleMessage messsage = new TextBoxPortraitStyleMessage();
-            messsage.style = portrait;
-            _connection.SendMessage(messsage);
+            TextBoxPortraitStyleMessage message = new TextBoxPortraitStyleMessage();
+            message.style = portrait;
+            _connection.SendMessage(message);
         }
 
     }
@@ -148,7 +148,7 @@ namespace GameLogic.Client
 
     public sealed class DMStoryScene : StoryScene
     {
-        public DMStoryScene(Connection connection, User owner) :
+        public DMStoryScene(Connection connection, DM owner) :
             base(connection, owner)
         {
             _connection.AddMessageReceiver(StorySceneNextActionMessage.MESSAGE_TYPE, this);
@@ -168,7 +168,7 @@ namespace GameLogic.Client
 
     public sealed class PlayerStoryScene : StoryScene
     {
-        public PlayerStoryScene(Connection connection, User owner) :
+        public PlayerStoryScene(Connection connection, Player owner) :
             base(connection, owner)
         {
             _connection.AddMessageReceiver(StorySceneObjectActionMessage.MESSAGE_TYPE, this);
@@ -180,19 +180,19 @@ namespace GameLogic.Client
             switch (objectMessage.action)
             {
                 case StorySceneObjectActionMessage.PlayerAction.INTERACT:
-                    this.OnInteract(objectMessage.objectID);
+                    this.OnInteract(objectMessage.objID);
                     break;
                 case StorySceneObjectActionMessage.PlayerAction.CREATE_ASPECT:
-                    this.OnCreateAspect(objectMessage.objectID);
+                    this.OnCreateAspect(objectMessage.objID);
                     break;
                 case StorySceneObjectActionMessage.PlayerAction.ATTACK:
-                    this.OnAttack(objectMessage.objectID);
+                    this.OnAttack(objectMessage.objID);
                     break;
                 case StorySceneObjectActionMessage.PlayerAction.HINDER:
-                    this.OnHinder(objectMessage.objectID);
+                    this.OnHinder(objectMessage.objID);
                     break;
                 default:
-                    break;
+                    throw new ArgumentOutOfRangeException(nameof(objectMessage.action));
             }
         }
 

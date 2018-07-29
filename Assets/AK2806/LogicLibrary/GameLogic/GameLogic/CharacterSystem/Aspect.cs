@@ -16,11 +16,11 @@ namespace GameLogic.CharacterSystem
     public class Aspect : AutogenIdentifiable, ICharacterProperty
     {
         #region Javascript API class
-        protected class API : IJSAPI<Aspect>
+        protected class JSAPI : IJSAPI<Aspect>
         {
             private readonly Aspect _outer;
 
-            public API(Aspect outer)
+            public JSAPI(Aspect outer)
             {
                 _outer = outer;
             }
@@ -131,7 +131,7 @@ namespace GameLogic.CharacterSystem
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         protected string _name = "";
         protected string _description = "";
@@ -142,17 +142,34 @@ namespace GameLogic.CharacterSystem
 
         public Aspect()
         {
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
 
-        public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
-        public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
+        protected override string BaseID => "Aspect";
+
+        public override string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
+        public override string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
         public PersistenceType PersistenceType { get => _persistenceType; set => _persistenceType = value; }
         public Character Belong { get => _belong; set => _belong = value; }
-        public Character Benefit { get => _benefit; set => _benefit = value; }
-        public int BenefitTimes { get => _benefitTimes; set => _benefitTimes = value; }
-
-        public override string BaseID => "Aspect";
+        public Character Benefit
+        {
+            get => _benefit;
+            set
+            {
+                _benefit = value;
+                if (_benefit != null && _benefitTimes <= 0) _benefitTimes = 1;
+                if (_benefit == null && _benefitTimes > 0) _benefitTimes = 0;
+            }
+        }
+        public int BenefitTimes
+        {
+            get => _benefitTimes;
+            set
+            {
+                _benefitTimes = value;
+                if (_benefitTimes <= 0) _benefit = null;
+            }
+        }
 
         public override IJSContext GetContext()
         {
@@ -166,11 +183,11 @@ namespace GameLogic.CharacterSystem
     public sealed class Consequence : Aspect
     {
         #region Javascript API class
-        private new class API : Aspect.API, IJSAPI<Consequence>
+        private new class JSAPI : Aspect.JSAPI, IJSAPI<Consequence>
         {
             private readonly Consequence _outer;
 
-            public API(Consequence outer) : base(outer)
+            public JSAPI(Consequence outer) : base(outer)
             {
                 _outer = outer;
             }
@@ -217,17 +234,17 @@ namespace GameLogic.CharacterSystem
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         private int _counteractLevel = 0;
         
         public int CounteractLevel { get => _counteractLevel; set => _counteractLevel = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Counteract level is less than 0."); }
 
-        public override string BaseID => "Consequence";
+        protected override string BaseID => "Consequence";
 
         public Consequence()
         {
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
 
         public override IJSContext GetContext()

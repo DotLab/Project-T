@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using GameLogic.CharacterSystem;
+using GameLogic.Container;
 using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 
@@ -8,7 +9,12 @@ namespace GameLogic.Campaign
 {
     public enum ShotType
     {
-        Story, Battle, Map
+        STORY, BATTLE, FREEDOM
+    }
+
+    public enum ContainerType
+    {
+        STORY, BATTLE
     }
 
     public abstract class Shot : IDescribable
@@ -20,7 +26,7 @@ namespace GameLogic.Campaign
         public abstract ShotType Type { get; }
         public abstract StoryShot Story { get; }
         public abstract BattleShot Battle { get; }
-        public abstract MapShot Map { get; }
+        public abstract FreedomShot Freedom { get; }
         
         public List<Shot> Nexts { get => _nexts; set => _nexts = value; }
         public string Description { get => _description; set => _description = value; }
@@ -79,11 +85,11 @@ namespace GameLogic.Campaign
 
     public sealed class CampaignManager : IJSContextProvider
     {
-        private sealed class API : IJSAPI<CampaignManager>
+        private sealed class JSAPI : IJSAPI<CampaignManager>
         {
             private CampaignManager _outer;
 
-            public API(CampaignManager outer)
+            public JSAPI(CampaignManager outer)
             {
                 _outer = outer;
             }
@@ -105,22 +111,24 @@ namespace GameLogic.Campaign
             }
         }
 
-        private API _apiObj;
+        private JSAPI _apiObj;
 
         private static readonly CampaignManager _instance = new CampaignManager();
         public static CampaignManager Instance => _instance;
-
-        private Campaign _currentCampaign;
-        private Shot _currentShot;
+        
+        private ContainerType _currentContainer = ContainerType.STORY;
+        private Campaign _currentCampaign = null;
+        private Shot _currentShot = null;
 
         private CampaignManager()
         {
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
 
-        public Campaign CurrentCampaign { get => _currentCampaign; set => _currentCampaign = value; }
-        public Shot CurrentShot { get => _currentShot; set => _currentShot = value; }
-        
+        public ContainerType CurrentContainer { get => _currentContainer; set => _currentContainer = value; }
+        public Campaign CurrentCampaign => _currentCampaign;
+        public Shot CurrentShot => _currentShot;
+
         public IJSContext GetContext()
         {
             return _apiObj;

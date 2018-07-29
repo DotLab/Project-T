@@ -9,11 +9,11 @@ namespace GameLogic.EventSystem
     public class Trigger : IJSContextProvider
     {
         #region Javascript API class
-        protected class API : IJSAPI<Trigger>
+        protected class JSAPI : IJSAPI<Trigger>
         {
             private readonly Trigger _outer;
 
-            public API(Trigger outer)
+            public JSAPI(Trigger outer)
             {
                 _outer = outer;
             }
@@ -97,7 +97,7 @@ namespace GameLogic.EventSystem
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         protected Command _command;
         protected string _boundEventID;
@@ -112,7 +112,7 @@ namespace GameLogic.EventSystem
             _boundEventID = boundEventID ?? throw new ArgumentNullException(nameof(boundEventID));
             _command = command ?? throw new ArgumentNullException(nameof(command));
             _active = true;
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
             if (autoReg) this.Register();
         }
         

@@ -7,9 +7,9 @@ namespace GameLogic.Campaign
 {
     public sealed class BattleShot : Shot
     {
-        public override ShotType Type => ShotType.Battle;
+        public override ShotType Type => ShotType.BATTLE;
         public override StoryShot Story => null;
-        public override MapShot Map => null;
+        public override FreedomShot Freedom => null;
         public override BattleShot Battle => this;
         
         public BattleShot()

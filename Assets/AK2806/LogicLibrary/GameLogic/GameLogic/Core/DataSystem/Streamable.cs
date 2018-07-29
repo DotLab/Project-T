@@ -1,8 +1,9 @@
-﻿using System;
+﻿using GameLogic.CharacterSystem;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace GameLogic.Core.Network
+namespace GameLogic.Core.DataSystem
 {
     public interface IDataOutputStream
     {
@@ -44,10 +45,10 @@ namespace GameLogic.Core.Network
         Double ReadDouble();
     }
 
-    public abstract class Streamable
+    public interface IStreamable
     {
-        public abstract void WriteTo(IDataOutputStream stream);
-        public abstract void ReadFrom(IDataInputStream stream);
+        void WriteTo(IDataOutputStream stream);
+        void ReadFrom(IDataInputStream stream);
     }
 
     public static class OutputStreamHelper
@@ -93,6 +94,22 @@ namespace GameLogic.Core.Network
         {
             stream.WriteInt32(val.action);
             stream.WriteInt32(val.emotion);
+        }
+
+        public static void WriteDescribable(IDataOutputStream stream, IDescribable describable)
+        {
+            stream.WriteInt32(describable.Name.Length);
+            stream.WriteString(describable.Name);
+            stream.WriteInt32(describable.Description.Length);
+            stream.WriteString(describable.Description);
+        }
+
+        public static void WriteSkillProperty(IDataOutputStream stream, SkillProperty property)
+        {
+            stream.WriteInt32(property.level);
+            stream.WriteBoolean(property.canAttack);
+            stream.WriteBoolean(property.canDefend);
+            stream.WriteBoolean(property.canMove);
         }
     }
 
@@ -146,6 +163,26 @@ namespace GameLogic.Core.Network
             PortraitStyle ret = new PortraitStyle();
             ret.action = stream.ReadInt32();
             ret.emotion = stream.ReadInt32();
+            return ret;
+        }
+
+        public static Describable ReadDescribable(IDataInputStream stream)
+        {
+            Describable ret = new Describable();
+            int length = stream.ReadInt32();
+            ret.Name = stream.ReadString(length);
+            length = stream.ReadInt32();
+            ret.Description = stream.ReadString(length);
+            return ret;
+        }
+
+        public static SkillProperty ReadSkillProperty(IDataInputStream stream)
+        {
+            SkillProperty ret = new SkillProperty();
+            ret.level = stream.ReadInt32();
+            ret.canAttack = stream.ReadBoolean();
+            ret.canDefend = stream.ReadBoolean();
+            ret.canMove = stream.ReadBoolean();
             return ret;
         }
     }

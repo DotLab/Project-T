@@ -8,99 +8,77 @@ using System.Text;
 
 namespace GameLogic.Core
 {
-    public sealed class Player
+    public sealed class Player : User
     {
         private readonly PlayerClient _client;
-        private readonly User _user;
         private readonly List<Character> _characters;
         private readonly int _index;
         
         public PlayerClient Client => _client;
-        public User User => _user;
         public List<Character> Characters => _characters;
-        public int Index => _index;
-        
-        public Player(User user, Connection connection, int index)
+        public override int Index => _index;
+
+        public Player(string id, string name, Connection connection, int index, IEnumerable<Character> characters) :
+            base(id, name, false)
         {
-            _user = user ?? throw new ArgumentNullException(nameof(user));
             _index = index > 0 ? index : throw new ArgumentOutOfRangeException(nameof(index), "Player index is less than 1.");
-            _client = new PlayerClient(connection, user);
-            _characters = new List<Character>();
-        }
-        
-    }
-
-    public sealed class DM
-    {
-        private readonly DMClient _client;
-        private readonly User _user;
-        
-        public DMClient Client => _client;
-        public User User => _user;
-
-        public DM(User user, Connection connection)
-        {
-            _user = user ?? throw new ArgumentNullException(nameof(user));
-            _client = new DMClient(connection, user);
-        }
-    }
-
-    public sealed class User
-    {
-        public static User CreatePlayer(string id, string name, Connection connection, int index, IEnumerable<Character> characters)
-        {
             foreach (Character character in characters)
             {
                 if (character == null) throw new ArgumentNullException(nameof(character));
             }
-            User ret = new User(id, name, false, connection, index);
-            ret.AsPlayer.Characters.AddRange(characters);
-            return ret;
+            _client = new PlayerClient(connection, this);
+            _characters = new List<Character>(characters);
+            foreach (Character character in characters)
+            {
+                character.Controller = this;
+            }
         }
+        
+    }
 
-        public static User CreateDM(string id, string name, Connection connection)
+    public sealed class DM : User
+    {
+        private readonly DMClient _client;
+        
+        public DMClient Client => _client;
+        public override int Index => 0;
+
+        public DM(string id, string name, Connection connection) :
+            base(id, name, true)
         {
-            return new User(id, name, true, connection, 0);
+            _client = new DMClient(connection, this);
         }
+    }
 
-        private readonly bool _isDM;
-        private readonly DM _dm;
-        private readonly Player _player;
-        private readonly string _id;
-        private readonly string _name;
+    public abstract class User
+    {
+        protected readonly bool _isDM;
+        protected readonly string _id;
+        protected readonly string _name;
         
         public bool IsDM => _isDM;
-        public DM AsDM => _dm;
-        public Player AsPlayer => _player;
+        public DM AsDM => (DM)this;
+        public Player AsPlayer => (Player)this;
         public string Id => _id;
         public string Name => _name;
+        public abstract int Index { get; }
 
-        private User(string id, string name, bool isDM, Connection connection, int index)
+        protected User(string id, string name, bool isDM)
         {
             _id = id ?? throw new ArgumentNullException(nameof(id));
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _isDM = isDM;
-            if (isDM)
-            {
-                _player = null;
-                _dm = new DM(this, connection);
-            }
-            else
-            {
-                _player = new Player(this, connection, index);
-                _dm = null;
-            }
         }
 
         public void UpdateClient()
         {
             if (_isDM)
             {
-                _dm.Client.Update();
+                this.AsDM.Client.Update();
             }
             else
             {
-                _player.Client.Update();
+                this.AsPlayer.Client.Update();
             }
         }
 

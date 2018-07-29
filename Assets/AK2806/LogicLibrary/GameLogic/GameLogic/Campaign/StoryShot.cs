@@ -15,10 +15,10 @@ namespace GameLogic.Campaign
         public List<SceneAction> Actions => _actions;
         public int CurrentActionIndex => _currentActionIndex;
 
-        public override ShotType Type => ShotType.Story;
+        public override ShotType Type => ShotType.STORY;
         public override StoryShot Story => this;
         public override BattleShot Battle => null;
-        public override MapShot Map => null;
+        public override FreedomShot Freedom => null;
         
         public StoryShot(List<SceneAction> actions)
         {

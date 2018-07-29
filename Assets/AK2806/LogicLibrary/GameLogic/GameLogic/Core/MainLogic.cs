@@ -20,25 +20,26 @@ namespace GameLogic.Core
 
     }
 
-    public class MainLogic
+    public static class MainLogic
     {
-        private static bool _gameOver = true;
         private static readonly JavascriptGlobalObject _globalObject = new JavascriptGlobalObject();
 
-        private static List<User> _players = null;
-        private static User _dm = null;
+        private static bool _gameOver = true;
+        private static List<Player> _players = null;
+        private static DM _dm = null;
 
-        public static IEnumerable<User> Players => _players;
-        public static User Dm => _dm;
-
-        public static void Init(User dm, IEnumerable<User> players)
+        public static bool GameOver => _gameOver;
+        public static IReadOnlyList<Player> Players => _players;
+        public static DM DM => _dm;
+        
+        public static void Init(DM dm, IEnumerable<Player> players)
         {
             _dm = dm ?? throw new ArgumentNullException(nameof(dm));
-            _players = new List<User>(players);
+            _players = new List<Player>(players);
 
-            foreach (User user in _players)
+            foreach (Player player in _players)
             {
-                foreach (Character character in user.AsPlayer.Characters)
+                foreach (Character character in player.Characters)
                 {
                     CharacterManager.Instance.PlayerCharacters.Add(character);
                 }
@@ -52,14 +53,13 @@ namespace GameLogic.Core
             engineRaw.BindType(nameof(CharacterViewEffect), typeof(CharacterViewEffect));
             engineRaw.BindType(nameof(Vector3), typeof(Vector3));
             engineRaw.BindType(nameof(Quaternion), typeof(Quaternion));
+            engineRaw.BindType(nameof(SkillProperty), typeof(SkillProperty));
             engineRaw.SetVar("$", _globalObject);
             
             
 
             _gameOver = false;
         }
-
-        public static bool GameOver => _gameOver;
 
         public static void Update()
         {

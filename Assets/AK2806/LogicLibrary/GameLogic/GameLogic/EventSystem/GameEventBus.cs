@@ -10,11 +10,11 @@ namespace GameLogic.EventSystem
     public sealed class GameEventBus : IJSContextProvider
     {
         #region Javascript API class
-        private sealed class API : IJSAPI<GameEventBus>
+        private sealed class JSAPI : IJSAPI<GameEventBus>
         {
             private readonly GameEventBus _outer;
 
-            public API(GameEventBus outer)
+            public JSAPI(GameEventBus outer)
             {
                 _outer = outer;
             }
@@ -91,7 +91,7 @@ namespace GameLogic.EventSystem
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         private static readonly GameEventBus _instance = new GameEventBus();
 
@@ -102,7 +102,7 @@ namespace GameLogic.EventSystem
         private GameEventBus()
         {
             _triggerPools = new Dictionary<string, List<Trigger>>();
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
 
         public void Publish(Event e)

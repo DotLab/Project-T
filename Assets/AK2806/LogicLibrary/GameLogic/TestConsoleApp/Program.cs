@@ -20,14 +20,14 @@ namespace TestConsoleApp
         {
             KeyCharacter[] player1characters = new KeyCharacter[1];
             KeyCharacter[] player2characters = new KeyCharacter[2];
-            User[] players = new User[2];
-            players[0] = User.CreatePlayer("Player1", "Player1", player1Connection, 1, player1characters);
-            players[1] = User.CreatePlayer("Player2", "Player2", player2Connection, 2, player2characters);
 
-            //players[0].AsPlayer.Characters.Add();
-            //players[0].AsPlayer.Characters.Add();
+            // ...
 
-            User dm = User.CreateDM("DM", "DM", dmConnection);
+            Player[] players = new Player[2];
+            players[0] = new Player("Player1", "Player1", player1Connection, 1, player1characters);
+            players[1] = new Player("Player2", "Player2", player2Connection, 2, player2characters);
+            
+            DM dm = new DM("DM", "DM", dmConnection);
             
             MainLogic.Init(dm, players);
 

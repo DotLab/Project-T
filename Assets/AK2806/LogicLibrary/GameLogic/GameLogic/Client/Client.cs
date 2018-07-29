@@ -1,4 +1,5 @@
-﻿using GameLogic.Core;
+﻿using GameLogic.Campaign;
+using GameLogic.Core;
 using GameLogic.Core.Network;
 using GameLogic.Core.Network.ClientMessages;
 using GameLogic.Core.Network.ServerMessages;
@@ -24,14 +25,10 @@ namespace GameLogic.Client
 
     public class Client : ClientComponent
     {
-        public enum ClientScene
-        {
-            STORY,
-            BATTLE,
-            MAP
-        }
+        protected readonly SkillCheckDialog _skillCheckDialog;
 
-        
+        public SkillCheckDialog SkillCheckDialog => _skillCheckDialog;
+
         public override void MessageReceived(ulong timestamp, Message message)
         {
             this.SynchronizeData();
@@ -46,6 +43,7 @@ namespace GameLogic.Client
             base(connection, owner)
         {
             _connection.AddMessageReceiver(ClientInitMessage.MESSAGE_TYPE, this);
+            _skillCheckDialog = new SkillCheckDialog(connection, owner);
         }
         
         public virtual void Update()
@@ -53,7 +51,7 @@ namespace GameLogic.Client
             _connection.UpdateReceiver();
         }
         
-        public void ShowScene(ClientScene scene)
+        public void ShowScene(ContainerType scene)
         {
             ShowSceneMessage message = new ShowSceneMessage();
             message.sceneType = (int)scene;
@@ -84,14 +82,13 @@ namespace GameLogic.Client
 
     public sealed class PlayerClient : Client
     {
-        
         private readonly PlayerStoryScene _storyScene;
         private readonly PlayerBattleSceme _battleScene;
 
         public PlayerStoryScene StoryScene => _storyScene;
         public PlayerBattleSceme BattleScene => _battleScene;
 
-        public PlayerClient(Connection connection, User owner) :
+        public PlayerClient(Connection connection, Player owner) :
             base(connection, owner)
         {
             _storyScene = new PlayerStoryScene(connection, owner);
@@ -104,15 +101,18 @@ namespace GameLogic.Client
     {
         private readonly DMStoryScene _storyScene;
         private readonly DMBattleScene _battleScene;
+        private readonly DMCheckDialog _dmCheckDialog;
         
         public DMStoryScene StoryScene => _storyScene;
         public DMBattleScene BattleScene => _battleScene;
-        
-        public DMClient(Connection connection, User owner) :
+        public DMCheckDialog DMCheckDialog => _dmCheckDialog;
+
+        public DMClient(Connection connection, DM owner) :
             base(connection, owner)
         {
             _storyScene = new DMStoryScene(connection, owner);
             _battleScene = new DMBattleScene();
+            _dmCheckDialog = new DMCheckDialog(connection, owner);
         }
         
     }

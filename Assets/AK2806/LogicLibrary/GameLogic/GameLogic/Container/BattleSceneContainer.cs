@@ -7,11 +7,11 @@ namespace GameLogic.Container
 {
     public class BattleSceneContainer : IJSContextProvider
     {
-        private sealed class API : IJSAPI<BattleSceneContainer>
+        private sealed class JSAPI : IJSAPI<BattleSceneContainer>
         {
             private readonly BattleSceneContainer _outer;
 
-            public API(BattleSceneContainer outer)
+            public JSAPI(BattleSceneContainer outer)
             {
                 _outer = outer;
             }
@@ -33,14 +33,14 @@ namespace GameLogic.Container
             }
         }
 
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         private static readonly BattleSceneContainer _instance = new BattleSceneContainer();
         public static BattleSceneContainer Instance => _instance;
 
         public BattleSceneContainer()
         {
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
 
         public IJSContext GetContext()

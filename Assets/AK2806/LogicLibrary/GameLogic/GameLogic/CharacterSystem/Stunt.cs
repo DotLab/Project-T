@@ -12,11 +12,11 @@ namespace GameLogic.CharacterSystem
     public sealed class Stunt : AutogenIdentifiable, ICharacterProperty
     {
         #region Javascript API class
-        private sealed class API : IJSAPI<Stunt>
+        private sealed class JSAPI : IJSAPI<Stunt>
         {
             private readonly Stunt _outer;
 
-            public API(Stunt outer)
+            public JSAPI(Stunt outer)
             {
                 _outer = outer;
             }
@@ -127,27 +127,31 @@ namespace GameLogic.CharacterSystem
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         private string _name = "";
         private string _description = "";
         private Character _belong = null;
         private InitiativeEffect _initiativeEffect;
         private SkillType _boundSkillType;
+        private readonly bool _needDMCheck;
 
-        public Stunt(InitiativeEffect effect, SkillType boundSkillType, string name = "", string description = "")
+        public Stunt(InitiativeEffect effect, SkillType boundSkillType, bool needDMCheck = true, string name = "", string description = "")
         {
             if (effect.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(effect));
             _initiativeEffect = effect;
             effect.Belong = this;
             _boundSkillType = boundSkillType ?? throw new ArgumentNullException(nameof(boundSkillType));
+            _needDMCheck = needDMCheck;
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _description = description ?? throw new ArgumentNullException(nameof(description));
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
-        
-        public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
-        public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
+
+        protected override string BaseID => "Stunt";
+
+        public override string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
+        public override string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
         public Character Belong { get => _belong; set => _belong = value; }
         public InitiativeEffect InitiativeEffect
         {
@@ -161,8 +165,7 @@ namespace GameLogic.CharacterSystem
             }
         }
         public SkillType BoundSkillType { get => _boundSkillType; set => _boundSkillType = value ?? throw new ArgumentNullException(nameof(value)); }
-
-        public override string BaseID => "Stunt";
+        public bool NeedDMCheck => _needDMCheck;
 
         public override IJSContext GetContext()
         {

@@ -15,11 +15,11 @@ namespace GameLogic.Core
         where TItem : class, IAttachable<TOwner>
     {
         #region Javascript API class
-        protected class API : IJSAPI<AttachableList<TOwner, TItem>>
+        protected class JSAPI : IJSAPI<AttachableList<TOwner, TItem>>
         {
             private readonly AttachableList<TOwner, TItem> _outer;
 
-            public API(AttachableList<TOwner, TItem> outer)
+            public JSAPI(AttachableList<TOwner, TItem> outer)
             {
                 _outer = outer;
             }
@@ -259,7 +259,7 @@ namespace GameLogic.Core
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         protected readonly TOwner _owner;
         protected readonly List<TItem> _container;
@@ -281,7 +281,7 @@ namespace GameLogic.Core
         
         public AttachableList(TOwner owner)
         {
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
             _owner = owner;
             _container = new List<TItem>();
         }

@@ -27,13 +27,13 @@ namespace GameLogic.Core.ScriptSystem
             Runtime, Compile
         }
 
-        protected int _errID;
-        protected JSErrorType _errType;
-        protected string _errMessage;
+        protected int _jsErrID = 0;
+        protected JSErrorType _jsErrType = JSErrorType.Runtime;
+        protected string _jsErrMessage = "";
 
-        public int ErrID => _errID;
-        public JSErrorType ErrType => _errType;
-        public string ErrMessage => _errMessage;
+        public int JSErrID => _jsErrID;
+        public JSErrorType JSErrType => _jsErrType;
+        public string JSErrMessage => _jsErrMessage;
 
         protected static string FullMessage(int errID, JSErrorType errType, string errMessage)
         {
@@ -52,13 +52,17 @@ namespace GameLogic.Core.ScriptSystem
             ret += "Error (" + errID + "): " + errMessage;
             return ret;
         }
-        
+
+        public JSException() { }
+        public JSException(string message) : base(message) { }
+        public JSException(string message, Exception inner) : base(message, inner) { }
+
         public JSException(int errID, JSErrorType errType, string errMessage) :
             base(FullMessage(errID, errType, errMessage))
         {
-            _errID = errID;
-            _errType = errType;
-            _errMessage = errMessage;
+            _jsErrID = errID;
+            _jsErrType = errType;
+            _jsErrMessage = errMessage;
         }
         
     }

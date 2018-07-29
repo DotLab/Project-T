@@ -6,6 +6,14 @@ using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.CharacterSystem
 {
+    public struct SkillProperty
+    {
+        public int level;
+        public bool canAttack;
+        public bool canDefend;
+        public bool canMove;
+    }
+
     public sealed class SkillType : IEquatable<SkillType>
     {
         public static readonly SkillType Athletics = new SkillType("Athletics", "运动", false, true, true);
@@ -54,28 +62,26 @@ namespace GameLogic.CharacterSystem
 
         private readonly string _id;
         private readonly string _name;
-        private readonly bool _canAttack;
-        private readonly bool _canDefend;
-        private readonly bool _canMove;
+        private readonly SkillProperty _property;
 
-        public string Id => _id;
+        public string ID => _id;
         public string Name => _name;
-        public bool CanAttack => _canAttack;
-        public bool CanDefend => _canDefend;
-        public bool CanMove => _canMove;
-        
+        public SkillProperty Property => _property;
+
         private SkillType(string id, string name, bool canAttack = false, bool canDefend = false, bool canMove = false)
         {
             _id = id ?? throw new ArgumentNullException(nameof(id));
             _name = name ?? throw new ArgumentNullException(nameof(name));
-            _canAttack = canAttack;
-            _canDefend = canDefend;
-            _canMove = canMove;
+            _property = new SkillProperty();
+            _property.level = 0;
+            _property.canAttack = canAttack;
+            _property.canDefend = canDefend;
+            _property.canMove = canMove;
         }
 
         public bool Equals(SkillType other)
         {
-            return other != null && _id == other._id;
+            return !(other is null) && _id == other._id;
         }
 
         public override bool Equals(object obj)
@@ -88,16 +94,25 @@ namespace GameLogic.CharacterSystem
             return _id.GetHashCode();
         }
         
-    }
+        public static bool operator==(SkillType a, SkillType b)
+        {
+            return a.Equals(b);
+        }
 
-    public sealed class Skill : ICharacterProperty
+        public static bool operator!=(SkillType a, SkillType b)
+        {
+            return !(a == b);
+        }
+    }
+    
+    public sealed class Skill : IDescribable, IJSContextProvider
     {
         #region Javascript API class
-        private sealed class API : IJSAPI<Skill>
+        private sealed class JSAPI : IJSAPI<Skill>
         {
             private readonly Skill _outer;
 
-            public API(Skill outer)
+            public JSAPI(Skill outer)
             {
                 _outer = outer;
             }
@@ -140,24 +155,24 @@ namespace GameLogic.CharacterSystem
                 }
             }
 
-            public int getLevel()
+            public SkillProperty getProperty()
             {
                 try
                 {
-                    return _outer.Level;
+                    return _outer.Property;
                 }
                 catch (Exception e)
                 {
                     JSEngineManager.Engine.Log(e.Message);
-                    return -1;
+                    return new SkillProperty();
                 }
             }
 
-            public void setLevel(int value)
+            public void setProperty(SkillProperty value)
             {
                 try
                 {
-                    _outer.Level = value;
+                     _outer.Property = value;
                 }
                 catch (Exception e)
                 {
@@ -169,7 +184,7 @@ namespace GameLogic.CharacterSystem
             {
                 try
                 {
-                    return _outer.SkillType.Id;
+                    return _outer.SkillType.ID;
                 }
                 catch (Exception e)
                 {
@@ -207,32 +222,22 @@ namespace GameLogic.CharacterSystem
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
         
         private string _description = "";
-        private Character _belong = null;
         private SkillType _skillType;
-        private int _level = 0;
-        private bool _canAttack;
-        private bool _canDefend;
-        private bool _canMove;
+        private SkillProperty _property;
 
         public string Name { get => _skillType.Name; set { } }
         public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
-        public Character Belong { get => _belong; set => _belong = value; }
         public SkillType SkillType { get => _skillType; set => _skillType = value ?? throw new ArgumentNullException(nameof(value)); }
-        public int Level { get => _level; set => _level = value; }
-        public bool CanAttack { get => _canAttack; set => _canAttack = value; }
-        public bool CanDefend { get => _canDefend; set => _canDefend = value; }
-        public bool CanMove { get => _canMove; set => _canMove = value; }
+        public SkillProperty Property { get => _property; set => _property = value; }
 
         public Skill(SkillType skillType)
         {
             _skillType = skillType ?? throw new ArgumentNullException(nameof(skillType));
-            _canAttack = skillType.CanAttack;
-            _canDefend = skillType.CanDefend;
-            _canMove = skillType.CanMove;
-            _apiObj = new API(this);
+            _property = skillType.Property;
+            _apiObj = new JSAPI(this);
         }
 
         public IJSContext GetContext()

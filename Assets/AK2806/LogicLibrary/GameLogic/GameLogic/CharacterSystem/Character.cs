@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GameLogic.Campaign;
+using GameLogic.Container;
+using GameLogic.Container.StoryComponent;
 using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.CharacterSystem
 {
-    public interface ICharacterProperty : IDescribable, IAttachable<Character> { }
+    public interface ICharacterProperty : IIdentifiable, IAttachable<Character> { }
 
     public sealed class ReadonlyCharacterPropertyList<T> : CharacterPropertyList<T> where T : class, ICharacterProperty
     {
@@ -33,14 +36,14 @@ namespace GameLogic.CharacterSystem
         public CharacterPropertyList(Character owner) : base(owner) { }
     }
 
-    public abstract class Character : IExtraProperty, IIdentifiable
+    public abstract class Character : IIdentifiable, IExtraProperty
     {
         #region Javascript API class
-        protected class API : IJSAPI<Character>
+        protected class JSAPI : IJSAPI<Character>
         {
             private readonly Character _outer;
 
-            public API(Character outer)
+            public JSAPI(Character outer)
             {
                 _outer = outer;
             }
@@ -134,17 +137,29 @@ namespace GameLogic.CharacterSystem
                     return null;
                 }
             }
-
-            public IJSAPI<CharacterPropertyList<Skill>> getSkillList()
+            
+            public SkillProperty getSkillProperty(string skillID)
             {
                 try
                 {
-                    return (IJSAPI<CharacterPropertyList<Skill>>)_outer.Skills.GetContext();
+                    return _outer.GetSkillProperty(SkillType.SkillTypes[skillID]);
                 }
                 catch (Exception e)
                 {
                     JSEngineManager.Engine.Log(e.Message);
-                    return null;
+                    return new SkillProperty();
+                }
+            }
+
+            public void setSkillProperty(string skillID, SkillProperty property)
+            {
+                try
+                {
+                    _outer.SetSkillProperty(SkillType.SkillTypes[skillID], property);
+                }
+                catch (Exception e)
+                {
+                    JSEngineManager.Engine.Log(e.Message);
                 }
             }
 
@@ -191,7 +206,7 @@ namespace GameLogic.CharacterSystem
             {
                 try
                 {
-                    return _outer.Refresh;
+                    return _outer.RefreshPoint;
                 }
                 catch (Exception e)
                 {
@@ -204,7 +219,7 @@ namespace GameLogic.CharacterSystem
             {
                 try
                 {
-                    _outer.Refresh = value;
+                    _outer.RefreshPoint = value;
                 }
                 catch (Exception e)
                 {
@@ -216,7 +231,7 @@ namespace GameLogic.CharacterSystem
             {
                 try
                 {
-                    return _outer.Fate;
+                    return _outer.FatePoint;
                 }
                 catch (Exception e)
                 {
@@ -229,7 +244,7 @@ namespace GameLogic.CharacterSystem
             {
                 try
                 {
-                    _outer.Fate = value;
+                    _outer.FatePoint = value;
                 }
                 catch (Exception e)
                 {
@@ -354,51 +369,70 @@ namespace GameLogic.CharacterSystem
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
         
         protected readonly string _id;
         protected string _name = "";
         protected string _description = "";
         protected Extra _belong = null;
         protected readonly CharacterView _view;
+        protected Player _controller = null;
 
         public string ID => _id;
         public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
         public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
         public Extra Belong { get => _belong; set => _belong = value; }
         public CharacterView View => _view;
+        public Player Controller { get => _controller; set => _controller = value; }
 
         protected Character(string id, CharacterView view)
         {
             _id = id ?? throw new ArgumentNullException(nameof(id));
             _view = view ?? throw new ArgumentNullException(nameof(view));
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
         
+        protected abstract List<Skill> Skills { get; }
         public abstract CharacterPropertyList<Aspect> Aspects { get; }
-        public abstract CharacterPropertyList<Skill> Skills { get; }
         public abstract CharacterPropertyList<Stunt> Stunts { get; }
         public abstract CharacterPropertyList<Extra> Extras { get; }
         public abstract CharacterPropertyList<Consequence> Consequences { get; }
-        public abstract int Refresh { get; set; }
-        public abstract int Fate { get; set; }
+        public abstract int RefreshPoint { get; set; }
+        public abstract int FatePoint { get; set; }
         public abstract int PhysicsStress { get; set; }
         public abstract int PhysicsStressMax { get; set; }
         public abstract int MentalStress { get; set; }
         public abstract int MentalStressMax { get; set; }
 
-        public int SkillLevel(SkillType skillType)
+        public IReadOnlyList<Skill> ReadonlySkillList => this.Skills;
+
+        public SkillProperty GetSkillProperty(SkillType skillType)
         {
             foreach (Skill skill in this.Skills)
             {
                 if (skill.SkillType == skillType)
                 {
-                    return skill.Level;
+                    return skill.Property;
                 }
             }
-            return 0;
+            return skillType.Property;
         }
 
+        public void SetSkillProperty(SkillType skillType, SkillProperty property)
+        {
+            foreach (Skill skill in this.Skills)
+            {
+                if (skill.SkillType == skillType)
+                {
+                    skill.Property = property;
+                    return;
+                }
+            }
+            Skill newSkill = new Skill(skillType);
+            newSkill.Property = property;
+            this.Skills.Add(newSkill);
+        }
+        
         public IJSContext GetContext()
         {
             return _apiObj;
@@ -415,22 +449,22 @@ namespace GameLogic.CharacterSystem
         private static readonly ReadonlyCharacterPropertyList<Consequence> _consequences = new ReadonlyCharacterPropertyList<Consequence>(null, null);
 
         private readonly CharacterPropertyList<Aspect> _aspects;
-        private readonly CharacterPropertyList<Skill> _skills;
+        private readonly List<Skill> _skills;
         private int _physicsStress = 0;
         private int _physicsStressMax = 0;
         private int _mentalStress = 0;
         private int _mentalStressMax = 0;
 
+        protected override List<Skill> Skills => _skills;
         public override CharacterPropertyList<Aspect> Aspects => _aspects;
-        public override CharacterPropertyList<Skill> Skills => _skills;
         public override int PhysicsStress { get => _physicsStress; set => _physicsStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Physics stress is less than 0."); }
         public override int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max physics stress is less than 1."); }
         public override int MentalStress { get => _mentalStress; set => _mentalStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Mental stress is less than 0."); }
         public override int MentalStressMax { get => _mentalStressMax; set => _mentalStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max mental stress is less than 1."); }
 
         public override CharacterPropertyList<Stunt> Stunts => _stunts;
-        public override int Refresh { get => 0; set { } }
-        public override int Fate { get => 0; set { } }
+        public override int RefreshPoint { get => 0; set { } }
+        public override int FatePoint { get => 0; set { } }
         public override CharacterPropertyList<Extra> Extras => _extras;
         public override CharacterPropertyList<Consequence> Consequences => _consequences;
 
@@ -438,7 +472,7 @@ namespace GameLogic.CharacterSystem
             base(id, view)
         {
             _aspects = new CharacterPropertyList<Aspect>(this);
-            _skills = new CharacterPropertyList<Skill>(this);
+            _skills = new List<Skill>();
         }
 
         public TemporaryCharacter(string id, TemporaryCharacter template) :
@@ -459,7 +493,7 @@ namespace GameLogic.CharacterSystem
                 Skill clone = new Skill(skill.SkillType);
                 clone.Name = skill.Name;
                 clone.Description = skill.Description;
-                clone.Level = skill.Level;
+                clone.Property = skill.Property;
                 this.Skills.Add(skill);
             }
             this.PhysicsStress = template.PhysicsStress;
@@ -474,19 +508,19 @@ namespace GameLogic.CharacterSystem
         private static readonly ReadonlyCharacterPropertyList<Consequence> _consequences = new ReadonlyCharacterPropertyList<Consequence>(null, null);
 
         private readonly CharacterPropertyList<Aspect> _aspects;
-        private readonly CharacterPropertyList<Skill> _skills;
+        private readonly List<Skill> _skills;
         private int _physicsStress = 0;
         private int _physicsStressMax = 0;
         private int _mentalStress = 0;
         private int _mentalStressMax = 0;
 
-        private int _refresh = 0;
-        private int _fate = 0;
+        private int _refreshPoint = 0;
+        private int _fatePoint = 0;
         private readonly CharacterPropertyList<Stunt> _stunts;
         private readonly CharacterPropertyList<Extra> _extras;
 
+        protected override List<Skill> Skills => _skills;
         public override CharacterPropertyList<Aspect> Aspects => _aspects;
-        public override CharacterPropertyList<Skill> Skills => _skills;
         public override int PhysicsStress { get => _physicsStress; set => _physicsStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Physics stress is less than 0."); }
         public override int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max physics stress is less than 1."); }
         public override int MentalStress { get => _mentalStress; set => _mentalStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Mental stress is less than 0."); }
@@ -494,8 +528,8 @@ namespace GameLogic.CharacterSystem
 
         public override CharacterPropertyList<Stunt> Stunts => _stunts;
         public override CharacterPropertyList<Extra> Extras => _extras;
-        public override int Refresh { get => _refresh; set => _refresh = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Refresh point is less than 1."); }
-        public override int Fate { get => _fate; set => _fate = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Fate point is less than 0."); }
+        public override int RefreshPoint { get => _refreshPoint; set => _refreshPoint = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Refresh point is less than 1."); }
+        public override int FatePoint { get => _fatePoint; set => _fatePoint = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Fate point is less than 0."); }
 
         public override CharacterPropertyList<Consequence> Consequences => _consequences;
 
@@ -503,7 +537,7 @@ namespace GameLogic.CharacterSystem
             base(id, view)
         {
             _aspects = new CharacterPropertyList<Aspect>(this);
-            _skills = new CharacterPropertyList<Skill>(this);
+            _skills = new List<Skill>();
             _stunts = new CharacterPropertyList<Stunt>(this);
             _extras = new CharacterPropertyList<Extra>(this);
         }
@@ -513,21 +547,21 @@ namespace GameLogic.CharacterSystem
     public sealed class KeyCharacter : Character
     {
         private readonly CharacterPropertyList<Aspect> _aspects;
-        private readonly CharacterPropertyList<Skill> _skills;
+        private readonly List<Skill> _skills;
         private int _physicsStress = 0;
         private int _physicsStressMax = 0;
         private int _mentalStress = 0;
         private int _mentalStressMax = 0;
 
-        private int _refresh = 0;
-        private int _fate = 0;
+        private int _refreshPoint = 0;
+        private int _fatePoint = 0;
         private readonly CharacterPropertyList<Stunt> _stunts;
         private readonly CharacterPropertyList<Extra> _extras;
 
         private readonly CharacterPropertyList<Consequence> _consequences;
 
+        protected override List<Skill> Skills => _skills;
         public override CharacterPropertyList<Aspect> Aspects => _aspects;
-        public override CharacterPropertyList<Skill> Skills => _skills;
         public override int PhysicsStress { get => _physicsStress; set => _physicsStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Physics stress is less than 0."); }
         public override int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max physics stress is less than 1."); }
         public override int MentalStress { get => _mentalStress; set => _mentalStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Mental stress is less than 0."); }
@@ -535,8 +569,8 @@ namespace GameLogic.CharacterSystem
 
         public override CharacterPropertyList<Stunt> Stunts => _stunts;
         public override CharacterPropertyList<Extra> Extras => _extras;
-        public override int Refresh { get => _refresh; set => _refresh = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Refresh point is less than 1."); }
-        public override int Fate { get => _fate; set => _fate = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Fate point is less than 0."); }
+        public override int RefreshPoint { get => _refreshPoint; set => _refreshPoint = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Refresh point is less than 1."); }
+        public override int FatePoint { get => _fatePoint; set => _fatePoint = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Fate point is less than 0."); }
 
         public override CharacterPropertyList<Consequence> Consequences => _consequences;
 
@@ -544,7 +578,7 @@ namespace GameLogic.CharacterSystem
             base(id, view)
         {
             _aspects = new CharacterPropertyList<Aspect>(this);
-            _skills = new CharacterPropertyList<Skill>(this);
+            _skills = new List<Skill>();
             _stunts = new CharacterPropertyList<Stunt>(this);
             _extras = new CharacterPropertyList<Extra>(this);
             _consequences = new CharacterPropertyList<Consequence>(this);
@@ -555,11 +589,11 @@ namespace GameLogic.CharacterSystem
     public sealed class CharacterManager : IJSContextProvider
     {
         #region Javascript API class
-        private sealed class API : IJSAPI<CharacterManager>
+        private sealed class JSAPI : IJSAPI<CharacterManager>
         {
             private readonly CharacterManager _outer;
 
-            public API(CharacterManager outer)
+            public JSAPI(CharacterManager outer)
             {
                 _outer = outer;
             }
@@ -581,7 +615,7 @@ namespace GameLogic.CharacterSystem
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         private ulong _autoIncrement = 0L;
 
@@ -595,23 +629,93 @@ namespace GameLogic.CharacterSystem
         private static readonly CharacterManager _instance = new CharacterManager();
         public static CharacterManager Instance => _instance;
         
-        private readonly IdentifiedObjList<Character> _savingCharacters;
+        private readonly IdentifiedObjList<Character> _savingNPCharacters;
         private readonly IdentifiedObjList<Character> _playerCharacters;
         
-        public IdentifiedObjList<Character> SavingCharacters => _savingCharacters;
+        public IdentifiedObjList<Character> SavingNPCharacters => _savingNPCharacters;
         public IdentifiedObjList<Character> PlayerCharacters => _playerCharacters;
 
         private CharacterManager()
         {
-            _savingCharacters = new IdentifiedObjList<Character>();
+            _savingNPCharacters = new IdentifiedObjList<Character>();
             _playerCharacters = new IdentifiedObjList<Character>();
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
         
+        public Character FindCharacterOrItemRecursivelyByID(string id)
+        {
+            if (CampaignManager.Instance.CurrentContainer == ContainerType.STORY)
+            {
+                if (StorySceneContainer.Instance.PlayerCharacters.TryGetValue(id, out Character character))
+                {
+                    return character;
+                }
+                else if (StorySceneContainer.Instance.ObjList.TryGetValue(id, out IStoryObject storyObject))
+                {
+                    return storyObject.CharacterRef;
+                }
+                else
+                {
+                    foreach (Character character2 in StorySceneContainer.Instance.PlayerCharacters)
+                    {
+                        Character item = this.FindItemRecursivelyByID(character2, id);
+                        if (item != null) return item;
+                    }
+                    foreach (IStoryObject obj in StorySceneContainer.Instance.ObjList)
+                    {
+                        Character item = this.FindItemRecursivelyByID(obj.CharacterRef, id);
+                        if (item != null) return item;
+                    }
+                }
+            }
+            else if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE)
+            {
+                throw new NotImplementedException();
+            }
+            return null;
+        }
+
+        public Character FindCharacterByID(string id)
+        {
+            if (CampaignManager.Instance.CurrentContainer == ContainerType.STORY)
+            {
+                if (StorySceneContainer.Instance.PlayerCharacters.TryGetValue(id, out Character character))
+                {
+                    return character;
+                }
+                else if (StorySceneContainer.Instance.ObjList.TryGetValue(id, out IStoryObject storyObject))
+                {
+                    return storyObject.CharacterRef;
+                }
+            }
+            else if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE)
+            {
+                throw new NotImplementedException();
+            }
+            return null;
+        }
+
+        public Character FindItemRecursivelyByID(Character owner, string itemID)
+        {
+            foreach (Extra extra in owner.Extras)
+            {
+                if (extra.Item.ID == itemID)
+                {
+                    return extra.Item;
+                }
+                else
+                {
+                    Character item = this.FindItemRecursivelyByID(extra.Item, itemID);
+                    if (item != null) return item;
+                }
+            }
+            return null;
+        }
+
         public Character CreateCharacterWithSaving(DataLevel dataLevel, string id, CharacterView view)
         {
             Character ret = CreateCharacter(dataLevel, id, view);
-            _savingCharacters.Add(ret);
+            _savingNPCharacters.Add(ret);
             return ret;
         }
 
@@ -637,7 +741,7 @@ namespace GameLogic.CharacterSystem
                     ret = new KeyCharacter(id, view);
                     break;
                 default:
-                    break;
+                    throw new ArgumentOutOfRangeException(nameof(dataLevel));
             }
             return ret;
         }

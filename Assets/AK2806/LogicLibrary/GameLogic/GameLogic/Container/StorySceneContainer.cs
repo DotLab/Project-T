@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 using GameLogic.CharacterSystem;
-using GameLogic.Container.Story;
+using GameLogic.Container.StoryComponent;
 using System.Numerics;
 
 namespace GameLogic.Container
@@ -11,11 +11,11 @@ namespace GameLogic.Container
     public sealed class StorySceneContainer : IJSContextProvider
     {
         #region Javascript API class
-        private sealed class API : IJSAPI<StorySceneContainer>
+        private sealed class JSAPI : IJSAPI<StorySceneContainer>
         {
             private readonly StorySceneContainer _outer;
 
-            public API(StorySceneContainer outer)
+            public JSAPI(StorySceneContainer outer)
             {
                 _outer = outer;
             }
@@ -172,7 +172,7 @@ namespace GameLogic.Container
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         private static readonly StorySceneContainer _instance = new StorySceneContainer();
         public static StorySceneContainer Instance => _instance;
@@ -193,12 +193,29 @@ namespace GameLogic.Container
             _playerCharacters = new IdentifiedObjList<Character>();
             _camera = new Camera();
             _textBoxes = new List<TextBox>();
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
 
         public StoryObject CreateStoryObject(Character character)
         {
             StoryObject ret = new StoryObject(character);
+            return ret;
+        }
+
+        public void AddPlayerCharacter(Character playerCharacter)
+        {
+            _playerCharacters.Add(playerCharacter);
+        }
+
+        public bool RemovePlayerCharacter(Character playerCharacter)
+        {
+            return this.RemovePlayerCharacter(playerCharacter.ID);
+        }
+
+        public bool RemovePlayerCharacter(string id)
+        {
+            bool ret = _playerCharacters.Remove(id);
+            throw new NotImplementedException();
             return ret;
         }
 
@@ -242,7 +259,7 @@ namespace GameLogic.Container
     }
 }
 
-namespace GameLogic.Container.Story
+namespace GameLogic.Container.StoryComponent
 {
     public interface IStoryObject : IIdentifiable
     {
@@ -261,11 +278,11 @@ namespace GameLogic.Container.Story
     public class StoryObject : IStoryObject
     {
         #region Javascript API class
-        protected class API : IJSAPI<StoryObject>
+        protected class JSAPI : IJSAPI<StoryObject>
         {
             private readonly StoryObject _outer;
 
-            public API(StoryObject outer)
+            public JSAPI(StoryObject outer)
             {
                 _outer = outer;
             }
@@ -462,7 +479,7 @@ namespace GameLogic.Container.Story
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
         
         protected Command _interact;
         protected Command _createAspect;
@@ -474,6 +491,8 @@ namespace GameLogic.Container.Story
         protected CharacterViewEffect _effect;
 
         public string ID => _characterRef.ID;
+        public string Name { get => _characterRef.Name; set { } }
+        public string Description { get => _characterRef.Description; set { } }
         public Command Interact { get => _interact; set => _interact = value; }
         public Command CreateAspect { get => _createAspect; set => _createAspect = value; }
         public Command Attack { get => _attack; set => _attack = value; }
@@ -482,14 +501,14 @@ namespace GameLogic.Container.Story
         public Layout Layout => _layout;
         public PortraitStyle Style => _style;
         public CharacterViewEffect Effect => _effect;
-        
+
         public StoryObject(Character character)
         {
             _characterRef = character ?? throw new ArgumentNullException(nameof(character));
             _layout = Layout.INIT;
             _style = PortraitStyle.INIT;
             _effect = CharacterViewEffect.INIT;
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
 
         public virtual void ApplyEffect(CharacterViewEffect effect)
@@ -553,11 +572,11 @@ namespace GameLogic.Container.Story
     public class PictureObject : StoryObject
     {
         #region Javascript API class
-        protected new class API : StoryObject.API, IJSAPI<PictureObject>
+        protected new class JSAPI : StoryObject.JSAPI, IJSAPI<PictureObject>
         {
             private readonly PictureObject _outer;
 
-            public API(PictureObject outer) :
+            public JSAPI(PictureObject outer) :
                 base(outer)
             {
                 _outer = outer;
@@ -580,14 +599,14 @@ namespace GameLogic.Container.Story
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
         
         protected readonly Camera _cameraRef;
         
         public PictureObject(Character character) :
             base(character)
         {
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
         
         public override void TransTo(Layout layout)
@@ -606,11 +625,11 @@ namespace GameLogic.Container.Story
     public sealed class Camera : IJSContextProvider
     {
         #region Javascript API class
-        private sealed class API : IJSAPI<Camera>
+        private sealed class JSAPI : IJSAPI<Camera>
         {
             private readonly Camera _outer;
 
-            public API(Camera outer)
+            public JSAPI(Camera outer)
             {
                 _outer = outer;
             }
@@ -707,7 +726,7 @@ namespace GameLogic.Container.Story
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         private Layout _layout;
         private CharacterViewEffect _effect;
@@ -719,7 +738,7 @@ namespace GameLogic.Container.Story
         {
             _layout = Layout.INIT;
             _effect = CharacterViewEffect.INIT;
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
 
         public void TransTo(Layout layout)
@@ -759,11 +778,11 @@ namespace GameLogic.Container.Story
     public class TextItem : ITextItem
     {
         #region Javascript API class
-        protected class API : IJSAPI<TextItem>
+        protected class JSAPI : IJSAPI<TextItem>
         {
             private readonly TextItem _outer;
 
-            public API(TextItem outer)
+            public JSAPI(TextItem outer)
             {
                 _outer = outer;
             }
@@ -810,7 +829,7 @@ namespace GameLogic.Container.Story
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         protected string _text;
 
@@ -820,7 +839,7 @@ namespace GameLogic.Container.Story
         public TextItem(string text = "")
         {
             _text = text ?? throw new ArgumentNullException(nameof(text));
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
 
         public virtual void React() { }
@@ -836,11 +855,11 @@ namespace GameLogic.Container.Story
     public class ClickableItem : ITextItem
     {
         #region Javascript API class
-        protected class API : IJSAPI<ClickableItem>
+        protected class JSAPI : IJSAPI<ClickableItem>
         {
             private readonly ClickableItem _outer;
 
-            public API(ClickableItem outer)
+            public JSAPI(ClickableItem outer)
             {
                 _outer = outer;
             }
@@ -899,7 +918,7 @@ namespace GameLogic.Container.Story
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         protected string _text;
         protected Command _action;
@@ -919,7 +938,7 @@ namespace GameLogic.Container.Story
             {
                 _action = null;
             }
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
         
         public virtual void React()
@@ -941,11 +960,11 @@ namespace GameLogic.Container.Story
     public sealed class TextBox : IJSContextProvider
     {
         #region Javascript API class
-        private sealed class API : IJSAPI<TextBox>
+        private sealed class JSAPI : IJSAPI<TextBox>
         {
             private readonly TextBox _outer;
 
-            public API(TextBox outer)
+            public JSAPI(TextBox outer)
             {
                 _outer = outer;
             }
@@ -1032,7 +1051,7 @@ namespace GameLogic.Container.Story
             }
         }
         #endregion
-        private readonly API _apiObj;
+        private readonly JSAPI _apiObj;
 
         private readonly List<ITextItem> _textItems;
         private CharacterView _portrait;
@@ -1047,7 +1066,7 @@ namespace GameLogic.Container.Story
         {
             _playerIndex = index >= 0 ? index : throw new ArgumentOutOfRangeException(nameof(index), "Player index is less than 0.");
             _textItems = new List<ITextItem>();
-            _apiObj = new API(this);
+            _apiObj = new JSAPI(this);
         }
 
         public ITextItem GenerateText()
