@@ -20,4 +20,24 @@ namespace GameLogic.Core
             this.sca = sca;
         }
     }
+
+    public struct Quaternion
+    {
+        public float X, Y, Z, W;
+
+        public Quaternion(float x, float y, float z, float w)
+        {
+            X = x;Y = y;Z = z;W = w;
+        }
+    }
+
+    public struct Vector3
+    {
+        public float X, Y, Z;
+
+        public Vector3(float x, float y, float z)
+        {
+            X = x; Y = y; Z = z;
+        }
+    }
 }

@@ -32,20 +32,7 @@ namespace GameLogic.CharacterSystem
                     return null;
                 }
             }
-
-            public bool getDMCheckResult()
-            {
-                try
-                {
-                    return _outer.DMCheckResult;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return false;
-                }
-            }
-
+            
             public InitiativeEffect Origin(JSContextHelper proof)
             {
                 try

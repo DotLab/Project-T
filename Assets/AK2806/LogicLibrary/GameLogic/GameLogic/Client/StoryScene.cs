@@ -6,6 +6,7 @@ using System.Text;
 using GameLogic.Core.Network;
 using GameLogic.Core.Network.ClientMessages;
 using GameLogic.Core.Network.ServerMessages;
+using GameLogic.CharacterSystem;
 
 namespace GameLogic.Client
 {
@@ -91,6 +92,20 @@ namespace GameLogic.Client
             _connection.SendMessage(message);
         }
 
+        public void AddPlayerCharacter(Character character)
+        {
+            StorySceneAddPlayerCharacterMessage message = new StorySceneAddPlayerCharacterMessage();
+
+            _connection.SendMessage(message);
+        }
+
+        public void RemovePlayerCharacter(Character character)
+        {
+            StorySceneRemovePlayerCharacterMessage message = new StorySceneRemovePlayerCharacterMessage();
+
+            _connection.SendMessage(message);
+        }
+        
         public void AddObject(IStoryObject obj)
         {
             StorySceneObjectAddMessage message = new StorySceneObjectAddMessage();
@@ -99,13 +114,18 @@ namespace GameLogic.Client
             _connection.SendMessage(message);
         }
 
-        public void RemoveObject(IStoryObject obj)
+        public void RemoveObject(string objID)
         {
             StorySceneObjectRemoveMessage message = new StorySceneObjectRemoveMessage();
-            message.objID = obj.ID;
+            message.objID = objID;
             _connection.SendMessage(message);
         }
 
+        public void RemoveObject(IStoryObject obj)
+        {
+            this.RemoveObject(obj.ID);
+        }
+        
         public void TransformObject(IStoryObject obj, Layout to)
         {
             StorySceneObjectTransformMessage message = new StorySceneObjectTransformMessage();
@@ -192,7 +212,7 @@ namespace GameLogic.Client
                     this.OnHinder(objectMessage.objID);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(objectMessage.action));
+                    return;
             }
         }
 

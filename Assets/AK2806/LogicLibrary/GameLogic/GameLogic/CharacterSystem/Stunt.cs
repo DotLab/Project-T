@@ -134,6 +134,7 @@ namespace GameLogic.CharacterSystem
         private Character _belong = null;
         private InitiativeEffect _initiativeEffect;
         private SkillType _boundSkillType;
+        private SkillProperty _skillProperty;
         private readonly bool _needDMCheck;
 
         public Stunt(InitiativeEffect effect, SkillType boundSkillType, bool needDMCheck = true, string name = "", string description = "")
@@ -142,6 +143,7 @@ namespace GameLogic.CharacterSystem
             _initiativeEffect = effect;
             effect.Belong = this;
             _boundSkillType = boundSkillType ?? throw new ArgumentNullException(nameof(boundSkillType));
+            _skillProperty = _boundSkillType.Property;
             _needDMCheck = needDMCheck;
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _description = description ?? throw new ArgumentNullException(nameof(description));
@@ -165,6 +167,7 @@ namespace GameLogic.CharacterSystem
             }
         }
         public SkillType BoundSkillType { get => _boundSkillType; set => _boundSkillType = value ?? throw new ArgumentNullException(nameof(value)); }
+        public SkillProperty SkillProperty { get => _skillProperty; set => _skillProperty = value; }
         public bool NeedDMCheck => _needDMCheck;
 
         public override IJSContext GetContext()

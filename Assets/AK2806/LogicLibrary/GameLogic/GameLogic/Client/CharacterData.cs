@@ -98,7 +98,7 @@ namespace GameLogic.Client
                     }
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(message.MessageType));
+                    return;
             }
         }
 
@@ -133,7 +133,7 @@ namespace GameLogic.Client
                     this.SendCharacterPropertiesDescriptionData(character, GetCharacterDataMessage.DataType.STUNTS);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(dataType));
+                    return;
             }
         }
 
@@ -221,7 +221,7 @@ namespace GameLogic.Client
                     }
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(dataType));
+                    return;
             }
             message.characterID = character.ID;
             _connection.SendMessage(message);

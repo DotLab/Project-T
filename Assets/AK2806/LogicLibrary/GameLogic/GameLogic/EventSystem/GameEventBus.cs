@@ -99,14 +99,21 @@ namespace GameLogic.EventSystem
 
         private readonly Dictionary<string, List<Trigger>> _triggerPools;
 
+        private Queue<Trigger> _waitForAdding;
+        private Queue<Trigger> _waitForRemoving;
+        private bool _publishing = false;
+
         private GameEventBus()
         {
             _triggerPools = new Dictionary<string, List<Trigger>>();
             _apiObj = new JSAPI(this);
+            _waitForAdding = new Queue<Trigger>();
+            _waitForRemoving = new Queue<Trigger>();
         }
 
         public void Publish(Event e)
         {
+            _publishing = true;
             string[] eventIDs = e.NotifyList;
             foreach (string id in eventIDs)
             {
@@ -124,10 +131,26 @@ namespace GameLogic.EventSystem
                     }
                 }
             }
+            _publishing = false;
+            foreach (Trigger trigger in _waitForAdding)
+            {
+                this.Register(trigger);
+            }
+            _waitForAdding.Clear();
+            foreach (Trigger trigger in _waitForRemoving)
+            {
+                this.Unregister(trigger);
+            }
+            _waitForRemoving.Clear();
         }
 
         public void Register(Trigger trigger)
         {
+            if (_publishing)
+            {
+                _waitForAdding.Enqueue(trigger);
+                return;
+            }
             if (!_triggerPools.ContainsKey(trigger.BoundEventID))
             {
                 _triggerPools.Add(trigger.BoundEventID, new List<Trigger>());
@@ -139,12 +162,20 @@ namespace GameLogic.EventSystem
 
         public bool Unregister(Trigger trigger)
         {
-            List<Trigger> triggers;
-            if (_triggerPools.TryGetValue(trigger.BoundEventID, out triggers))
+            if (_triggerPools.TryGetValue(trigger.BoundEventID, out List<Trigger> triggers))
             {
-                return triggers.Remove(trigger);
+                if (_publishing)
+                {
+                    if (triggers.Contains(trigger))
+                    {
+                        _waitForRemoving.Enqueue(trigger);
+                        return true;
+                    }
+                    else return false;
+                }
+                else return triggers.Remove(trigger);
             }
-            return false;
+            else return false;
         }
 
         public IJSContext GetContext()

@@ -32,9 +32,8 @@ namespace GameLogic.Client
 
         public void RequestCheck(string text, Action<bool> result)
         {
-            if (_isChecking) throw new InvalidOperationException("Already in checking state.");
-            if (text == null) throw new ArgumentNullException(nameof(text));
-            _resultCallback = result ?? throw new ArgumentNullException(nameof(result));
+            if (_isChecking) return;
+            _resultCallback = result;
             _isChecking = true;
             this.Show(text);
         }

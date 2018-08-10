@@ -12,18 +12,19 @@ using System.Text;
 
 namespace GameLogic.Client
 {
-    public sealed class SkillCheckDialog : ClientComponent
+    public sealed class SkillCheckPanel : ClientComponent
     {
-        public enum ClientState
+        public enum ClientPosition
         {
             INITIATIVE,
             PASSIVE,
             OBSERVER
         }
 
-        private ClientState _state;
+        private ClientPosition _position = ClientPosition.OBSERVER;
+        private bool _isChecking = false;
 
-        public SkillCheckDialog(Connection connection, User owner) :
+        public SkillCheckPanel(Connection connection, User owner) :
             base(connection, owner)
         {
             _connection.AddMessageReceiver(SkillSelectedMessage.MESSAGE_TYPE, this);
@@ -33,7 +34,7 @@ namespace GameLogic.Client
 
         public override void MessageReceived(ulong timestamp, Message message)
         {
-            if (_state == ClientState.OBSERVER || MainLogic.DM.Client.DMCheckDialog.IsChecking) return;
+            if (!_isChecking || _position == ClientPosition.OBSERVER || MainLogic.DM.Client.DMCheckDialog.IsChecking) return;
             if (message.MessageType == SkillSelectedMessage.MESSAGE_TYPE)
             {
                 SkillSelectedMessage skillSelectedMessage = (SkillSelectedMessage)message;
@@ -69,36 +70,36 @@ namespace GameLogic.Client
 
         private void OnSelectSkill(SkillType skillType)
         {
-            if (_state == ClientState.INITIATIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_SKILL)
+            if (_position == ClientPosition.INITIATIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_SKILL)
             {
-                SkillChecker.Instance.InitiativeUseSkill(skillType, false);
+                StorySceneContainer.Instance.InitiativeUseSkill(skillType, false, false);
             }
-            else if (_state == ClientState.PASSIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL)
+            else if (_position == ClientPosition.PASSIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL)
             {
-                SkillChecker.Instance.PassiveUseSkill(skillType, false);
+                StorySceneContainer.Instance.PassiveUseSkill(skillType, false, false);
             }
         }
 
         private void OnSelectStunt(string stuntID)
         {
-            if (_state == ClientState.INITIATIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_SKILL)
+            if (_position == ClientPosition.INITIATIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_SKILL)
             {
                 foreach (Stunt stunt in SkillChecker.Instance.Initiative.Stunts)
                 {
                     if (stunt.ID == stuntID)
                     {
-                        SkillChecker.Instance.InitiativeUseStunt(stunt);
+                        StorySceneContainer.Instance.InitiativeUseStunt(stunt);
                         break;
                     }
                 }
             }
-            else if (_state == ClientState.PASSIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL)
+            else if (_position == ClientPosition.PASSIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL)
             {
                 foreach (Stunt stunt in SkillChecker.Instance.Passive.Stunts)
                 {
                     if (stunt.ID == stuntID)
                     {
-                        SkillChecker.Instance.PassiveUseStunt(stunt);
+                        StorySceneContainer.Instance.PassiveUseStunt(stunt);
                         break;
                     }
                 }
@@ -107,52 +108,76 @@ namespace GameLogic.Client
 
         private void OnSelectAspects(Aspect aspect, bool reroll)
         {
-            if (_state == ClientState.INITIATIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_ASPECT)
+            if (_position == ClientPosition.INITIATIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_ASPECT)
             {
-                SkillChecker.Instance.InitiativeUseAspect(aspect, reroll);
+                StorySceneContainer.Instance.InitiativeUseAspect(aspect, reroll);
             }
-            else if (_state == ClientState.PASSIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_ASPECT)
+            else if (_position == ClientPosition.PASSIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_ASPECT)
             {
-                SkillChecker.Instance.PassiveUseAspect(aspect, reroll);
+                StorySceneContainer.Instance.PassiveUseAspect(aspect, reroll);
             }
         }
 
-        public void Show(Character initiative, Character passive, ClientState clientState)
+        public void Show(Character initiative, Character passive, ClientPosition clientState)
         {
-            SkillCheckDialogShowMessage message = new SkillCheckDialogShowMessage();
+            if (_isChecking) return;
+            SkillCheckPanelShowMessage message = new SkillCheckPanelShowMessage();
             message.initiativeCharacterID = initiative.ID;
             message.initiativeView = initiative.View;
             message.passiveCharacterID = passive.ID;
             message.passiveView = passive.View;
-            message.playerState = (int)(_state = clientState);
+            message.playerState = (int)(_position = clientState);
             _connection.SendMessage(message);
+            _isChecking = true;
         }
 
-        public void HideWithResult(SkillChecker.CheckResult checkResult)
+        public void Hide()
         {
-            SkillCheckDialogHideMessage message = new SkillCheckDialogHideMessage();
-            message.checkResult = (int)checkResult;
+            if (!_isChecking) return;
+            SkillCheckPanelHideMessage message = new SkillCheckPanelHideMessage();
             _connection.SendMessage(message);
+            _position = ClientPosition.OBSERVER;
+            _isChecking = false;
         }
 
         public void DisplayDicePoint(bool isInitiative, int[] dicePoints)
         {
-
+            if (!_isChecking) return;
+            DisplayDicePointsMessage message = new DisplayDicePointsMessage();
+            message.userID = isInitiative ?
+                (SkillChecker.Instance.Initiative.Controller != null ? SkillChecker.Instance.Initiative.Controller.Id : MainLogic.DM.Id)
+                : (SkillChecker.Instance.Passive.Controller != null ? SkillChecker.Instance.Passive.Controller.Id : MainLogic.DM.Id);
+            message.dicePoints = dicePoints;
+            _connection.SendMessage(message);
         }
         
         public void UpdateSumPoint(bool isInitiative, int point)
         {
-            
+            if (!_isChecking) return;
+            SkillCheckPanelUpdateSumPointMessage message = new SkillCheckPanelUpdateSumPointMessage();
+            message.isInitiative = isInitiative;
+            message.point = point;
+            _connection.SendMessage(message);
         }
 
         public void DisplaySkillReady(bool isInitiative, SkillType skillType, bool bigone)
         {
-
+            if (!_isChecking) return;
+            SkillCheckPanelDisplaySkillReadyMessage message = new SkillCheckPanelDisplaySkillReadyMessage();
+            message.isInitiative = isInitiative;
+            message.skillTypeID = skillType.ID;
+            message.bigone = bigone;
+            _connection.SendMessage(message);
         }
 
         public void DisplayUsingAspect(bool isInitiative, Aspect aspect)
         {
-
+            if (!_isChecking) return;
+            SkillCheckPanelDisplayUsingAspectMessage message = new SkillCheckPanelDisplayUsingAspectMessage();
+            message.isInitiative = isInitiative;
+            message.characterID = aspect.Belong.ID;
+            message.aspectID = aspect.ID;
+            _connection.SendMessage(message);
         }
         
     }

@@ -5,6 +5,7 @@ using GameLogic.Core.Network.ClientMessages;
 using GameLogic.Core.Network.ServerMessages;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace GameLogic.Client
@@ -16,8 +17,9 @@ namespace GameLogic.Client
 
         protected ClientComponent(Connection connection, User owner)
         {
-            _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-            _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+            Debug.Assert(connection != null && owner != null);
+            _connection = connection;
+            _owner = owner;
         }
 
         public abstract void MessageReceived(ulong timestamp, Message message);
@@ -25,9 +27,10 @@ namespace GameLogic.Client
 
     public class Client : ClientComponent
     {
-        protected readonly SkillCheckDialog _skillCheckDialog;
+        protected readonly CharacterData _characterData;
+        protected readonly SkillCheckPanel _skillCheckPanel;
 
-        public SkillCheckDialog SkillCheckDialog => _skillCheckDialog;
+        public SkillCheckPanel SkillCheckPanel => _skillCheckPanel;
 
         public override void MessageReceived(ulong timestamp, Message message)
         {
@@ -43,7 +46,8 @@ namespace GameLogic.Client
             base(connection, owner)
         {
             _connection.AddMessageReceiver(ClientInitMessage.MESSAGE_TYPE, this);
-            _skillCheckDialog = new SkillCheckDialog(connection, owner);
+            _characterData = new CharacterData(connection, owner);
+            _skillCheckPanel = new SkillCheckPanel(connection, owner);
         }
         
         public virtual void Update()
@@ -92,7 +96,7 @@ namespace GameLogic.Client
             base(connection, owner)
         {
             _storyScene = new PlayerStoryScene(connection, owner);
-            _battleScene = new PlayerBattleSceme();
+            _battleScene = new PlayerBattleSceme(connection, owner);
         }
 
     }
@@ -111,7 +115,7 @@ namespace GameLogic.Client
             base(connection, owner)
         {
             _storyScene = new DMStoryScene(connection, owner);
-            _battleScene = new DMBattleScene();
+            _battleScene = new DMBattleScene(connection, owner);
             _dmCheckDialog = new DMCheckDialog(connection, owner);
         }
         

@@ -1,12 +1,10 @@
-﻿using GameLogic.Campaign;
-using GameLogic.CharacterSystem;
-using GameLogic.Core;
+﻿using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace GameLogic.Container
+namespace GameLogic.CharacterSystem
 {
     public sealed class SkillChecker : IJSContextProvider
     {
@@ -61,7 +59,8 @@ namespace GameLogic.Container
             INITIATIVE_SKILL,
             PASSIVE_SKILL,
             INITIATIVE_ASPECT,
-            PASSIVE_ASPECT
+            PASSIVE_ASPECT,
+            END
         }
 
         private static Range FAIL;
@@ -134,8 +133,8 @@ namespace GameLogic.Container
             SUCCEED_WITH_STYLE = succeedWithStyle;
         }
 
-        private static readonly SkillChecker _skillChecker = new SkillChecker();
-        public static SkillChecker Instance => _skillChecker;
+        private static readonly SkillChecker _instance = new SkillChecker();
+        public static SkillChecker Instance => _instance;
 
         private Character _initiative;
         private Character _passive;
@@ -151,7 +150,7 @@ namespace GameLogic.Container
         private int _initiativeExtraPoint;
         private int _passiveExtraPoint;
 
-        private CheckerState _state;
+        private CheckerState _state = CheckerState.IDLE;
         
         public Character Initiative => _initiative;
         public Character Passive => _passive;
@@ -159,6 +158,8 @@ namespace GameLogic.Container
 
         public SkillType InitiativeSkillType => _initiativeSkillType;
         public SkillType PassiveSkillType => _passiveSkillType;
+        public int InitiativeRollPoint => _initiativeRollPoint;
+        public int PassiveRollPoint => _passiveRollPoint;
 
         public int InitiativeExtraPoint { get => _initiativeExtraPoint; set => _initiativeExtraPoint = value; }
         public int PassiveExtraPoint { get => _passiveExtraPoint; set => _passiveExtraPoint = value; }
@@ -217,25 +218,11 @@ namespace GameLogic.Container
             _initiativeCallback = initiativeCallback ?? throw new ArgumentNullException(nameof(initiativeCallback));
             _passiveCallback = passiveCallback ?? throw new ArgumentNullException(nameof(passiveCallback));
             _state = CheckerState.INITIATIVE_SKILL;
-            foreach (Player player in MainLogic.Players)
-            {
-                if (initiative.Controller == player) player.Client.SkillCheckDialog.Show(initiative, passive, Client.SkillCheckDialog.ClientState.INITIATIVE);
-                else if (passive.Controller == player) player.Client.SkillCheckDialog.Show(initiative, passive, Client.SkillCheckDialog.ClientState.PASSIVE);
-                else player.Client.SkillCheckDialog.Show(initiative, passive, Client.SkillCheckDialog.ClientState.OBSERVER);
-            }
-            if (initiative.Controller == null) MainLogic.DM.Client.SkillCheckDialog.Show(initiative, passive, Client.SkillCheckDialog.ClientState.INITIATIVE);
-            else if (passive.Controller == null) MainLogic.DM.Client.SkillCheckDialog.Show(initiative, passive, Client.SkillCheckDialog.ClientState.PASSIVE);
-            else MainLogic.DM.Client.SkillCheckDialog.Show(initiative, passive, Client.SkillCheckDialog.ClientState.OBSERVER);
         }
 
         public void CancelCheck()
         {
             if (_state != CheckerState.INITIATIVE_SKILL) throw new InvalidOperationException("Cannot cancel at this time.");
-            foreach (User user in MainLogic.Players)
-            {
-                user.AsPlayer.Client.SkillCheckDialog.HideWithResult(CheckResult.CANCEL);
-            }
-            MainLogic.DM.AsDM.Client.SkillCheckDialog.HideWithResult(CheckResult.CANCEL);
             _initiativeCallback(CheckResult.CANCEL);
             _passiveCallback(CheckResult.CANCEL);
             _state = CheckerState.IDLE;
@@ -244,15 +231,6 @@ namespace GameLogic.Container
         public void ForceEndCheck(CheckResult initiativeResult, CheckResult passiveResult)
         {
             if (_state == CheckerState.IDLE) throw new InvalidOperationException("Skill checking is not working.");
-            foreach (Player player in MainLogic.Players)
-            {
-                if (_initiative.Controller == player) player.Client.SkillCheckDialog.HideWithResult(initiativeResult);
-                else if (_passive.Controller == player) player.Client.SkillCheckDialog.HideWithResult(passiveResult);
-                else player.Client.SkillCheckDialog.HideWithResult(CheckResult.CANCEL);
-            }
-            if (_initiative.Controller == null) MainLogic.DM.Client.SkillCheckDialog.HideWithResult(initiativeResult);
-            else if (_passive.Controller == null) MainLogic.DM.Client.SkillCheckDialog.HideWithResult(passiveResult);
-            else MainLogic.DM.Client.SkillCheckDialog.HideWithResult(CheckResult.CANCEL);
             _initiativeCallback(initiativeResult);
             _passiveCallback(passiveResult);
             _state = CheckerState.IDLE;
@@ -260,7 +238,7 @@ namespace GameLogic.Container
         
         public void EndCheck()
         {
-            if (_state != CheckerState.INITIATIVE_ASPECT || _state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("Cannot make checking over.");
+            if (_state != CheckerState.END) throw new InvalidOperationException("Cannot make checking over.");
             CheckResult initiativeResult;
             CheckResult passiveResult;
             int delta = this.InitiativePoint - this.PassivePoint;
@@ -296,246 +274,105 @@ namespace GameLogic.Container
                 initiativeResult = CheckResult.TIE;
                 passiveResult = CheckResult.TIE;
             }
-            foreach (Player player in MainLogic.Players)
-            {
-                if (_initiative.Controller == player) player.Client.SkillCheckDialog.HideWithResult(initiativeResult);
-                else if (_passive.Controller == player) player.Client.SkillCheckDialog.HideWithResult(passiveResult);
-                else player.Client.SkillCheckDialog.HideWithResult(CheckResult.CANCEL);
-            }
-            if (_initiative.Controller == null) MainLogic.DM.Client.SkillCheckDialog.HideWithResult(initiativeResult);
-            else if (_passive.Controller == null) MainLogic.DM.Client.SkillCheckDialog.HideWithResult(passiveResult);
-            else MainLogic.DM.Client.SkillCheckDialog.HideWithResult(CheckResult.CANCEL);
             _initiativeCallback(initiativeResult);
             _passiveCallback(passiveResult);
             _state = CheckerState.IDLE;
         }
-
-        public void InitiativeUseSkill(SkillType skillType, bool stuntDo, int[] fixedDicePoints = null)
+        
+        public void InitiativeSelectSkill(SkillType skillType)
         {
-            if (_state != CheckerState.INITIATIVE_SKILL) throw new InvalidOperationException("Is not in the correct state.");
-            if (stuntDo)
-            {
-                this.InitiativeSkillTakeEffect(skillType, true, fixedDicePoints);
-                _state = CheckerState.PASSIVE_SKILL;
-            }
-            else if (_action == CharacterAction.CREATE_ASPECT || _action == CharacterAction.HINDER)
-            {
-                MainLogic.DM.Client.DMCheckDialog.RequestCheck(_initiative.Name + "对" + _passive.Name + "使用" + skillType.Name + ",可以吗？",
-                    result =>
-                    {
-                        if (result) this.InitiativeSkillTakeEffect(skillType, false, fixedDicePoints);
-                        _state = CheckerState.PASSIVE_SKILL;
-                    });
-            }
-            else if (_action == CharacterAction.ATTACK)
+            if (_state != CheckerState.INITIATIVE_SKILL) throw new InvalidOperationException("State incorrect.");
+            if (_action == CharacterAction.ATTACK)
             {
                 SkillProperty skillProperty = _initiative.GetSkillProperty(skillType);
                 if (!skillProperty.canAttack) throw new ArgumentException("This skill cannot use in attack situation.", nameof(skillType));
-                this.InitiativeSkillTakeEffect(skillType, false, fixedDicePoints);
-                _state = CheckerState.PASSIVE_SKILL;
             }
+            _initiativeSkillType = skillType;
         }
-
-        public void InitiativeSkillTakeEffect(SkillType skillType, bool bigone, int[] fixedDicePoints = null)
+        
+        public int[] InitiativeRollDice(int[] fixedDicePoints = null)
         {
             int[] dicePoints = fixedDicePoints ?? this.RollDice();
             _initiativeRollPoint = 0;
             foreach (int point in dicePoints) _initiativeRollPoint += point;
-            _initiativeSkillType = skillType;
-            foreach (Player player in MainLogic.Players)
-            {
-                player.Client.SkillCheckDialog.DisplayDicePoint(true, dicePoints);
-                player.Client.SkillCheckDialog.DisplaySkillReady(true, skillType, bigone);
-                player.Client.SkillCheckDialog.UpdateSumPoint(true, this.InitiativePoint);
-            }
-            MainLogic.DM.Client.SkillCheckDialog.DisplayDicePoint(true, dicePoints);
-            MainLogic.DM.Client.SkillCheckDialog.DisplaySkillReady(true, skillType, bigone);
-            MainLogic.DM.Client.SkillCheckDialog.UpdateSumPoint(true, this.InitiativePoint);
-        }
-        
-        public void InitiativeUseStunt(Stunt stunt)
-        {
-            if (_state != CheckerState.INITIATIVE_SKILL) throw new InvalidOperationException("Is not in the correct state.");
-            if (stunt.Belong != _initiative) throw new ArgumentException("This stunt is not belong to initiative character.", nameof(stunt));
-            if (stunt.NeedDMCheck)
-            {
-                MainLogic.DM.Client.DMCheckDialog.RequestCheck(_initiative.Name + "对" + _passive.Name + "使用" + stunt.Name + ",可以吗？",
-                    result =>
-                    {
-                        if (result)
-                        {
-                            _initiativeSkillType = stunt.BoundSkillType;
-                            stunt.InitiativeEffect.DoAction();
-                        }
-                    });
-            }
-            else
-            {
-                _initiativeSkillType = stunt.BoundSkillType;
-                stunt.InitiativeEffect.DoAction();
-            }
+            return dicePoints;
         }
 
-        public void InitiativeSkipUsingAspects()
+        public void InitiativeSkillSelectionOver()
         {
-            if (_state != CheckerState.INITIATIVE_ASPECT) throw new InvalidOperationException("Is not in the correct state.");
+            if (_state != CheckerState.INITIATIVE_SKILL || _initiativeSkillType == null) throw new InvalidOperationException("State incorrect.");
+            _state = CheckerState.PASSIVE_SKILL;
+        }
+        
+        public void InitiativeAspectSelectionOver()
+        {
+            if (_state != CheckerState.INITIATIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
             _state = CheckerState.PASSIVE_ASPECT;
         }
 
-        public void InitiativeUseAspect(Aspect aspect, bool reroll)
+        public void InitiativeSelectAspect(Aspect aspect, bool reroll)
         {
-            if (_state != CheckerState.INITIATIVE_ASPECT) throw new InvalidOperationException("Is not in the correct state.");
+            if (_state != CheckerState.INITIATIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
             if (aspect.Benefit != _initiative && _initiative.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
-            foreach (Player player in MainLogic.Players)
+            if (aspect.Benefit != null && aspect.Benefit != _initiative)
             {
-                player.Client.SkillCheckDialog.DisplayUsingAspect(true, aspect);
+                ++aspect.Benefit.FatePoint;
             }
-            MainLogic.DM.Client.SkillCheckDialog.DisplayUsingAspect(true, aspect);
-            MainLogic.DM.Client.DMCheckDialog.RequestCheck(_initiative.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
-                result =>
-                {
-                    if (result)
-                    {
-                        if (aspect.Benefit != null && aspect.Benefit != _initiative)
-                        {
-                            ++aspect.Benefit.FatePoint;
-                        }
-                        else if (aspect.Benefit == null)
-                        {
-                            ++_passive.FatePoint;
-                        }
-                        --_initiative.FatePoint;
-                        if (reroll) this.InitiativeSkillTakeEffect(_initiativeSkillType, false);
-                        else
-                        {
-                            _initiativeExtraPoint += 2;
-                            foreach (Player player in MainLogic.Players)
-                            {
-                                player.Client.SkillCheckDialog.DisplaySkillReady(true, _initiativeSkillType, true);
-                                player.Client.SkillCheckDialog.UpdateSumPoint(true, this.InitiativePoint);
-                            }
-                            MainLogic.DM.Client.SkillCheckDialog.DisplaySkillReady(true, _initiativeSkillType, true);
-                            MainLogic.DM.Client.SkillCheckDialog.UpdateSumPoint(true, this.InitiativePoint);
-                        }
-                    }
-                });
+            else if (aspect.Benefit == null)
+            {
+                ++_passive.FatePoint;
+            }
+            if (aspect.Benefit != _initiative) --_initiative.FatePoint;
+            if (reroll) this.InitiativeRollDice();
+            else _initiativeExtraPoint += 2;
         }
         
-        public void PassiveUseSkill(SkillType skillType, bool stuntDo, int[] fixedDicePoints = null)
+        public void PassiveSelectSkill(SkillType skillType)
         {
-            if (_state != CheckerState.PASSIVE_SKILL) throw new InvalidOperationException("Is not in the correct state.");
-            if (stuntDo)
-            {
-                this.PassiveSkillTakeEffect(skillType, true, fixedDicePoints);
-                _state = CheckerState.INITIATIVE_ASPECT;
-            }
-            else
+            if (_state != CheckerState.PASSIVE_SKILL) throw new InvalidOperationException("State incorrect.");
+            if (_action == CharacterAction.ATTACK)
             {
                 SkillProperty skillProperty = _passive.GetSkillProperty(skillType);
-                if (_action == CharacterAction.ATTACK && !skillProperty.canDefend) throw new ArgumentException("This skill cannot use in attack situation.", nameof(skillType));
-                if (CanResistSkillWithoutDMCheck(_initiativeSkillType, skillType, _action))
-                {
-                    this.PassiveSkillTakeEffect(skillType, false, fixedDicePoints);
-                    _state = CheckerState.INITIATIVE_ASPECT;
-                }
-                else
-                {
-                    MainLogic.DM.Client.DMCheckDialog.RequestCheck(_passive.Name + "对" + _passive.Name + "使用" + skillType.Name + ",可以吗？",
-                        result =>
-                        {
-                            if (result)
-                            {
-                                this.PassiveSkillTakeEffect(skillType, false, fixedDicePoints);
-                                _state = CheckerState.INITIATIVE_ASPECT;
-                            }
-                        });
-                }
+                if (!skillProperty.canDefend) throw new ArgumentException("This skill cannot use in attack situation.", nameof(skillType));
             }
+            _passiveSkillType = skillType;
         }
 
-        public void PassiveSkillTakeEffect(SkillType skillType, bool bigone, int[] fixedDicePoints = null)
+        public int[] PassiveRollDice(int[] fixedDicePoints = null)
         {
             int[] dicePoints = fixedDicePoints ?? this.RollDice();
             _passiveRollPoint = 0;
             foreach (int point in dicePoints) _passiveRollPoint += point;
-            _passiveSkillType = skillType;
-            foreach (Player player in MainLogic.Players)
-            {
-                player.Client.SkillCheckDialog.DisplayDicePoint(false, dicePoints);
-                player.Client.SkillCheckDialog.DisplaySkillReady(false, skillType, bigone);
-                player.Client.SkillCheckDialog.UpdateSumPoint(false, this.PassivePoint);
-            }
-            MainLogic.DM.Client.SkillCheckDialog.DisplayDicePoint(false, dicePoints);
-            MainLogic.DM.Client.SkillCheckDialog.DisplaySkillReady(false, skillType, bigone);
-            MainLogic.DM.Client.SkillCheckDialog.UpdateSumPoint(false, this.PassivePoint);
+            return dicePoints;
         }
 
-        public void PassiveUseStunt(Stunt stunt)
+        public void PassiveSkillSelectionOver()
         {
-            if (_state != CheckerState.PASSIVE_SKILL) throw new InvalidOperationException("Is not in the correct state.");
-            if (stunt.Belong != _passive) throw new ArgumentException("This stunt is not belong to passive character.", nameof(stunt));
-            if (stunt.NeedDMCheck)
-            {
-                MainLogic.DM.Client.DMCheckDialog.RequestCheck(_passive.Name + "对" + _initiative.Name + "使用" + stunt.Name + ",可以吗？",
-                    result =>
-                    {
-                        if (result)
-                        {
-                            _passiveSkillType = stunt.BoundSkillType;
-                            stunt.InitiativeEffect.DoAction();
-                        }
-                    });
-            }
-            else
-            {
-                _passiveSkillType = stunt.BoundSkillType;
-                stunt.InitiativeEffect.DoAction();
-            }
+            if (_state != CheckerState.PASSIVE_SKILL || _passiveSkillType == null) throw new InvalidOperationException("State incorrect.");
+            _state = CheckerState.INITIATIVE_ASPECT;
+        }
+        
+        public void PassiveAspectSelectionOver()
+        {
+            if (_state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
+            _state = CheckerState.END;
         }
 
-        public void PassiveSkipUsingAspects()
+        public void PassiveSelectAspect(Aspect aspect, bool reroll)
         {
-            if (_state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("Is not in the correct state.");
-            this.EndCheck();
-        }
-
-        public void PassiveUseAspect(Aspect aspect, bool reroll)
-        {
-            if (_state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("Is not in the correct state.");
+            if (_state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
             if (aspect.Benefit != _passive && _passive.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
-            foreach (Player player in MainLogic.Players)
+            if (aspect.Benefit != null && aspect.Benefit != _passive)
             {
-                player.Client.SkillCheckDialog.DisplayUsingAspect(false, aspect);
+                ++aspect.Benefit.FatePoint;
             }
-            MainLogic.DM.Client.SkillCheckDialog.DisplayUsingAspect(false, aspect);
-            MainLogic.DM.Client.DMCheckDialog.RequestCheck(_passive.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
-                result =>
-                {
-                    if (result)
-                    {
-                        if (aspect.Benefit != null && aspect.Benefit != _passive)
-                        {
-                            ++aspect.Benefit.FatePoint;
-                        }
-                        else if (aspect.Benefit == null)
-                        {
-                            ++_initiative.FatePoint;
-                        }
-                        --_passive.FatePoint;
-                        if (reroll) this.PassiveSkillTakeEffect(_passiveSkillType, false);
-                        else
-                        {
-                            _passiveExtraPoint += 2;
-                            foreach (Player player in MainLogic.Players)
-                            {
-                                player.Client.SkillCheckDialog.DisplaySkillReady(false, _passiveSkillType, true);
-                                player.Client.SkillCheckDialog.UpdateSumPoint(false, this.PassivePoint);
-                            }
-                            MainLogic.DM.Client.SkillCheckDialog.DisplaySkillReady(false, _passiveSkillType, true);
-                            MainLogic.DM.Client.SkillCheckDialog.UpdateSumPoint(false, this.PassivePoint);
-                        }
-                    }
-                });
+            else if (aspect.Benefit == null)
+            {
+                ++_initiative.FatePoint;
+            }
+            if (aspect.Benefit != _passive) --_passive.FatePoint;
+            if (reroll) this.PassiveRollDice();
+            else _passiveExtraPoint += 2;
         }
 
         public IJSContext GetContext()

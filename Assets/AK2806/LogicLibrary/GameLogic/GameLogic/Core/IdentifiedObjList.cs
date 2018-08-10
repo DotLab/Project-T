@@ -5,7 +5,15 @@ using System.Text;
 
 namespace GameLogic.Core
 {
-    public sealed class IdentifiedObjList<T> : IEnumerable<T>, IEnumerable where T : IIdentifiable
+    public interface IReadonlyIdentifiedObjList<T> : IEnumerable<T>, IEnumerable, IReadOnlyCollection<T>
+    {
+        T this[string id] { get; }
+        bool Contains(string id);
+        bool Contains(T item);
+        bool TryGetValue(string id, out T value);
+    }
+
+    public sealed class IdentifiedObjList<T> : IEnumerable<T>, IEnumerable, IReadonlyIdentifiedObjList<T> where T : IIdentifiable
     {
         private Dictionary<string, T> _table;
         

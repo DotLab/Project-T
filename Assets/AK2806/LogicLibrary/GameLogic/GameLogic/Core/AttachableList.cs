@@ -264,10 +264,10 @@ namespace GameLogic.Core
         protected readonly TOwner _owner;
         protected readonly List<TItem> _container;
         
-        public TOwner Owner => _owner;
-        public int Count => _container.Count;
+        public virtual TOwner Owner => _owner;
+        public virtual int Count => _container.Count;
 
-        public TItem this[int i]
+        public virtual TItem this[int i]
         {
             get => _container[i];
             set
@@ -315,17 +315,17 @@ namespace GameLogic.Core
             _container.Clear();
         }
 
-        public bool Contains(TItem item)
+        public virtual bool Contains(TItem item)
         {
             return _container.Contains(item);
         }
 
-        public void ForEach(Action<TItem> action)
+        public virtual void ForEach(Action<TItem> action)
         {
             _container.ForEach(action);
         }
 
-        public int IndexOf(TItem item, int index = 0, int count = -1)
+        public virtual int IndexOf(TItem item, int index = 0, int count = -1)
         {
             if (count >= 0) return _container.IndexOf(item, index, count);
             else return _container.IndexOf(item, index);
@@ -338,7 +338,7 @@ namespace GameLogic.Core
             item.Belong = _owner;
         }
 
-        public int LastIndexOf(TItem item, int index = 0, int count = -1)
+        public virtual int LastIndexOf(TItem item, int index = 0, int count = -1)
         {
             if (count >= 0) return _container.LastIndexOf(item, index, count);
             else return _container.LastIndexOf(item, index);
@@ -362,12 +362,12 @@ namespace GameLogic.Core
             _container.Reverse();
         }
         
-        public TItem[] ToArray()
+        public virtual TItem[] ToArray()
         {
             return _container.ToArray();
         }
 
-        public IEnumerator<TItem> GetEnumerator()
+        public virtual IEnumerator<TItem> GetEnumerator()
         {
             return ((IEnumerable<TItem>)_container).GetEnumerator();
         }
@@ -377,7 +377,7 @@ namespace GameLogic.Core
             return this.GetEnumerator();
         }
 
-        public IJSContext GetContext()
+        public virtual IJSContext GetContext()
         {
             return _apiObj;
         }

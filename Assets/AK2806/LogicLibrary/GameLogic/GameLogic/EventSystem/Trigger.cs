@@ -99,12 +99,12 @@ namespace GameLogic.EventSystem
         #endregion
         private readonly JSAPI _apiObj;
 
-        protected Command _command;
-        protected string _boundEventID;
+        protected readonly Command _command;
+        protected readonly string _boundEventID;
         protected bool _active;
         
         public string BoundEventID => _boundEventID;
-        public Command Command { get => _command; set => _command = value ?? throw new ArgumentNullException(nameof(value)); }
+        public Command Command => _command;
         public bool Active { get => _active; set => _active = value; }
 
         public Trigger(string boundEventID, Command command, bool autoReg = true)

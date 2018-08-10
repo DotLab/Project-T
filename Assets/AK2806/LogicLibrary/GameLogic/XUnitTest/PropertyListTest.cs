@@ -49,6 +49,7 @@ namespace XUnitTest
         private string _description;
         private string _name;
 
+        public string ID => "";
         public Character Belong { get => null; set { } }
         public string Description { get => _description; set => _description = value; }
         public string Name { get => _name; set => _name = value; }

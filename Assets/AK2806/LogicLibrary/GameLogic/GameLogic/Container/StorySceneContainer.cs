@@ -182,8 +182,8 @@ namespace GameLogic.Container
         private readonly Camera _camera;
         private readonly List<TextBox> _textBoxes;
 
-        public IdentifiedObjList<IStoryObject> ObjList => _objList;
-        public IdentifiedObjList<Character> PlayerCharacters => _playerCharacters;
+        public IReadonlyIdentifiedObjList<IStoryObject> ObjList => _objList;
+        public IReadonlyIdentifiedObjList<Character> PlayerCharacters => _playerCharacters;
         public Camera Camera => _camera;
         public List<TextBox> TextBoxes => _textBoxes;
         
@@ -196,7 +196,7 @@ namespace GameLogic.Container
             _apiObj = new JSAPI(this);
         }
 
-        public StoryObject CreateStoryObject(Character character)
+        private StoryObject CreateStoryObject(Character character)
         {
             StoryObject ret = new StoryObject(character);
             return ret;
@@ -205,11 +205,7 @@ namespace GameLogic.Container
         public void AddPlayerCharacter(Character playerCharacter)
         {
             _playerCharacters.Add(playerCharacter);
-        }
-
-        public bool RemovePlayerCharacter(Character playerCharacter)
-        {
-            return this.RemovePlayerCharacter(playerCharacter.ID);
+            throw new NotImplementedException();
         }
 
         public bool RemovePlayerCharacter(string id)
@@ -219,16 +215,16 @@ namespace GameLogic.Container
             return ret;
         }
 
+        public bool RemovePlayerCharacter(Character playerCharacter)
+        {
+            return this.RemovePlayerCharacter(playerCharacter.ID);
+        }
+        
         public bool AddIntoScene(IStoryObject sceneObject)
         {
             _objList.Add(sceneObject);
             throw new NotImplementedException();
             return true;
-        }
-        
-        public bool RemoveFromScene(IStoryObject sceneObject)
-        {
-            return this.RemoveFromScene(sceneObject.ID);
         }
 
         public bool RemoveFromScene(string id)
@@ -238,6 +234,11 @@ namespace GameLogic.Container
             return ret;
         }
 
+        public bool RemoveFromScene(IStoryObject sceneObject)
+        {
+            return this.RemoveFromScene(sceneObject.ID);
+        }
+        
         public void ResetScene()
         {
             _objList.Clear();
@@ -248,6 +249,198 @@ namespace GameLogic.Container
                 box.DisplayText();
             }
             throw new NotImplementedException();
+        }
+
+        public void StartCheck(
+            Character initiative, Character passive, SkillChecker.CharacterAction action,
+            Action<SkillChecker.CheckResult> initiativeCallback, Action<SkillChecker.CheckResult> passiveCallback
+            )
+        {
+            SkillChecker.Instance.StartCheck(initiative, passive, action, initiativeCallback, passiveCallback);
+            foreach (Player player in MainLogic.Players)
+            {
+                if (initiative.Controller == player) player.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.INITIATIVE);
+                else if (passive.Controller == player) player.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.PASSIVE);
+                else player.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.OBSERVER);
+            }
+            if (initiative.Controller == null) MainLogic.DM.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.INITIATIVE);
+            else if (passive.Controller == null) MainLogic.DM.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.PASSIVE);
+            else MainLogic.DM.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.OBSERVER);
+        }
+
+        public void CancelCheck()
+        {
+            SkillChecker.Instance.CancelCheck();
+            foreach (User user in MainLogic.Players)
+            {
+                user.AsPlayer.Client.SkillCheckPanel.Hide();
+            }
+            MainLogic.DM.AsDM.Client.SkillCheckPanel.Hide();
+        }
+
+        public void ForceEndCheck(SkillChecker.CheckResult initiativeResult, SkillChecker.CheckResult passiveResult)
+        {
+            SkillChecker.Instance.ForceEndCheck(initiativeResult, passiveResult);
+            foreach (Player player in MainLogic.Players)
+            {
+                if (SkillChecker.Instance.Initiative.Controller == player) player.Client.SkillCheckPanel.Hide();
+                else if (SkillChecker.Instance.Passive.Controller == player) player.Client.SkillCheckPanel.Hide();
+                else player.Client.SkillCheckPanel.Hide();
+            }
+            if (SkillChecker.Instance.Initiative.Controller == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
+            else if (SkillChecker.Instance.Passive.Controller == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
+            else MainLogic.DM.Client.SkillCheckPanel.Hide();
+        }
+
+        public void EndCheck()
+        {
+            SkillChecker.Instance.EndCheck();
+            foreach (Player player in MainLogic.Players)
+            {
+                if (SkillChecker.Instance.Initiative.Controller == player) player.Client.SkillCheckPanel.Hide();
+                else if (SkillChecker.Instance.Passive.Controller == player) player.Client.SkillCheckPanel.Hide();
+                else player.Client.SkillCheckPanel.Hide();
+            }
+            if (SkillChecker.Instance.Initiative.Controller == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
+            else if (SkillChecker.Instance.Passive.Controller == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
+            else MainLogic.DM.Client.SkillCheckPanel.Hide();
+        }
+
+        private void InitiativeSelectSkill(SkillType skillType, bool bigone, int[] fixedDicePoints)
+        {
+            SkillChecker.Instance.InitiativeSelectSkill(skillType);
+            int[] dicePoints = SkillChecker.Instance.InitiativeRollDice(fixedDicePoints);
+            SkillChecker.Instance.InitiativeSkillSelectionOver();
+            foreach (Player player in MainLogic.Players)
+            {
+                player.Client.SkillCheckPanel.DisplayDicePoint(true, dicePoints);
+                player.Client.SkillCheckPanel.DisplaySkillReady(true, skillType, bigone);
+                player.Client.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.InitiativePoint);
+            }
+            MainLogic.DM.Client.SkillCheckPanel.DisplayDicePoint(true, dicePoints);
+            MainLogic.DM.Client.SkillCheckPanel.DisplaySkillReady(true, skillType, bigone);
+            MainLogic.DM.Client.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.InitiativePoint);
+        }
+
+        public void InitiativeUseSkill(SkillType skillType, bool force, bool bigone, int[] fixedDicePoints = null)
+        {
+            if (force || SkillChecker.Instance.Action == SkillChecker.CharacterAction.ATTACK)
+            {
+                this.InitiativeSelectSkill(skillType, bigone, fixedDicePoints);
+            }
+            else if (SkillChecker.Instance.Action == SkillChecker.CharacterAction.CREATE_ASPECT || SkillChecker.Instance.Action == SkillChecker.CharacterAction.HINDER)
+            {
+                MainLogic.DM.Client.DMCheckDialog.RequestCheck(SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
+                    result => { if (result) this.InitiativeSelectSkill(skillType, bigone, fixedDicePoints); });
+            }
+        }
+
+        public void InitiativeUseStunt(Stunt stunt)
+        {
+            if (stunt.Belong != SkillChecker.Instance.Initiative) throw new ArgumentException("This stunt is not belong to initiative character.", nameof(stunt));
+            if (stunt.NeedDMCheck)
+                MainLogic.DM.Client.DMCheckDialog.RequestCheck(SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + stunt.Name + ",可以吗？",
+                    result => { if (result) stunt.InitiativeEffect.DoAction(); });
+            else stunt.InitiativeEffect.DoAction();
+        }
+
+        private void PassiveSelectSkill(SkillType skillType, bool bigone, int[] fixedDicePoints)
+        {
+            SkillChecker.Instance.PassiveSelectSkill(skillType);
+            int[] dicePoints = SkillChecker.Instance.PassiveRollDice(fixedDicePoints);
+            SkillChecker.Instance.PassiveSkillSelectionOver();
+            foreach (Player player in MainLogic.Players)
+            {
+                player.Client.SkillCheckPanel.DisplayDicePoint(false, dicePoints);
+                player.Client.SkillCheckPanel.DisplaySkillReady(false, skillType, bigone);
+                player.Client.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.PassivePoint);
+            }
+            MainLogic.DM.Client.SkillCheckPanel.DisplayDicePoint(false, dicePoints);
+            MainLogic.DM.Client.SkillCheckPanel.DisplaySkillReady(false, skillType, bigone);
+            MainLogic.DM.Client.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.PassivePoint);
+        }
+
+        public void PassiveUseSkill(SkillType skillType, bool force, bool bigone, int[] fixedDicePoints = null)
+        {
+            if (force)
+            {
+                this.PassiveSelectSkill(skillType, bigone, fixedDicePoints);
+            }
+            else
+            {
+                if (SkillChecker.CanResistSkillWithoutDMCheck(SkillChecker.Instance.InitiativeSkillType, skillType, SkillChecker.Instance.Action))
+                {
+                    this.PassiveSelectSkill(skillType, bigone, fixedDicePoints);
+                }
+                else
+                {
+                    MainLogic.DM.Client.DMCheckDialog.RequestCheck(SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
+                        result => { if (result) this.PassiveSelectSkill(skillType, bigone, fixedDicePoints); });
+                }
+            }
+        }
+
+        public void PassiveUseStunt(Stunt stunt)
+        {
+            if (stunt.Belong != SkillChecker.Instance.Passive) throw new ArgumentException("This stunt is not belong to passive character.", nameof(stunt));
+            if (stunt.NeedDMCheck)
+                MainLogic.DM.Client.DMCheckDialog.RequestCheck(SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + stunt.Name + ",可以吗？",
+                    result => { if (result) stunt.InitiativeEffect.DoAction(); });
+            else stunt.InitiativeEffect.DoAction();
+        }
+
+        public void InitiativeUseAspect(Aspect aspect, bool reroll)
+        {
+            foreach (Player player in MainLogic.Players)
+            {
+                player.Client.SkillCheckPanel.DisplayUsingAspect(true, aspect);
+            }
+            MainLogic.DM.Client.SkillCheckPanel.DisplayUsingAspect(true, aspect);
+            MainLogic.DM.Client.DMCheckDialog.RequestCheck(SkillChecker.Instance.Initiative.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
+                result =>
+                {
+                    if (result)
+                    {
+                        SkillChecker.Instance.InitiativeSelectAspect(aspect, reroll);
+                        foreach (Player player in MainLogic.Players)
+                        {
+                            player.Client.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.InitiativePoint);
+                        }
+                        MainLogic.DM.Client.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.InitiativePoint);
+                    }
+                });
+        }
+
+        public void InitiativeSkipUsingAspect()
+        {
+            SkillChecker.Instance.InitiativeAspectSelectionOver();
+        }
+
+        public void PassiveUseAspect(Aspect aspect, bool reroll)
+        {
+            foreach (Player player in MainLogic.Players)
+            {
+                player.Client.SkillCheckPanel.DisplayUsingAspect(false, aspect);
+            }
+            MainLogic.DM.Client.SkillCheckPanel.DisplayUsingAspect(false, aspect);
+            MainLogic.DM.Client.DMCheckDialog.RequestCheck(SkillChecker.Instance.Passive.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
+                result =>
+                {
+                    if (result)
+                    {
+                        SkillChecker.Instance.PassiveSelectAspect(aspect, reroll);
+                        foreach (Player player in MainLogic.Players)
+                        {
+                            player.Client.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.PassivePoint);
+                        }
+                        MainLogic.DM.Client.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.PassivePoint);
+                    }
+                });
+        }
+
+        public void PassiveSkipUsingAspect()
+        {
+            SkillChecker.Instance.PassiveAspectSelectionOver();
         }
 
         public IJSContext GetContext()
@@ -770,15 +963,15 @@ namespace GameLogic.Container.StoryComponent
 
     public interface ITextItem : IJSContextProvider
     {
-        bool IsReactable { get; }
-        void React();
+        bool IsSelection { get; }
+        int SelectionCode { get; }
         string Text { get; }
     }
 
-    public class TextItem : ITextItem
+    public sealed class TextItem : ITextItem
     {
         #region Javascript API class
-        protected class JSAPI : IJSAPI<TextItem>
+        private sealed class JSAPI : IJSAPI<TextItem>
         {
             private readonly TextItem _outer;
 
@@ -831,44 +1024,43 @@ namespace GameLogic.Container.StoryComponent
         #endregion
         private readonly JSAPI _apiObj;
 
-        protected string _text;
+        private string _text;
 
-        public bool IsReactable => false;
+        public bool IsSelection => false;
+        public int SelectionCode => -1;
         public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException(nameof(value)); }
 
-        public TextItem(string text = "")
+        public TextItem(string text)
         {
             _text = text ?? throw new ArgumentNullException(nameof(text));
             _apiObj = new JSAPI(this);
         }
-
-        public virtual void React() { }
-
-        public virtual IJSContext GetContext()
+        
+        public IJSContext GetContext()
         {
             return _apiObj;
         }
         
-        public virtual void SetContext(IJSContext context) { }
+        public void SetContext(IJSContext context) { }
     }
 
-    public class ClickableItem : ITextItem
+    public sealed class SelectionItem : ITextItem
     {
         #region Javascript API class
-        protected class JSAPI : IJSAPI<ClickableItem>
+        private sealed class JSAPI : IJSAPI<SelectionItem>
         {
-            private readonly ClickableItem _outer;
+            private readonly SelectionItem _outer;
 
-            public JSAPI(ClickableItem outer)
+            public JSAPI(SelectionItem outer)
             {
                 _outer = outer;
             }
 
-            public void setAction(Action action)
+            public void setSelectionCode(int code)
             {
                 try
                 {
-                    _outer.Action = new Command(action);
+                    _outer.SelectionCode = code;
                 }
                 catch (Exception e)
                 {
@@ -901,7 +1093,7 @@ namespace GameLogic.Container.StoryComponent
                 }
             }
 
-            public ClickableItem Origin(JSContextHelper proof)
+            public SelectionItem Origin(JSContextHelper proof)
             {
                 try
                 {
@@ -920,41 +1112,25 @@ namespace GameLogic.Container.StoryComponent
         #endregion
         private readonly JSAPI _apiObj;
 
-        protected string _text;
-        protected Command _action;
+        private string _text;
+        private int _selectionCode;
 
-        public bool IsReactable => true;
+        public bool IsSelection => true;
         public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException(nameof(value)); }
-        public Command Action { get => _action; set => _action = value; }
-
-        public ClickableItem(string text = "", string actionCode = null)
+        public int SelectionCode { get => _selectionCode; set => _selectionCode = value; }
+        
+        public SelectionItem(string text, int selectionCode)
         {
             _text = text ?? throw new ArgumentNullException(nameof(text));
-            if (actionCode != null)
-            {
-                _action = new Command(actionCode);
-            }
-            else
-            {
-                _action = null;
-            }
             _apiObj = new JSAPI(this);
         }
         
-        public virtual void React()
-        {
-            if (_action != null)
-            {
-                _action.DoAction();
-            }
-        }
-
-        public virtual IJSContext GetContext()
+        public IJSContext GetContext()
         {
             return _apiObj;
         }
         
-        public virtual void SetContext(IJSContext context) { }
+        public void SetContext(IJSContext context) { }
     }
 
     public sealed class TextBox : IJSContextProvider
@@ -969,11 +1145,11 @@ namespace GameLogic.Container.StoryComponent
                 _outer = outer;
             }
 
-            public IJSAPI<TextItem> generateText()
+            public IJSAPI<TextItem> generateText(string text)
             {
                 try
                 {
-                    ITextItem textItem = _outer.GenerateText();
+                    ITextItem textItem = _outer.GenerateText(text);
                     return (IJSAPI<TextItem>)textItem.GetContext();
                 }
                 catch (Exception e)
@@ -983,12 +1159,12 @@ namespace GameLogic.Container.StoryComponent
                 }
             }
 
-            public IJSAPI<ClickableItem> generateButton()
+            public IJSAPI<SelectionItem> generateSelection(string text, int selectionCode)
             {
                 try
                 {
-                    ITextItem buttonItem = _outer.GenerateButton();
-                    return (IJSAPI<ClickableItem>)buttonItem.GetContext();
+                    ITextItem buttonItem = _outer.GenerateSelection(text, selectionCode);
+                    return (IJSAPI<SelectionItem>)buttonItem.GetContext();
                 }
                 catch (Exception e)
                 {
@@ -1069,16 +1245,16 @@ namespace GameLogic.Container.StoryComponent
             _apiObj = new JSAPI(this);
         }
 
-        public ITextItem GenerateText()
+        public ITextItem GenerateText(string text)
         {
-            TextItem ret = new TextItem();
+            TextItem ret = new TextItem(text);
             _textItems.Add(ret);
             return ret;
         }
 
-        public ITextItem GenerateButton()
+        public ITextItem GenerateSelection(string text, int selectionCode)
         {
-            ClickableItem ret = new ClickableItem();
+            SelectionItem ret = new SelectionItem(text, selectionCode);
             _textItems.Add(ret);
             return ret;
         }

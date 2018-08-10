@@ -4,6 +4,7 @@ using GameLogic.Core.Network;
 using GameLogic.Core.ScriptSystem;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace GameLogic.Core
@@ -21,11 +22,8 @@ namespace GameLogic.Core
         public Player(string id, string name, Connection connection, int index, IEnumerable<Character> characters) :
             base(id, name, false)
         {
-            _index = index > 0 ? index : throw new ArgumentOutOfRangeException(nameof(index), "Player index is less than 1.");
-            foreach (Character character in characters)
-            {
-                if (character == null) throw new ArgumentNullException(nameof(character));
-            }
+            Debug.Assert(index > 0);
+            _index = index;
             _client = new PlayerClient(connection, this);
             _characters = new List<Character>(characters);
             foreach (Character character in characters)
@@ -65,8 +63,9 @@ namespace GameLogic.Core
 
         protected User(string id, string name, bool isDM)
         {
-            _id = id ?? throw new ArgumentNullException(nameof(id));
-            _name = name ?? throw new ArgumentNullException(nameof(name));
+            Debug.Assert(id != null && name != null);
+            _id = id;
+            _name = name;
             _isDM = isDM;
         }
 

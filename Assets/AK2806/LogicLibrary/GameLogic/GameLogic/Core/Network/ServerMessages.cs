@@ -671,7 +671,7 @@ namespace GameLogic.Core.Network.ServerMessages
         }
     }
 
-    public sealed class SkillCheckDialogShowMessage : Message
+    public sealed class SkillCheckPanelShowMessage : Message
     {
         public const long MESSAGE_TYPE = -31L;
         public override long MessageType => MESSAGE_TYPE;
@@ -705,22 +705,13 @@ namespace GameLogic.Core.Network.ServerMessages
         }
     }
     
-    public sealed class SkillCheckDialogHideMessage : Message
+    public sealed class SkillCheckPanelHideMessage : Message
     {
         public const long MESSAGE_TYPE = -32L;
         public override long MessageType => MESSAGE_TYPE;
 
-        public int checkResult;
-
-        public override void ReadFrom(IDataInputStream stream)
-        {
-            checkResult = stream.ReadInt32();
-        }
-
-        public override void WriteTo(IDataOutputStream stream)
-        {
-            stream.WriteInt32(checkResult);
-        }
+        public override void ReadFrom(IDataInputStream stream) { }
+        public override void WriteTo(IDataOutputStream stream) { }
     }
 
     public sealed class DMCheckPanelShowMessage : Message
@@ -752,17 +743,18 @@ namespace GameLogic.Core.Network.ServerMessages
         public override void WriteTo(IDataOutputStream stream) { }
     }
 
-    public sealed class SkillCheckDialogDisplayDicePointMessage : Message
+    public sealed class DisplayDicePointsMessage : Message
     {
         public const long MESSAGE_TYPE = -35L;
         public override long MessageType => MESSAGE_TYPE;
 
-        public bool isInitiative;
+        public string userID;
         public int[] dicePoints;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteBoolean(isInitiative);
+            stream.WriteInt32(userID.Length);
+            stream.WriteString(userID);
             stream.WriteInt32(dicePoints.Length);
             foreach (int point in dicePoints)
             {
@@ -772,8 +764,9 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            isInitiative = stream.ReadBoolean();
             int length = stream.ReadInt32();
+            userID = stream.ReadString(length);
+            length = stream.ReadInt32();
             dicePoints = new int[length];
             for (int i = 0; i < length; ++i)
             {
@@ -782,7 +775,7 @@ namespace GameLogic.Core.Network.ServerMessages
         }
     }
 
-    public sealed class SkillCheckDialogUpdateSumPointMessage : Message
+    public sealed class SkillCheckPanelUpdateSumPointMessage : Message
     {
         public const long MESSAGE_TYPE = -36L;
         public override long MessageType => MESSAGE_TYPE;
@@ -803,35 +796,252 @@ namespace GameLogic.Core.Network.ServerMessages
         }
     }
 
-    public sealed class SkillCheckDialogDisplaySkillReadyMessage : Message
+    public sealed class SkillCheckPanelDisplaySkillReadyMessage : Message
     {
         public const long MESSAGE_TYPE = -37L;
         public override long MessageType => MESSAGE_TYPE;
 
+        public bool isInitiative;
+        public string skillTypeID;
+        public bool bigone;
+
         public override void ReadFrom(IDataInputStream stream)
         {
-            throw new NotImplementedException();
+            isInitiative = stream.ReadBoolean();
+            int length = stream.ReadInt32();
+            skillTypeID = stream.ReadString(length);
+            bigone = stream.ReadBoolean();
         }
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            throw new NotImplementedException();
+            stream.WriteBoolean(isInitiative);
+            stream.WriteInt32(skillTypeID.Length);
+            stream.WriteString(skillTypeID);
+            stream.WriteBoolean(bigone);
         }
     }
 
-    public sealed class SkillCheckDialogDisplayUsingAspectMessage : Message
+    public sealed class SkillCheckPanelDisplayUsingAspectMessage : Message
     {
         public const long MESSAGE_TYPE = -38L;
         public override long MessageType => MESSAGE_TYPE;
 
+        public bool isInitiative;
+        public string characterID;
+        public string aspectID;
+
         public override void ReadFrom(IDataInputStream stream)
         {
-            throw new NotImplementedException();
+            isInitiative = stream.ReadBoolean();
+            int length = stream.ReadInt32();
+            characterID = stream.ReadString(length);
+            length = stream.ReadInt32();
+            aspectID = stream.ReadString(length);
         }
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            throw new NotImplementedException();
+            stream.WriteBoolean(isInitiative);
+            stream.WriteInt32(characterID.Length);
+            stream.WriteString(characterID);
+            stream.WriteInt32(aspectID.Length);
+            stream.WriteString(aspectID);
+        }
+    }
+
+    public sealed class StorySceneAddPlayerCharacterMessage : Message
+    {
+        public const long MESSAGE_TYPE = -39L;
+        public override long MessageType => MESSAGE_TYPE;
+
+        public int playerIndex;
+        public string characterID;
+        public CharacterView view;
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(playerIndex);
+            stream.WriteInt32(characterID.Length);
+            stream.WriteString(characterID);
+            OutputStreamHelper.WriteCharacterView(stream, view);
+        }
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            playerIndex = stream.ReadInt32();
+            int length = stream.ReadInt32();
+            characterID = stream.ReadString(length);
+            view = InputStreamHelper.ReadCharacterView(stream);
+        }
+    }
+
+    public sealed class StorySceneRemovePlayerCharacterMessage : Message
+    {
+        public const long MESSAGE_TYPE = -40L;
+        public override long MessageType => MESSAGE_TYPE;
+
+        public int playerIndex;
+        public string characterID;
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(playerIndex);
+            stream.WriteInt32(characterID.Length);
+            stream.WriteString(characterID);
+        }
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            playerIndex = stream.ReadInt32();
+            int length = stream.ReadInt32();
+            characterID = stream.ReadString(length);
+        }
+    }
+
+    public sealed class BattleScenePushGridObjectMessage : Message
+    {
+        public const long MESSAGE_TYPE = -41L;
+        public override long MessageType => MESSAGE_TYPE;
+
+        public string objID;
+        public CharacterView view;
+        public int row;
+        public int col;
+        public bool highland;
+        public int direction;
+        public bool actable;
+        public bool movable;
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(objID.Length);
+            stream.WriteString(objID);
+            OutputStreamHelper.WriteCharacterView(stream, view);
+            stream.WriteInt32(row);
+            stream.WriteInt32(col);
+            stream.WriteBoolean(highland);
+            stream.WriteInt32(direction);
+            stream.WriteBoolean(actable);
+            stream.WriteBoolean(movable);
+        }
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            int length = stream.ReadInt32();
+            objID = stream.ReadString(length);
+            view = InputStreamHelper.ReadCharacterView(stream);
+            row = stream.ReadInt32();
+            col = stream.ReadInt32();
+            highland = stream.ReadBoolean();
+            direction = stream.ReadInt32();
+            actable = stream.ReadBoolean();
+            movable = stream.ReadBoolean();
+        }
+    }
+
+    public sealed class BattleSceneRemoveGridObjectMessage : Message
+    {
+        public const long MESSAGE_TYPE = -42L;
+        public override long MessageType => MESSAGE_TYPE;
+
+        public int row;
+        public int col;
+        public string objID;
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(row);
+            stream.WriteInt32(col);
+            stream.WriteInt32(objID.Length);
+            stream.WriteString(objID);
+        }
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            row = stream.ReadInt32();
+            col = stream.ReadInt32();
+            int length = stream.ReadInt32();
+            objID = stream.ReadString(length);
+        }
+    }
+
+    public sealed class BattleSceneAddLadderObjectMessage : Message
+    {
+        public const long MESSAGE_TYPE = -43L;
+        public override long MessageType => MESSAGE_TYPE;
+
+        public string objID;
+        public CharacterView view;
+        public int row;
+        public int col;
+        public int direction;
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(objID.Length);
+            stream.WriteString(objID);
+            OutputStreamHelper.WriteCharacterView(stream, view);
+            stream.WriteInt32(row);
+            stream.WriteInt32(col);
+            stream.WriteInt32(direction);
+        }
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            int length = stream.ReadInt32();
+            objID = stream.ReadString(length);
+            view = InputStreamHelper.ReadCharacterView(stream);
+            row = stream.ReadInt32();
+            col = stream.ReadInt32();
+            direction = stream.ReadInt32();
+        }
+    }
+
+    public sealed class BattleSceneRemoveLadderObjectMessage : Message
+    {
+        public const long MESSAGE_TYPE = -44L;
+        public override long MessageType => MESSAGE_TYPE;
+
+        public int row;
+        public int col;
+        public string objID;
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(row);
+            stream.WriteInt32(col);
+            stream.WriteInt32(objID.Length);
+            stream.WriteString(objID);
+        }
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            row = stream.ReadInt32();
+            col = stream.ReadInt32();
+            int length = stream.ReadInt32();
+            objID = stream.ReadString(length);
+        }
+    }
+    
+    public sealed class BattleSceneResetMessage : Message
+    {
+        public const long MESSAGE_TYPE = -45L;
+        public override long MessageType => MESSAGE_TYPE;
+
+        public int rows;
+        public int cols;
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(rows);
+            stream.WriteInt32(cols);
+        }
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            rows = stream.ReadInt32();
+            cols = stream.ReadInt32();
         }
     }
 }

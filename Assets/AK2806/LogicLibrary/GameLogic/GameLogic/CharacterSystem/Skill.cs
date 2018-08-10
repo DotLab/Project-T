@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GameLogic.Container.BattleComponent;
 using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 
@@ -8,10 +9,28 @@ namespace GameLogic.CharacterSystem
 {
     public struct SkillProperty
     {
+        public static readonly SkillProperty INIT = new SkillProperty
+        {
+            level = 0, canAttack = false, canDefend = false, canMove = false,
+            useRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
+            affectRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
+            islinearUse = false, islinearAffect = false,
+            linearAffectDirection = Direction.POSITIVE_ROW & Direction.POSITIVE_COL & Direction.NEGATIVE_ROW & Direction.NEGATIVE_COL,
+            linearUseDirection = Direction.POSITIVE_ROW & Direction.POSITIVE_COL & Direction.NEGATIVE_ROW & Direction.NEGATIVE_COL,
+            targetCount = 1
+        };
+
         public int level;
         public bool canAttack;
         public bool canDefend;
         public bool canMove;
+        public Range useRange;
+        public bool islinearUse;
+        public Direction linearUseDirection;
+        public Range affectRange;
+        public bool islinearAffect;
+        public Direction linearAffectDirection;
+        public int targetCount;
     }
 
     public sealed class SkillType : IEquatable<SkillType>
@@ -21,7 +40,7 @@ namespace GameLogic.CharacterSystem
         public static readonly SkillType Contacts = new SkillType("Contacts", "人脉");
         public static readonly SkillType Crafts = new SkillType("Crafts", "工艺");
         public static readonly SkillType Deceive = new SkillType("Deceive", "欺诈");
-        public static readonly SkillType Drive = new SkillType("Drive", "驾驶", false, false, true);
+        public static readonly SkillType Drive = new SkillType("Drive", "驾驶");
         public static readonly SkillType Empathy = new SkillType("Empathy", "共情");
         public static readonly SkillType Fight = new SkillType("Fight", "战斗", true, true);
         public static readonly SkillType Investigate = new SkillType("Investigate", "调查");
@@ -31,7 +50,7 @@ namespace GameLogic.CharacterSystem
         public static readonly SkillType Provoke = new SkillType("Provoke", "威胁", true);
         public static readonly SkillType Rapport = new SkillType("Rapport", "交际");
         public static readonly SkillType Resources = new SkillType("Resources", "资源");
-        public static readonly SkillType Shoot = new SkillType("Shoot", "射击", true);
+        public static readonly SkillType Shoot = new SkillType("Shoot", "射击");
         public static readonly SkillType Stealth = new SkillType("Stealth", "潜行");
         public static readonly SkillType Will = new SkillType("Will", "意志", false, true);
         
@@ -72,7 +91,7 @@ namespace GameLogic.CharacterSystem
         {
             _id = id ?? throw new ArgumentNullException(nameof(id));
             _name = name ?? throw new ArgumentNullException(nameof(name));
-            _property = new SkillProperty();
+            _property = SkillProperty.INIT;
             _property.level = 0;
             _property.canAttack = canAttack;
             _property.canDefend = canDefend;
@@ -105,125 +124,8 @@ namespace GameLogic.CharacterSystem
         }
     }
     
-    public sealed class Skill : IDescribable, IJSContextProvider
+    public sealed class Skill : IDescribable
     {
-        #region Javascript API class
-        private sealed class JSAPI : IJSAPI<Skill>
-        {
-            private readonly Skill _outer;
-
-            public JSAPI(Skill outer)
-            {
-                _outer = outer;
-            }
-
-            public string getName()
-            {
-                try
-                {
-                    return _outer.Name;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return null;
-                }
-            }
-            
-            public string getDescription()
-            {
-                try
-                {
-                    return _outer.Description;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return null;
-                }
-            }
-
-            public void setDescription(string name)
-            {
-                try
-                {
-                    _outer.Name = name;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                }
-            }
-
-            public SkillProperty getProperty()
-            {
-                try
-                {
-                    return _outer.Property;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return new SkillProperty();
-                }
-            }
-
-            public void setProperty(SkillProperty value)
-            {
-                try
-                {
-                     _outer.Property = value;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                }
-            }
-
-            public string getSkillType()
-            {
-                try
-                {
-                    return _outer.SkillType.ID;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return null;
-                }
-            }
-
-            public void setSkillType(string id)
-            {
-                try
-                {
-                    _outer.SkillType = SkillType.SkillTypes[id];
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                }
-            }
-
-            public Skill Origin(JSContextHelper proof)
-            {
-                try
-                {
-                    if (proof == JSContextHelper.Instance)
-                    {
-                        return _outer;
-                    }
-                    return null;
-                }
-                catch (Exception)
-                {
-                    return null;
-                }
-            }
-        }
-        #endregion
-        private readonly JSAPI _apiObj;
-        
         private string _description = "";
         private SkillType _skillType;
         private SkillProperty _property;
@@ -237,15 +139,7 @@ namespace GameLogic.CharacterSystem
         {
             _skillType = skillType ?? throw new ArgumentNullException(nameof(skillType));
             _property = skillType.Property;
-            _apiObj = new JSAPI(this);
         }
 
-        public IJSContext GetContext()
-        {
-            return _apiObj;
-        }
-
-        public void SetContext(IJSContext context) { }
-        
     }
 }
