@@ -23,6 +23,16 @@ namespace GameLogic.Core.Network
                     return null;
             }
         }
+        
+        public static Networkf.Message ParseMessage(byte[] buf, ref int i)
+        {
+            int type = ReadMessageType(buf, ref i);
+            var stream = new BitDataInputStream(buf, i);
+            var message = New(type);
+            message.ReadFrom(stream);
+            i = stream.i;
+            return message;
+        }
         #endregion
         public abstract void WriteTo(IDataOutputStream stream);
         public abstract void ReadFrom(IDataInputStream stream);

@@ -63,6 +63,45 @@ namespace GameLogic.Core.DataSystem
         }
     }
 
+    public sealed class BitDataInputStream : IDataInputStream
+    {
+        public readonly byte[] bytes;
+        public int start, i;
+
+        public BitDataInputStream(byte[] bytes, int i = 0)
+        {
+            this.bytes = bytes;
+            this.start = this.i = i;
+        }
+
+        public bool ReadBoolean()
+        {
+            byte val = Bit.ReadUInt8(bytes, ref i);
+            return val != 0;
+        }
+
+        public byte ReadByte()
+        {
+            return Bit.ReadUInt8(bytes, ref i);
+        }
+
+        public int ReadInt32()
+        {
+            return Bit.ReadInt32(bytes, ref i);
+        }
+
+        public float ReadSingle()
+        {
+            return Bit.ReadSingle(bytes, ref i);
+        }
+
+        public string ReadString(int length)
+        {
+            int byteCount = Bit.ReadUInt16(bytes, ref i);
+            return Bit.ReadString(bytes, ref i, byteCount);
+        }
+    }
+
     public interface IStreamable
     {
         void WriteTo(IDataOutputStream stream);
