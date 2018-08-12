@@ -97,6 +97,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Networkf\Networkf\Networkf.csproj">
+      <Project>{cbdc55e6-4342-499e-9005-a9feb17ac397}</Project>
+      <Name>Networkf</Name>
+    </ProjectReference>
     <ProjectReference Include="..\GameLogic\GameLogic.csproj">
       <Project>{eb01b5ab-a1e5-48e6-b134-e02e1d4ccd50}</Project>
       <Name>GameLogic</Name>

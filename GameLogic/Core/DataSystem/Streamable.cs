@@ -53,7 +53,7 @@ namespace GameLogic.Core.DataSystem
 
         public void WriteSingle(float val)
         {
-            throw new NotImplementedException();
+            Bit.WriteSingle(bytes, ref i, val);
         }
 
         public void WriteString(string val)
