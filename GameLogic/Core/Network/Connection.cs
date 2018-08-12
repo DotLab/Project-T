@@ -7,7 +7,7 @@ using System.Text;
 
 namespace GameLogic.Core.Network
 {
-    public abstract class Message : IStreamable
+    public abstract class Message : Networkf.Message, IStreamable
     {
         #region Message Creator
         public static Message New(long messageType)
@@ -28,6 +28,17 @@ namespace GameLogic.Core.Network
         public abstract void ReadFrom(IDataInputStream stream);
 
         public abstract long MessageType { get; }
+
+        protected Message() : base(0) {
+            type = (int)MessageType;
+        }
+
+        public override void WriteTo(byte[] buf, ref int i)
+        {
+            var stream = new BitDataOutputStream(buf, i);
+            WriteTo(stream);
+            i = stream.i;
+        }
     }
     
     public interface IMessageReceiver
