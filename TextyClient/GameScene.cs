@@ -14,10 +14,10 @@ namespace TextyClient
     {
         private Bitmap _backbuffer = null;
         private Point _viewerRectangleLeftTop = new Point(0, 0);
-        
-        public Size CanvasSize => _backbuffer.Size;
-        public int CanvasWidth => _backbuffer.Width;
-        public int CanvasHeight => _backbuffer.Height;
+
+        public Size CanvasSize => _backbuffer == null ? new Size(0, 0) : _backbuffer.Size;
+        public int CanvasWidth => _backbuffer == null ? 0 : _backbuffer.Width;
+        public int CanvasHeight => _backbuffer == null ? 0 : _backbuffer.Height;
 
         public int ViewerRectangleLeft { get => _viewerRectangleLeftTop.X; set => _viewerRectangleLeftTop.X = value; }
         public int ViewerRectangleTop { get => _viewerRectangleLeftTop.Y; set => _viewerRectangleLeftTop.Y = value; }
