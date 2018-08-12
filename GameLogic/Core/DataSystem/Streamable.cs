@@ -3,46 +3,64 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
+using Bit = Networkf.BitHelper;
+
 namespace GameLogic.Core.DataSystem
 {
     public interface IDataOutputStream
     {
         void WriteBoolean(Boolean val);
-        void WriteChar(Char val);
         void WriteString(String val);
         void WriteByte(Byte val);
-        void WriteSByte(SByte val);
-        void WriteInt16(Int16 val);
         void WriteInt32(Int32 val);
-        void WriteInt24(Int32 val);
-        void WriteInt64(Int64 val);
-        void WriteUInt16(UInt16 val);
-        void WriteUInt32(UInt32 val);
-        void WriteUInt24(UInt32 val);
-        void WriteUInt64(UInt64 val);
         void WriteSingle(Single val);
-        void WriteDouble(Double val);
     }
 
     public interface IDataInputStream
     {
-        bool IsEnd();
-        void Skip(int val);
         Boolean ReadBoolean();
-        Char ReadChar();
         String ReadString(int length);
         Byte ReadByte();
-        SByte ReadSByte();
-        Int16 ReadInt16();
         Int32 ReadInt32();
-        Int32 ReadInt24();
-        Int64 ReadInt64();
-        UInt16 ReadUInt16();
-        UInt32 ReadUInt32();
-        UInt32 ReadUInt24();
-        UInt64 ReadUInt64();
         Single ReadSingle();
-        Double ReadDouble();
+    }
+
+    public sealed class BitDataOutputStream : IDataOutputStream
+    {
+        public readonly byte[] bytes;
+        public int start, i;
+
+        public BitDataOutputStream(byte[] bytes, int i = 0)
+        {
+            this.bytes = bytes;
+            this.start = this.i = i;
+        }
+
+        public void WriteBoolean(bool val)
+        {
+            Bit.WriteUInt8(bytes, ref i, (byte)(val ? 1 : 0));
+        }
+
+        public void WriteByte(byte val)
+        {
+            Bit.WriteUInt8(bytes, ref i, val);
+        }
+
+        public void WriteInt32(int val)
+        {
+            Bit.WriteInt32(bytes, ref i, val);
+        }
+
+        public void WriteSingle(float val)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void WriteString(string val)
+        {
+            Bit.WriteUInt16(bytes, ref i, (ushort)Bit.GetStringByteCount(val));
+            Bit.WriteString(bytes, ref i, val);
+        }
     }
 
     public interface IStreamable
