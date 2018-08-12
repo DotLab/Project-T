@@ -104,8 +104,8 @@ namespace TextyClient
                 case BattleScenePushGridObjectMessage.MESSAGE_TYPE:
                     {
                         BattleScenePushGridObjectMessage pushGridObjMessage = (BattleScenePushGridObjectMessage)message;
-                        Grid grid = _grids[pushGridObjMessage.row, pushGridObjMessage.col];
-                        GridObject gridObject = new GridObject(pushGridObjMessage.objID, pushGridObjMessage.view);
+                        Grid grid = _grids[pushGridObjMessage.gridObj.row, pushGridObjMessage.gridObj.col];
+                        GridObject gridObject = new GridObject(pushGridObjMessage.gridObj.objID, pushGridObjMessage.view);
                         gridObject.direction = (Direction)pushGridObjMessage.direction;
                         gridObject.actable = pushGridObjMessage.actable;
                         gridObject.movable = pushGridObjMessage.movable;
@@ -122,10 +122,10 @@ namespace TextyClient
                 case BattleSceneRemoveGridObjectMessage.MESSAGE_TYPE:
                     {
                         BattleSceneRemoveGridObjectMessage removeGridObjMessage = (BattleSceneRemoveGridObjectMessage)message;
-                        Grid grid = _grids[removeGridObjMessage.row, removeGridObjMessage.col];
+                        Grid grid = _grids[removeGridObjMessage.gridObj.row, removeGridObjMessage.gridObj.col];
                         for (int i = grid.lowland.Count - 1; i >= 0; --i)
                         {
-                            if (grid.lowland[i].id == removeGridObjMessage.objID)
+                            if (grid.lowland[i].id == removeGridObjMessage.gridObj.objID)
                             {
                                 grid.lowland.RemoveAt(i);
                                 return;
@@ -133,7 +133,7 @@ namespace TextyClient
                         }
                         for (int i = grid.highland.Count - 1; i >= 0; --i)
                         {
-                            if (grid.highland[i].id == removeGridObjMessage.objID)
+                            if (grid.highland[i].id == removeGridObjMessage.gridObj.objID)
                             {
                                 grid.highland.RemoveAt(i);
                                 return;
@@ -144,26 +144,25 @@ namespace TextyClient
                 case BattleSceneAddLadderObjectMessage.MESSAGE_TYPE:
                     {
                         BattleSceneAddLadderObjectMessage addLadderObjMessage = (BattleSceneAddLadderObjectMessage)message;
-                        BattleSceneRemoveGridObjectMessage removeGridObjMessage = (BattleSceneRemoveGridObjectMessage)message;
-                        Grid grid = _grids[removeGridObjMessage.row, removeGridObjMessage.col];
-                        SideObject sideObject = new SideObject(addLadderObjMessage.objID, addLadderObjMessage.view);
+                        Grid grid = _grids[addLadderObjMessage.ladderObj.row, addLadderObjMessage.ladderObj.col];
+                        SideObject sideObject = new SideObject(addLadderObjMessage.ladderObj.objID, addLadderObjMessage.view);
                         switch (addLadderObjMessage.direction)
                         {
                             case (int)Direction.POSITIVE_ROW:
                                 grid.positiveRowLadder = sideObject;
-                                _grids[removeGridObjMessage.row + 1, removeGridObjMessage.col].negativeRowLadder = sideObject;
+                                _grids[addLadderObjMessage.ladderObj.row + 1, addLadderObjMessage.ladderObj.col].negativeRowLadder = sideObject;
                                 break;
                             case (int)Direction.POSITIVE_COL:
                                 grid.positiveRowLadder = sideObject;
-                                _grids[removeGridObjMessage.row, removeGridObjMessage.col + 1].negativeColLadder = sideObject;
+                                _grids[addLadderObjMessage.ladderObj.row, addLadderObjMessage.ladderObj.col + 1].negativeColLadder = sideObject;
                                 break;
                             case (int)Direction.NEGATIVE_ROW:
                                 grid.positiveRowLadder = sideObject;
-                                _grids[removeGridObjMessage.row - 1, removeGridObjMessage.col].positiveRowLadder = sideObject;
+                                _grids[addLadderObjMessage.ladderObj.row - 1, addLadderObjMessage.ladderObj.col].positiveRowLadder = sideObject;
                                 break;
                             case (int)Direction.NEGATIVE_COL:
                                 grid.positiveRowLadder = sideObject;
-                                _grids[removeGridObjMessage.row, removeGridObjMessage.col - 1].positiveColLadder = sideObject;
+                                _grids[addLadderObjMessage.ladderObj.row, addLadderObjMessage.ladderObj.col - 1].positiveColLadder = sideObject;
                                 break;
                             default:
                                 return;
@@ -173,26 +172,26 @@ namespace TextyClient
                 case BattleSceneRemoveLadderObjectMessage.MESSAGE_TYPE:
                     {
                         BattleSceneRemoveLadderObjectMessage removeLadderObjMessage = (BattleSceneRemoveLadderObjectMessage)message;
-                        Grid grid = _grids[removeLadderObjMessage.row, removeLadderObjMessage.col];
-                        if (grid.positiveRowLadder != null && grid.positiveRowLadder.id == removeLadderObjMessage.objID)
+                        Grid grid = _grids[removeLadderObjMessage.ladderObj.row, removeLadderObjMessage.ladderObj.col];
+                        if (grid.positiveRowLadder != null && grid.positiveRowLadder.id == removeLadderObjMessage.ladderObj.objID)
                         {
                             grid.positiveRowLadder = null;
-                            _grids[removeLadderObjMessage.row + 1, removeLadderObjMessage.col].negativeRowLadder = null;
+                            _grids[removeLadderObjMessage.ladderObj.row + 1, removeLadderObjMessage.ladderObj.col].negativeRowLadder = null;
                         }
-                        else if (grid.positiveColLadder != null && grid.positiveColLadder.id == removeLadderObjMessage.objID)
+                        else if (grid.positiveColLadder != null && grid.positiveColLadder.id == removeLadderObjMessage.ladderObj.objID)
                         {
                             grid.positiveColLadder = null;
-                            _grids[removeLadderObjMessage.row, removeLadderObjMessage.col + 1].negativeColLadder = null;
+                            _grids[removeLadderObjMessage.ladderObj.row, removeLadderObjMessage.ladderObj.col + 1].negativeColLadder = null;
                         }
-                        else if (grid.negativeRowLadder != null && grid.negativeRowLadder.id == removeLadderObjMessage.objID)
+                        else if (grid.negativeRowLadder != null && grid.negativeRowLadder.id == removeLadderObjMessage.ladderObj.objID)
                         {
                             grid.negativeRowLadder = null;
-                            _grids[removeLadderObjMessage.row - 1, removeLadderObjMessage.col].positiveRowLadder = null;
+                            _grids[removeLadderObjMessage.ladderObj.row - 1, removeLadderObjMessage.ladderObj.col].positiveRowLadder = null;
                         }
-                        else if (grid.negativeColLadder != null && grid.negativeColLadder.id == removeLadderObjMessage.objID)
+                        else if (grid.negativeColLadder != null && grid.negativeColLadder.id == removeLadderObjMessage.ladderObj.objID)
                         {
                             grid.negativeColLadder = null;
-                            _grids[removeLadderObjMessage.row, removeLadderObjMessage.col - 1].positiveColLadder = null;
+                            _grids[removeLadderObjMessage.ladderObj.row, removeLadderObjMessage.ladderObj.col - 1].positiveColLadder = null;
                         }
                     }
                     break;
