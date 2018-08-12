@@ -899,15 +899,36 @@ namespace GameLogic.Core.Network.ServerMessages
         }
     }
 
+    public struct BattleSceneObj : IStreamable
+    {
+        public string objID;
+        public int row;
+        public int col;
+
+        public void ReadFrom(IDataInputStream stream)
+        {
+            int length = stream.ReadInt32();
+            objID = stream.ReadString(length);
+            row = stream.ReadInt32();
+            col = stream.ReadInt32();
+        }
+
+        public void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(objID.Length);
+            stream.WriteString(objID);
+            stream.WriteInt32(row);
+            stream.WriteInt32(col);
+        }
+    }
+
     public sealed class BattleScenePushGridObjectMessage : Message
     {
         public const long MESSAGE_TYPE = -41L;
         public override long MessageType => MESSAGE_TYPE;
 
-        public string objID;
+        public BattleSceneObj gridObj;
         public CharacterView view;
-        public int row;
-        public int col;
         public bool highland;
         public int direction;
         public bool actable;
@@ -915,11 +936,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(objID.Length);
-            stream.WriteString(objID);
+            gridObj.WriteTo(stream);
             OutputStreamHelper.WriteCharacterView(stream, view);
-            stream.WriteInt32(row);
-            stream.WriteInt32(col);
             stream.WriteBoolean(highland);
             stream.WriteInt32(direction);
             stream.WriteBoolean(actable);
@@ -928,11 +946,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            objID = stream.ReadString(length);
+            gridObj.ReadFrom(stream);
             view = InputStreamHelper.ReadCharacterView(stream);
-            row = stream.ReadInt32();
-            col = stream.ReadInt32();
             highland = stream.ReadBoolean();
             direction = stream.ReadInt32();
             actable = stream.ReadBoolean();
@@ -945,24 +960,16 @@ namespace GameLogic.Core.Network.ServerMessages
         public const long MESSAGE_TYPE = -42L;
         public override long MessageType => MESSAGE_TYPE;
 
-        public int row;
-        public int col;
-        public string objID;
+        public BattleSceneObj gridObj;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(row);
-            stream.WriteInt32(col);
-            stream.WriteInt32(objID.Length);
-            stream.WriteString(objID);
+            gridObj.WriteTo(stream);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            row = stream.ReadInt32();
-            col = stream.ReadInt32();
-            int length = stream.ReadInt32();
-            objID = stream.ReadString(length);
+            gridObj.ReadFrom(stream);
         }
     }
 
@@ -971,29 +978,21 @@ namespace GameLogic.Core.Network.ServerMessages
         public const long MESSAGE_TYPE = -43L;
         public override long MessageType => MESSAGE_TYPE;
 
-        public string objID;
+        public BattleSceneObj ladderObj;
         public CharacterView view;
-        public int row;
-        public int col;
         public int direction;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(objID.Length);
-            stream.WriteString(objID);
+            ladderObj.WriteTo(stream);
             OutputStreamHelper.WriteCharacterView(stream, view);
-            stream.WriteInt32(row);
-            stream.WriteInt32(col);
             stream.WriteInt32(direction);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            objID = stream.ReadString(length);
+            ladderObj.ReadFrom(stream);
             view = InputStreamHelper.ReadCharacterView(stream);
-            row = stream.ReadInt32();
-            col = stream.ReadInt32();
             direction = stream.ReadInt32();
         }
     }
@@ -1003,24 +1002,16 @@ namespace GameLogic.Core.Network.ServerMessages
         public const long MESSAGE_TYPE = -44L;
         public override long MessageType => MESSAGE_TYPE;
 
-        public int row;
-        public int col;
-        public string objID;
+        public BattleSceneObj ladderObj;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(row);
-            stream.WriteInt32(col);
-            stream.WriteInt32(objID.Length);
-            stream.WriteString(objID);
+            ladderObj.WriteTo(stream);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            row = stream.ReadInt32();
-            col = stream.ReadInt32();
-            int length = stream.ReadInt32();
-            objID = stream.ReadString(length);
+            ladderObj.ReadFrom(stream);
         }
     }
     
@@ -1044,4 +1035,53 @@ namespace GameLogic.Core.Network.ServerMessages
             cols = stream.ReadInt32();
         }
     }
+
+    public sealed class BattleSceneSetActingOrderMessage : Message
+    {
+        public const long MESSAGE_TYPE = -46L;
+        public override long MessageType => MESSAGE_TYPE;
+
+        public struct ActableObject : IStreamable
+        {
+            public BattleSceneObj gridObj;
+            public CharacterView view;
+
+            public void WriteTo(IDataOutputStream stream)
+            {
+                gridObj.WriteTo(stream);
+                OutputStreamHelper.WriteCharacterView(stream, view);
+            }
+
+            public void ReadFrom(IDataInputStream stream)
+            {
+                gridObj.ReadFrom(stream);
+                view = InputStreamHelper.ReadCharacterView(stream);
+            }
+        }
+
+        public ActableObject[] objsOrder;
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            int length = stream.ReadInt32();
+            objsOrder = new ActableObject[length];
+            for (int i = 0; i < length; ++i)
+            {
+                objsOrder[i] = new ActableObject();
+                objsOrder[i].ReadFrom(stream);
+            }
+        }
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(objsOrder.Length);
+            foreach (ActableObject obj in objsOrder)
+            {
+                obj.WriteTo(stream);
+            }
+        }
+
+    }
+
+
 }

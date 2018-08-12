@@ -28,6 +28,7 @@ namespace TextyClient
         public event EventHandler<MouseEventArgs> CanvasMouseUp;
         public event EventHandler<MouseEventArgs> CanvasMouseDown;
         public event EventHandler<MouseEventArgs> CanvasMouseClick;
+        public event EventHandler<MouseEventArgs> CanvasMouseDoubleClick;
 
         public GameScene()
         {
@@ -94,6 +95,11 @@ namespace TextyClient
         private void GameScene_MouseClick(object sender, MouseEventArgs e)
         {
             this.CanvasMouseClick?.Invoke(this, new MouseEventArgs(e.Button, e.Clicks, _viewerRectangleLeftTop.X + e.X, _viewerRectangleLeftTop.Y + e.Y, e.Delta));
+        }
+
+        private void GameScene_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            this.CanvasMouseDoubleClick?.Invoke(this, new MouseEventArgs(e.Button, e.Clicks, _viewerRectangleLeftTop.X + e.X, _viewerRectangleLeftTop.Y + e.Y, e.Delta));
         }
     }
 

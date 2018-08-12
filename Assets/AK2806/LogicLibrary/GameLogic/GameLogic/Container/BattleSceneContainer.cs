@@ -46,8 +46,8 @@ namespace GameLogic.Container
         private readonly IdentifiedObjList<LadderObject> _ladderObjList;
         private readonly List<ActableGridObject> _actableObjList;
         private readonly BattleMap _battleMap;
-        private ActableGridObject _currentActable = null;
-        private int _roundCount = 0;
+        private ActableGridObject _currentActable;
+        private int _roundCount;
 
         private GridObject _initiative;
         private SkillType _initiativeSkillType;
@@ -78,6 +78,7 @@ namespace GameLogic.Container
             _gridObjList.Clear();
             _ladderObjList.Clear();
             _actableObjList.Clear();
+            _currentActable = null;
             _roundCount = 0;
             foreach (Player player in MainLogic.Players)
             {
@@ -327,7 +328,11 @@ namespace GameLogic.Container
                 actableObject.MovePoint = 0;
             }
             _actableObjList.Sort((ActableGridObject a, ActableGridObject b) => { return b.ActionTurn - a.ActionTurn; });
-            // ...
+            foreach (Player player in MainLogic.Players)
+            {
+                player.Client.BattleScene.SetActingOrder(_actableObjList);
+            }
+            MainLogic.DM.Client.BattleScene.SetActingOrder(_actableObjList);
             if (_actableObjList.Count > 0) _currentActable = _actableObjList[0];
             else _currentActable = null;
             ++_roundCount;

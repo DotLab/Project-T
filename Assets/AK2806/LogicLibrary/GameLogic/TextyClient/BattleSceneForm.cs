@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -35,9 +34,13 @@ namespace TextyClient
 
             public GridObject(string id, CharacterView view)
             {
-                Debug.Assert(id != null && view != null);
                 this.id = id;
                 this.view = view;
+            }
+
+            public override string ToString()
+            {
+                return view.battle;
             }
         }
 
@@ -48,9 +51,13 @@ namespace TextyClient
 
             public SideObject(string id, CharacterView view)
             {
-                Debug.Assert(id != null && view != null);
                 this.id = id;
                 this.view = view;
+            }
+
+            public override string ToString()
+            {
+                return view.battle;
             }
         }
 
@@ -75,13 +82,11 @@ namespace TextyClient
         private int _rows = -1;
         private int _cols = -1;
         private const float DIAMOND_LENGTH = 64.0f;
-
-        private int _mouseX = 0;
-        private int _mouseY = 0;
-
+        
         private int _mouseRow = -1;
         private int _mouseCol = -1;
         private bool _mouseHighland = false;
+        private GridObject _specifiedGridObject = null;
         
         public void MessageReceived(ulong timestamp, GameLogic.Core.Network.Message message)
         {
@@ -204,13 +209,44 @@ namespace TextyClient
             connectionUpdater.Interval = 1;
             connectionUpdater.Tick += new EventHandler(this.ConnectionUpdate);
             connectionUpdater.Start();
-
+            
             //Program.connection.AddMessageReceiver(DisplayDicePointsMessage.MESSAGE_TYPE, this);
         }
 
         private void ConnectionUpdate(object sender, EventArgs e)
         {
             //Program.connection.UpdateReceiver();
+        }
+        
+        private GridObject GetSelectedGridObject()
+        {
+            if (_specifiedGridObject == null)
+            {
+                if (_mouseRow != -1 && _mouseCol != -1)
+                {
+                    Grid grid = _grids[_mouseRow, _mouseCol];
+                    List<GridObject> land;
+                    if (_mouseHighland) land = grid.highland;
+                    else land = grid.lowland;
+                    if (land.Count > 0)
+                    {
+                        GridObject gridObject = land[land.Count - 1];
+                        return gridObject;
+                    }
+                }
+                return null;
+            }
+            else
+            {
+                return _specifiedGridObject;
+            }
+        }
+
+        private void updateTimer_Tick(object sender, EventArgs e)
+        {
+            mouseGridPosLbl.Text = "Row:" + _mouseRow.ToString() + ", Col:" + _mouseCol.ToString() + ", Highland:" + _mouseHighland.ToString();
+            GridObject gridObject = this.GetSelectedGridObject();
+            selectedGridObjectLbl.Text = gridObject != null ? gridObject.ToString() : "无";
         }
 
         private void vScrollBar_ValueChanged(object sender, EventArgs e)
@@ -238,8 +274,7 @@ namespace TextyClient
             CharacterView view2 = new CharacterView();
             view2.battle = "吸血鬼";
             _grids[0, 0].highland.Add(new GridObject("", view2));
-            _grids[0, 1].highland.Add(new GridObject("", view2));
-            _grids[0, 1].isMiddleLand = true;
+            _grids[0, 1].lowland.Add(new GridObject("", view2));
             this.UpdateScrollBar();
         }
 
@@ -290,10 +325,8 @@ namespace TextyClient
                     for (int j = 0; j < _cols; ++j)
                     {
                         Grid grid = _grids[i, j];
-                        Debug.Assert(grid != null && grid.lowland != null && grid.highland != null);
                         foreach (GridObject gridObject in grid.lowland)
                         {
-                            Debug.Assert(gridObject != null);
                             PointF[] diamondPoints = new PointF[4]
                             {
                                 new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j) * DIAMOND_LENGTH / 2.0f),
@@ -307,13 +340,12 @@ namespace TextyClient
                             }
                             else
                             {
-                                g.DrawString(gridObject.view.battle, new Font("宋体", 12), Brushes.Green, new PointF(diamondPoints[0].X - 12, diamondPoints[0].Y + 12));
+                                g.DrawString(gridObject.view.battle, new Font("宋体", 12), Brushes.Black, new PointF(diamondPoints[0].X - 12, diamondPoints[0].Y + 12));
                             }
                             g.DrawPolygon(Pens.Black, diamondPoints);
                         }
                         foreach (GridObject gridObject in grid.highland)
                         {
-                            Debug.Assert(gridObject != null);
                             PointF[] lowlandDiamondPoints = new PointF[4]
                             {
                                 new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j) * DIAMOND_LENGTH / 2.0f),
@@ -348,7 +380,7 @@ namespace TextyClient
                             }
                             else
                             {
-                                g.DrawString(gridObject.view.battle, new Font("宋体", 12), Brushes.Green, new PointF(diamondPoints[0].X - 12, diamondPoints[0].Y + 12));
+                                g.DrawString(gridObject.view.battle, new Font("宋体", 12), Brushes.Black, new PointF(diamondPoints[0].X - 12, diamondPoints[0].Y + 12));
                             }
                             g.DrawPolygon(Pens.Red, diamondPoints);
                             for (int k = 0; k < 4; ++k)
@@ -362,9 +394,7 @@ namespace TextyClient
             if (_mouseRow != -1 && _mouseCol != -1)
             {
                 int i = _mouseRow, j = _mouseCol;
-                Debug.Assert(i >= 0 && i < _rows && j >= 0 && j < _cols);
                 Grid grid = _grids[i, j];
-                Debug.Assert(grid != null);
                 PointF[] diamondPoints;
                 if (_mouseHighland)
                 {
@@ -399,7 +429,15 @@ namespace TextyClient
                         new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f)
                     };
                 }
-                Pen pen = new Pen(Brushes.Blue, 3);
+                Pen pen;
+                if (_specifiedGridObject != null)
+                {
+                    pen = new Pen(Brushes.Green, 3);
+                }
+                else
+                {
+                    pen = new Pen(Brushes.Blue, 3);
+                }
                 g.DrawPolygon(pen, diamondPoints);
             }
         }
@@ -409,11 +447,8 @@ namespace TextyClient
             this.UpdateScrollBar();
         }
         
-        private void battleScene_CanvasMouseMove(object sender, MouseEventArgs e)
+        private void battleScene_CanvasMouseDown(object sender, MouseEventArgs e)
         {
-            mousePos.Text = e.Location.ToString();
-            mouseGridPos.Text = "Row:" + _mouseRow.ToString() + ", Col:" + _mouseCol.ToString() + ", Highland:" + _mouseHighland.ToString();
-            _mouseX = e.X; _mouseY = e.Y;
             if (_grids != null)
             {
                 for (int i = 0; i < _rows; ++i)
@@ -421,7 +456,6 @@ namespace TextyClient
                     for (int j = 0; j < _cols; ++j)
                     {
                         Grid grid = _grids[i, j];
-                        Debug.Assert(grid != null && grid.lowland != null && grid.highland != null);
                         PointF[] diamondPoints;
                         if (grid.highland.Count > 0)
                         {
@@ -445,8 +479,9 @@ namespace TextyClient
                                     new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j + 1) * DIAMOND_LENGTH / 2.0f)
                                 };
                             }
-                            if (IsPointInPolygon(diamondPoints, new PointF(_mouseX, _mouseY)))
+                            if (IsPointInPolygon(diamondPoints, new PointF(e.X, e.Y)))
                             {
+                                if (!(_mouseRow == i && _mouseCol == j && _mouseHighland == true)) _specifiedGridObject = null;
                                 _mouseRow = i; _mouseCol = j;
                                 _mouseHighland = true;
                                 return;
@@ -461,8 +496,9 @@ namespace TextyClient
                                 new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 2) * DIAMOND_LENGTH / 2.0f),
                                 new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f)
                             };
-                            if (IsPointInPolygon(diamondPoints, new PointF(_mouseX, _mouseY)))
+                            if (IsPointInPolygon(diamondPoints, new PointF(e.X, e.Y)))
                             {
+                                if (!(_mouseRow == i && _mouseCol == j && _mouseHighland == false)) _specifiedGridObject = null;
                                 _mouseRow = i; _mouseCol = j;
                                 _mouseHighland = false;
                                 return;
@@ -471,13 +507,42 @@ namespace TextyClient
                     }
                 }
             }
+            _specifiedGridObject = null;
             _mouseRow = -1; _mouseCol = -1;
             _mouseHighland = false;
         }
 
         private void battleSceneMenuStrip_Opening(object sender, CancelEventArgs e)
         {
-            
+            GridObject gridObject = this.GetSelectedGridObject();
+            if (!gridObject.actable)
+            {
+
+            }
         }
+
+        private void battleScene_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (_mouseRow != -1 && _mouseCol != -1)
+            {
+                Grid grid = _grids[_mouseRow, _mouseCol];
+                if (_mouseHighland) gridObjectSelectionList.DataSource = grid.highland;
+                else gridObjectSelectionList.DataSource = grid.lowland;
+                gridObjectSelectionList.Location = new Point(e.X + battleScene.Left, e.Y + battleScene.Top);
+                gridObjectSelectionList.Visible = true;
+            }
+        }
+
+        private void battleScene_MouseClick(object sender, MouseEventArgs e)
+        {
+            gridObjectSelectionList.Visible = false;
+        }
+
+        private void gridObjectSelectionList_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            _specifiedGridObject = (GridObject)gridObjectSelectionList.SelectedValue;
+            gridObjectSelectionList.Visible = false;
+        }
+
     }
 }

@@ -37,6 +37,7 @@
             this.Name = "GameScene";
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.GameScene_Paint);
             this.MouseClick += new System.Windows.Forms.MouseEventHandler(this.GameScene_MouseClick);
+            this.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.GameScene_MouseDoubleClick);
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.GameScene_MouseDown);
             this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.GameScene_MouseMove);
             this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.GameScene_MouseUp);

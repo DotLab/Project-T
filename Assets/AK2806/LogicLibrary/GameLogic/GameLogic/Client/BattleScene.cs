@@ -33,10 +33,10 @@ namespace GameLogic.Client
         public void PushGridObject(int row, int col, bool highland, GridObject gridObject)
         {
             BattleScenePushGridObjectMessage message = new BattleScenePushGridObjectMessage();
-            message.row = row;
-            message.col = col;
+            message.gridObj.row = row;
+            message.gridObj.col = col;
             message.highland = highland;
-            message.objID = gridObject.ID;
+            message.gridObj.objID = gridObject.ID;
             message.view = gridObject.CharacterRef.View;
             _connection.SendMessage(message);
         }
@@ -44,19 +44,19 @@ namespace GameLogic.Client
         public void RemoveGridObject(GridObject gridObject)
         {
             BattleSceneRemoveGridObjectMessage message = new BattleSceneRemoveGridObjectMessage();
-            message.row = gridObject.GridRef.PosRow;
-            message.col = gridObject.GridRef.PosCol;
-            message.objID = gridObject.ID;
+            message.gridObj.row = gridObject.GridRef.PosRow;
+            message.gridObj.col = gridObject.GridRef.PosCol;
+            message.gridObj.objID = gridObject.ID;
             _connection.SendMessage(message);
         }
 
         public void AddLadderObject(int row, int col, Direction direction, LadderObject ladderObject)
         {
             BattleSceneAddLadderObjectMessage message = new BattleSceneAddLadderObjectMessage();
-            message.row = row;
-            message.col = col;
+            message.ladderObj.row = row;
+            message.ladderObj.col = col;
             message.direction = (int)direction;
-            message.objID = ladderObject.ID;
+            message.ladderObj.objID = ladderObject.ID;
             message.view = ladderObject.CharacterRef.View;
             _connection.SendMessage(message);
         }
@@ -64,9 +64,9 @@ namespace GameLogic.Client
         public void RemoveLadderObject(LadderObject ladderObject)
         {
             BattleSceneRemoveLadderObjectMessage message = new BattleSceneRemoveLadderObjectMessage();
-            message.row = ladderObject.GridRef.PosRow;
-            message.col = ladderObject.GridRef.PosCol;
-            message.objID = ladderObject.ID;
+            message.ladderObj.row = ladderObject.GridRef.PosRow;
+            message.ladderObj.col = ladderObject.GridRef.PosCol;
+            message.ladderObj.objID = ladderObject.ID;
             _connection.SendMessage(message);
         }
 
@@ -78,7 +78,13 @@ namespace GameLogic.Client
             _connection.SendMessage(message);
         }
 
-        public void ShowActionTurn(IEnumerable<Character> characters)
+        public void SetActingOrder(IEnumerable<ActableGridObject> objects)
+        {
+            BattleSceneSetActingOrderMessage message = new BattleSceneSetActingOrderMessage();
+            //message.objsOrder = new BattleSceneSetActingOrderMessage.ActableObject[];
+        }
+
+        public void NextTurn(User who, ActableGridObject actable)
         {
 
         }
