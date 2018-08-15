@@ -6,37 +6,8 @@ using System.Text;
 
 namespace GameLogic.CharacterSystem
 {
-    public sealed class SkillChecker : IJSContextProvider
+    public sealed class SkillChecker
     {
-        #region Javascript API class
-        private sealed class JSAPI : IJSAPI<SkillChecker>
-        {
-            private readonly SkillChecker _outer;
-
-            public JSAPI(SkillChecker outer)
-            {
-                _outer = outer;
-            }
-
-            public SkillChecker Origin(JSContextHelper proof)
-            {
-                try
-                {
-                    if (proof == JSContextHelper.Instance)
-                    {
-                        return _outer;
-                    }
-                    return null;
-                }
-                catch (Exception)
-                {
-                    return null;
-                }
-            }
-        }
-        #endregion
-        private readonly JSAPI _apiObj;
-
         public enum CharacterAction
         {
             CREATE_ASPECT,
@@ -169,10 +140,7 @@ namespace GameLogic.CharacterSystem
 
         public CheckerState State => _state;
 
-        private SkillChecker()
-        {
-            _apiObj = new JSAPI(this);
-        }
+        private SkillChecker() { }
         
         public static bool CanResistSkillWithoutDMCheck(SkillType initiativeUsing, SkillType resist, CharacterAction action)
         {
@@ -374,12 +342,5 @@ namespace GameLogic.CharacterSystem
             if (reroll) this.PassiveRollDice();
             else _passiveExtraPoint += 2;
         }
-
-        public IJSContext GetContext()
-        {
-            return _apiObj;
-        }
-
-        public void SetContext(IJSContext context) { }
     }
 }

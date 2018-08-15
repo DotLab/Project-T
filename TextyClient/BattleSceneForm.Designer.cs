@@ -33,8 +33,13 @@
             this.gridObjectSelectionList = new System.Windows.Forms.ListBox();
             this.battleScene = new TextyClient.GameScene();
             this.battleSceneMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.menuItemSelectAspect = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuItemMove = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuItemUseSkill = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuItemUseStunt = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuItemExtraMovePoint = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.menuItemConfirm = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuItemSelectAspect = new System.Windows.Forms.ToolStripMenuItem();
             this.menuItemViewData = new System.Windows.Forms.ToolStripMenuItem();
             this.hScrollBar = new System.Windows.Forms.HScrollBar();
             this.vScrollBar = new System.Windows.Forms.VScrollBar();
@@ -44,7 +49,6 @@
             this.label5 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.roundOverBtn = new System.Windows.Forms.Button();
             this.selectedGridObjectLbl = new System.Windows.Forms.Label();
             this.mouseGridPosLbl = new System.Windows.Forms.Label();
             this.roundInfoLbl = new System.Windows.Forms.Label();
@@ -53,11 +57,7 @@
             this.roundInfoList = new System.Windows.Forms.ListBox();
             this.label2 = new System.Windows.Forms.Label();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
-            this.menuItemConfirm = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuItemMove = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuItemUseSkill = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuItemUseStunt = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuItemExtraMovePoint = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuItemRoundOver = new System.Windows.Forms.ToolStripMenuItem();
             this.groupBox1.SuspendLayout();
             this.battleSceneMenuStrip.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -111,24 +111,59 @@
             this.menuItemUseSkill,
             this.menuItemUseStunt,
             this.menuItemExtraMovePoint,
+            this.menuItemRoundOver,
             this.toolStripSeparator1,
             this.menuItemConfirm,
             this.menuItemSelectAspect,
             this.menuItemViewData});
             this.battleSceneMenuStrip.Name = "battleSceneMenuStrip";
-            this.battleSceneMenuStrip.Size = new System.Drawing.Size(149, 164);
+            this.battleSceneMenuStrip.Size = new System.Drawing.Size(181, 208);
             this.battleSceneMenuStrip.Opening += new System.ComponentModel.CancelEventHandler(this.battleSceneMenuStrip_Opening);
+            // 
+            // menuItemMove
+            // 
+            this.menuItemMove.Name = "menuItemMove";
+            this.menuItemMove.Size = new System.Drawing.Size(148, 22);
+            this.menuItemMove.Text = "移动";
+            this.menuItemMove.Click += new System.EventHandler(this.menuItemMove_Click);
+            // 
+            // menuItemUseSkill
+            // 
+            this.menuItemUseSkill.Name = "menuItemUseSkill";
+            this.menuItemUseSkill.Size = new System.Drawing.Size(148, 22);
+            this.menuItemUseSkill.Text = "使用技能";
+            this.menuItemUseSkill.Click += new System.EventHandler(this.menuItemUseSkill_Click);
+            // 
+            // menuItemUseStunt
+            // 
+            this.menuItemUseStunt.Name = "menuItemUseStunt";
+            this.menuItemUseStunt.Size = new System.Drawing.Size(148, 22);
+            this.menuItemUseStunt.Text = "使用特技";
+            this.menuItemUseStunt.Click += new System.EventHandler(this.menuItemUseStunt_Click);
+            // 
+            // menuItemExtraMovePoint
+            // 
+            this.menuItemExtraMovePoint.Name = "menuItemExtraMovePoint";
+            this.menuItemExtraMovePoint.Size = new System.Drawing.Size(148, 22);
+            this.menuItemExtraMovePoint.Text = "额外移动点数";
+            this.menuItemExtraMovePoint.Click += new System.EventHandler(this.menuItemExtraMovePoint_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(145, 6);
+            // 
+            // menuItemConfirm
+            // 
+            this.menuItemConfirm.Name = "menuItemConfirm";
+            this.menuItemConfirm.Size = new System.Drawing.Size(148, 22);
+            this.menuItemConfirm.Text = "确认选择";
             // 
             // menuItemSelectAspect
             // 
             this.menuItemSelectAspect.Name = "menuItemSelectAspect";
             this.menuItemSelectAspect.Size = new System.Drawing.Size(148, 22);
             this.menuItemSelectAspect.Text = "选择特征";
-            // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(145, 6);
             // 
             // menuItemViewData
             // 
@@ -161,7 +196,6 @@
             this.groupBox2.Controls.Add(this.label5);
             this.groupBox2.Controls.Add(this.label4);
             this.groupBox2.Controls.Add(this.label1);
-            this.groupBox2.Controls.Add(this.roundOverBtn);
             this.groupBox2.Controls.Add(this.selectedGridObjectLbl);
             this.groupBox2.Controls.Add(this.mouseGridPosLbl);
             this.groupBox2.Controls.Add(this.roundInfoLbl);
@@ -220,15 +254,6 @@
             this.label1.Size = new System.Drawing.Size(77, 12);
             this.label1.TabIndex = 18;
             this.label1.Text = "剩余移动点：";
-            // 
-            // roundOverBtn
-            // 
-            this.roundOverBtn.Location = new System.Drawing.Point(113, 355);
-            this.roundOverBtn.Name = "roundOverBtn";
-            this.roundOverBtn.Size = new System.Drawing.Size(75, 23);
-            this.roundOverBtn.TabIndex = 13;
-            this.roundOverBtn.Text = "回合结束";
-            this.roundOverBtn.UseVisualStyleBackColor = true;
             // 
             // selectedGridObjectLbl
             // 
@@ -299,35 +324,12 @@
             this.updateTimer.Interval = 16;
             this.updateTimer.Tick += new System.EventHandler(this.updateTimer_Tick);
             // 
-            // menuItemConfirm
+            // menuItemRoundOver
             // 
-            this.menuItemConfirm.Name = "menuItemConfirm";
-            this.menuItemConfirm.Size = new System.Drawing.Size(148, 22);
-            this.menuItemConfirm.Text = "确认选择";
-            // 
-            // menuItemMove
-            // 
-            this.menuItemMove.Name = "menuItemMove";
-            this.menuItemMove.Size = new System.Drawing.Size(148, 22);
-            this.menuItemMove.Text = "移动";
-            // 
-            // menuItemUseSkill
-            // 
-            this.menuItemUseSkill.Name = "menuItemUseSkill";
-            this.menuItemUseSkill.Size = new System.Drawing.Size(148, 22);
-            this.menuItemUseSkill.Text = "使用技能";
-            // 
-            // menuItemUseStunt
-            // 
-            this.menuItemUseStunt.Name = "menuItemUseStunt";
-            this.menuItemUseStunt.Size = new System.Drawing.Size(148, 22);
-            this.menuItemUseStunt.Text = "使用特技";
-            // 
-            // menuItemExtraMovePoint
-            // 
-            this.menuItemExtraMovePoint.Name = "menuItemExtraMovePoint";
-            this.menuItemExtraMovePoint.Size = new System.Drawing.Size(148, 22);
-            this.menuItemExtraMovePoint.Text = "额外移动点数";
+            this.menuItemRoundOver.Name = "menuItemRoundOver";
+            this.menuItemRoundOver.Size = new System.Drawing.Size(180, 22);
+            this.menuItemRoundOver.Text = "回合结束";
+            this.menuItemRoundOver.Click += new System.EventHandler(this.menuItemRoundOver_Click);
             // 
             // BattleSceneForm
             // 
@@ -366,7 +368,6 @@
         private System.Windows.Forms.ListBox gridObjectSelectionList;
         private System.Windows.Forms.Label selectedGridObjectLbl;
         private System.Windows.Forms.Timer updateTimer;
-        private System.Windows.Forms.Button roundOverBtn;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label1;
@@ -377,5 +378,6 @@
         private System.Windows.Forms.ToolStripMenuItem menuItemUseStunt;
         private System.Windows.Forms.ToolStripMenuItem menuItemExtraMovePoint;
         private System.Windows.Forms.ToolStripMenuItem menuItemConfirm;
+        private System.Windows.Forms.ToolStripMenuItem menuItemRoundOver;
     }
 }

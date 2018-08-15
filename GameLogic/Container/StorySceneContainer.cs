@@ -259,12 +259,12 @@ namespace GameLogic.Container
             SkillChecker.Instance.StartCheck(initiative, passive, action, initiativeCallback, passiveCallback);
             foreach (Player player in MainLogic.Players)
             {
-                if (initiative.Controller == player) player.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.INITIATIVE);
-                else if (passive.Controller == player) player.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.PASSIVE);
+                if (initiative.ControlPlayer == player) player.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.INITIATIVE);
+                else if (passive.ControlPlayer == player) player.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.PASSIVE);
                 else player.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.OBSERVER);
             }
-            if (initiative.Controller == null) MainLogic.DM.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.INITIATIVE);
-            else if (passive.Controller == null) MainLogic.DM.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.PASSIVE);
+            if (initiative.ControlPlayer == null) MainLogic.DM.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.INITIATIVE);
+            else if (passive.ControlPlayer == null) MainLogic.DM.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.PASSIVE);
             else MainLogic.DM.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.OBSERVER);
         }
 
@@ -283,12 +283,12 @@ namespace GameLogic.Container
             SkillChecker.Instance.ForceEndCheck(initiativeResult, passiveResult);
             foreach (Player player in MainLogic.Players)
             {
-                if (SkillChecker.Instance.Initiative.Controller == player) player.Client.SkillCheckPanel.Hide();
-                else if (SkillChecker.Instance.Passive.Controller == player) player.Client.SkillCheckPanel.Hide();
+                if (SkillChecker.Instance.Initiative.ControlPlayer == player) player.Client.SkillCheckPanel.Hide();
+                else if (SkillChecker.Instance.Passive.ControlPlayer == player) player.Client.SkillCheckPanel.Hide();
                 else player.Client.SkillCheckPanel.Hide();
             }
-            if (SkillChecker.Instance.Initiative.Controller == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
-            else if (SkillChecker.Instance.Passive.Controller == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
+            if (SkillChecker.Instance.Initiative.ControlPlayer == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
+            else if (SkillChecker.Instance.Passive.ControlPlayer == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
             else MainLogic.DM.Client.SkillCheckPanel.Hide();
         }
 
@@ -297,12 +297,12 @@ namespace GameLogic.Container
             SkillChecker.Instance.EndCheck();
             foreach (Player player in MainLogic.Players)
             {
-                if (SkillChecker.Instance.Initiative.Controller == player) player.Client.SkillCheckPanel.Hide();
-                else if (SkillChecker.Instance.Passive.Controller == player) player.Client.SkillCheckPanel.Hide();
+                if (SkillChecker.Instance.Initiative.ControlPlayer == player) player.Client.SkillCheckPanel.Hide();
+                else if (SkillChecker.Instance.Passive.ControlPlayer == player) player.Client.SkillCheckPanel.Hide();
                 else player.Client.SkillCheckPanel.Hide();
             }
-            if (SkillChecker.Instance.Initiative.Controller == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
-            else if (SkillChecker.Instance.Passive.Controller == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
+            if (SkillChecker.Instance.Initiative.ControlPlayer == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
+            else if (SkillChecker.Instance.Passive.ControlPlayer == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
             else MainLogic.DM.Client.SkillCheckPanel.Hide();
         }
 

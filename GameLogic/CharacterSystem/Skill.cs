@@ -92,7 +92,6 @@ namespace GameLogic.CharacterSystem
             _id = id ?? throw new ArgumentNullException(nameof(id));
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _property = SkillProperty.INIT;
-            _property.level = 0;
             _property.canAttack = canAttack;
             _property.canDefend = canDefend;
             _property.canMove = canMove;

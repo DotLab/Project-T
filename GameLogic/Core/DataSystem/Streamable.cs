@@ -152,15 +152,7 @@ namespace GameLogic.Core.DataSystem
             stream.WriteInt32(val.action);
             stream.WriteInt32(val.emotion);
         }
-
-        public static void WriteDescribable(IDataOutputStream stream, IDescribable describable)
-        {
-            stream.WriteInt32(describable.Name.Length);
-            stream.WriteString(describable.Name);
-            stream.WriteInt32(describable.Description.Length);
-            stream.WriteString(describable.Description);
-        }
-
+        
         public static void WriteSkillProperty(IDataOutputStream stream, SkillProperty property)
         {
             stream.WriteInt32(property.level);
@@ -222,17 +214,7 @@ namespace GameLogic.Core.DataSystem
             ret.emotion = stream.ReadInt32();
             return ret;
         }
-
-        public static Describable ReadDescribable(IDataInputStream stream)
-        {
-            Describable ret = new Describable();
-            int length = stream.ReadInt32();
-            ret.Name = stream.ReadString(length);
-            length = stream.ReadInt32();
-            ret.Description = stream.ReadString(length);
-            return ret;
-        }
-
+        
         public static SkillProperty ReadSkillProperty(IDataInputStream stream)
         {
             SkillProperty ret = new SkillProperty();

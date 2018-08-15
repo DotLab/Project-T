@@ -1,4 +1,5 @@
 ﻿using GameLogic.CharacterSystem;
+using GameLogic.Container.BattleComponent;
 using GameLogic.Core.DataSystem;
 using System;
 
@@ -333,27 +334,55 @@ namespace GameLogic.Core.Network.ServerMessages
             effect = InputStreamHelper.ReadCharacterViewEffect(stream);
         }
     }
-    
+
+    public struct Describable : IStreamable
+    {
+        public string name;
+        public string description;
+
+        public Describable(IDescribable describable)
+        {
+            name = describable.Name;
+            description = describable.Description;
+        }
+
+        public void ReadFrom(IDataInputStream stream)
+        {
+            int length = stream.ReadInt32();
+            name = stream.ReadString(length);
+            length = stream.ReadInt32();
+            description = stream.ReadString(length);
+        }
+
+        public void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(name.Length);
+            stream.WriteString(name);
+            stream.WriteInt32(description.Length);
+            stream.WriteString(description);
+        }
+    }
+
     public sealed class CharacterInfoDataMessage : Message
     {
         public const long MESSAGE_TYPE = -18L;
         public override long MessageType => MESSAGE_TYPE;
         
         public string characterID;
-        public IDescribable describable;
+        public Describable describable;
 
         public override void WriteTo(IDataOutputStream stream)
         {
             stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
-            OutputStreamHelper.WriteDescribable(stream, describable);
+            describable.WriteTo(stream);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
             int length = stream.ReadInt32();
             characterID = stream.ReadString(length);
-            describable = InputStreamHelper.ReadDescribable(stream);
+            describable.ReadFrom(stream);
         }
     }
 
@@ -362,20 +391,20 @@ namespace GameLogic.Core.Network.ServerMessages
         public struct Property : IStreamable
         {
             public string propertyID;
-            public IDescribable describable;
+            public Describable describable;
 
             public void ReadFrom(IDataInputStream stream)
             {
                 int length = stream.ReadInt32();
                 propertyID = stream.ReadString(length);
-                describable = InputStreamHelper.ReadDescribable(stream);
+                describable.ReadFrom(stream);
             }
 
             public void WriteTo(IDataOutputStream stream)
             {
                 stream.WriteInt32(propertyID.Length);
                 stream.WriteString(propertyID);
-                OutputStreamHelper.WriteDescribable(stream, describable);
+                describable.WriteTo(stream);
             }
         }
         
@@ -390,7 +419,6 @@ namespace GameLogic.Core.Network.ServerMessages
             properties = new Property[length];
             for (int i = 0; i < length; ++i)
             {
-                properties[i] = new Property();
                 properties[i].ReadFrom(stream);
             }
         }
@@ -920,6 +948,20 @@ namespace GameLogic.Core.Network.ServerMessages
             stream.WriteInt32(row);
             stream.WriteInt32(col);
         }
+
+        public BattleSceneObj(GridObject gridObject)
+        {
+            row = gridObject.GridRef.PosRow;
+            col = gridObject.GridRef.PosCol;
+            objID = gridObject.ID;
+        }
+
+        public BattleSceneObj(LadderObject ladderObject)
+        {
+            row = ladderObject.GridRef.PosRow;
+            col = ladderObject.GridRef.PosCol;
+            objID = ladderObject.ID;
+        }
     }
 
     public sealed class BattleScenePushGridObjectMessage : Message
@@ -1040,34 +1082,15 @@ namespace GameLogic.Core.Network.ServerMessages
     {
         public const long MESSAGE_TYPE = -46L;
         public override long MessageType => MESSAGE_TYPE;
-
-        public struct ActableObject : IStreamable
-        {
-            public BattleSceneObj gridObj;
-            public CharacterView view;
-
-            public void WriteTo(IDataOutputStream stream)
-            {
-                gridObj.WriteTo(stream);
-                OutputStreamHelper.WriteCharacterView(stream, view);
-            }
-
-            public void ReadFrom(IDataInputStream stream)
-            {
-                gridObj.ReadFrom(stream);
-                view = InputStreamHelper.ReadCharacterView(stream);
-            }
-        }
-
-        public ActableObject[] objsOrder;
+        
+        public BattleSceneObj[] objsOrder;
 
         public override void ReadFrom(IDataInputStream stream)
         {
             int length = stream.ReadInt32();
-            objsOrder = new ActableObject[length];
+            objsOrder = new BattleSceneObj[length];
             for (int i = 0; i < length; ++i)
             {
-                objsOrder[i] = new ActableObject();
                 objsOrder[i].ReadFrom(stream);
             }
         }
@@ -1075,7 +1098,7 @@ namespace GameLogic.Core.Network.ServerMessages
         public override void WriteTo(IDataOutputStream stream)
         {
             stream.WriteInt32(objsOrder.Length);
-            foreach (ActableObject obj in objsOrder)
+            foreach (BattleSceneObj obj in objsOrder)
             {
                 obj.WriteTo(stream);
             }
@@ -1083,5 +1106,48 @@ namespace GameLogic.Core.Network.ServerMessages
 
     }
 
+    public sealed class BattleSceneNextTurnMessage : Message
+    {
+        public const long MESSAGE_TYPE = -47L;
+        public override long MessageType => MESSAGE_TYPE;
 
+        public bool canOperate;
+        public BattleSceneObj gridObj;
+        public int actionPoint;
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            canOperate = stream.ReadBoolean();
+            gridObj.ReadFrom(stream);
+            actionPoint = stream.ReadInt32();
+        }
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteBoolean(canOperate);
+            gridObj.WriteTo(stream);
+            stream.WriteInt32(actionPoint);
+        }
+    }
+
+    public sealed class BattleSceneMoveInfoMessage : Message
+    {
+        public const long MESSAGE_TYPE = -48L;
+        public override long MessageType => MESSAGE_TYPE;
+
+        public int direction;
+        public bool canMove;
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            direction = stream.ReadInt32();
+            canMove = stream.ReadBoolean();
+        }
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(direction);
+            stream.WriteBoolean(canMove);
+        }
+    }
 }

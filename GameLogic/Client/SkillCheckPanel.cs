@@ -145,8 +145,8 @@ namespace GameLogic.Client
             if (!_isChecking) return;
             DisplayDicePointsMessage message = new DisplayDicePointsMessage();
             message.userID = isInitiative ?
-                (SkillChecker.Instance.Initiative.Controller != null ? SkillChecker.Instance.Initiative.Controller.Id : MainLogic.DM.Id)
-                : (SkillChecker.Instance.Passive.Controller != null ? SkillChecker.Instance.Passive.Controller.Id : MainLogic.DM.Id);
+                (SkillChecker.Instance.Initiative.ControlPlayer != null ? SkillChecker.Instance.Initiative.ControlPlayer.Id : MainLogic.DM.Id)
+                : (SkillChecker.Instance.Passive.ControlPlayer != null ? SkillChecker.Instance.Passive.ControlPlayer.Id : MainLogic.DM.Id);
             message.dicePoints = dicePoints;
             _connection.SendMessage(message);
         }
