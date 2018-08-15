@@ -87,7 +87,11 @@ namespace TextyClient
         private int _mouseCol = -1;
         private bool _mouseHighland = false;
         private GridObject _specifiedGridObject = null;
-        
+
+        private string _operatableID = null;
+        private List<GridObject> _actingOrder;
+        private bool _inChecking = false;
+
         public void MessageReceived(ulong timestamp, GameLogic.Core.Network.Message message)
         {
             switch (message.MessageType)
@@ -195,6 +199,35 @@ namespace TextyClient
                         }
                     }
                     break;
+                case BattleSceneSetActingOrderMessage.MESSAGE_TYPE:
+                    {
+                        var orderMessage = (BattleSceneSetActingOrderMessage)message;
+                        _actingOrder.Clear();
+                        _actingOrder.Add(null);
+                        foreach (var msgActableObj in orderMessage.objsOrder)
+                        {
+                            GridObject gridObject = this.GetGridObject(msgActableObj.row, msgActableObj.col, msgActableObj.objID);
+                            _actingOrder.Add(gridObject);
+                        }
+                    }
+                    break;
+                case BattleSceneNextTurnMessage.MESSAGE_TYPE:
+                    {
+                        var orderMessage = (BattleSceneNextTurnMessage)message;
+                        if (orderMessage.canOperate)
+                        {
+                            roundInfoLbl.Text = "你的回合";
+                            _operatableID = orderMessage.gridObj.objID;
+                        }
+                        else
+                        {
+                            roundInfoLbl.Text = _actingOrder[0].ToString() + " 的回合";
+                            _operatableID = null;
+                        }
+                        if (_actingOrder.Count > 0) _actingOrder.RemoveAt(0);
+                        this.BattleSceneLookAtGrid(orderMessage.gridObj.row, orderMessage.gridObj.col);
+                    }
+                    break;
                 default:
                     return;
             }
@@ -205,10 +238,12 @@ namespace TextyClient
             InitializeComponent();
 
             Timer connectionUpdater = new Timer();
-            connectionUpdater.Interval = 1;
+            connectionUpdater.Interval = 10;
             connectionUpdater.Tick += new EventHandler(this.ConnectionUpdate);
             connectionUpdater.Start();
-            
+
+            _actingOrder = new List<GridObject>();
+            roundInfoList.DataSource = _actingOrder;
             //Program.connection.AddMessageReceiver(DisplayDicePointsMessage.MESSAGE_TYPE, this);
         }
 
@@ -239,6 +274,37 @@ namespace TextyClient
             {
                 return _specifiedGridObject;
             }
+        }
+
+        private GridObject GetGridObject(int row, int col, string id)
+        {
+            Grid grid = _grids[row, col];
+            for (int i = grid.lowland.Count - 1; i >= 0; --i)
+            {
+                if (grid.lowland[i].id == id) return grid.lowland[i];
+            }
+            for (int i = grid.highland.Count - 1; i >= 0; --i)
+            {
+                if (grid.highland[i].id == id) return grid.highland[i];
+            }
+            return null;
+        }
+
+        private void BattleSceneLookAtGrid(int row, int col)
+        {
+            Point pos = new Point((int)(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f)), (int)(DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f));
+            int deltaWidth = battleScene.CanvasWidth - battleScene.Width;
+            int deltaHeight = battleScene.CanvasHeight - battleScene.Height;
+            deltaWidth = deltaWidth >= 0 ? deltaWidth : 0;
+            deltaHeight = deltaHeight >= 0 ? deltaHeight : 0;
+            if (pos.X < 0) pos.X = 0;
+            if (pos.Y < 0) pos.Y = 0;
+            if (pos.X > deltaWidth) pos.X = deltaWidth;
+            if (pos.Y > deltaHeight) pos.Y = deltaHeight;
+            battleScene.ViewerRectangleLeftTop = pos;
+            this.UpdateScrollBar();
+            hScrollBar.Value = pos.X;
+            vScrollBar.Value = pos.Y;
         }
 
         private void updateTimer_Tick(object sender, EventArgs e)
@@ -272,8 +338,11 @@ namespace TextyClient
             }
             CharacterView view2 = new CharacterView();
             view2.battle = "吸血鬼";
+            CharacterView view3 = new CharacterView();
+            view3.battle = "障碍";
+            _grids[0, 0].highland.Add(new GridObject("", view3));
             _grids[0, 0].highland.Add(new GridObject("", view2));
-            _grids[0, 1].lowland.Add(new GridObject("", view2));
+            _grids[0, 0].lowland.Add(new GridObject("", view3));
             this.UpdateScrollBar();
         }
 
@@ -313,87 +382,95 @@ namespace TextyClient
             return isInside;
         }
 
+        private void BattleSceneObjectPresent(GridObject gridObject, Graphics g, PointF[] gridPoints)
+        {
+            if (gridObject.view.battle == "地面")
+            {
+                g.FillPolygon(Brushes.LightGray, gridPoints);
+            }
+            else if (gridObject.view.battle == "障碍")
+            {
+                g.FillPolygon(Brushes.DarkGray, gridPoints);
+            }
+            else
+            {
+                g.DrawString(gridObject.view.battle, new Font("宋体", 12), Brushes.Black, new PointF(gridPoints[0].X - 12, gridPoints[0].Y + 12));
+            }
+        }
+
         private void battleScene_CanvasDrawing(object sender, CanvasDrawingEventArgs e)
         {
             Graphics g = e.g;
             g.Clear(Color.White);
             if (_grids != null)
             {
-                for (int i = 0; i < _rows; ++i)
+                for (int row = 0; row < _rows; ++row)
                 {
-                    for (int j = 0; j < _cols; ++j)
+                    for (int col = 0; col < _cols; ++col)
                     {
-                        Grid grid = _grids[i, j];
-                        foreach (GridObject gridObject in grid.lowland)
+                        Grid grid = _grids[row, col];
+                        if (grid.lowland.Count > 0)
                         {
-                            PointF[] diamondPoints = new PointF[4]
+                            PointF[] gridPoints = new PointF[4]
                             {
-                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j) * DIAMOND_LENGTH / 2.0f),
-                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f),
-                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 2) * DIAMOND_LENGTH / 2.0f),
-                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f)
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
                             };
-                            if (gridObject.view.battle == "地面")
+                            foreach (GridObject gridObject in grid.lowland)
                             {
-                                g.FillPolygon(Brushes.LightGray, diamondPoints);
+                                this.BattleSceneObjectPresent(gridObject, g, gridPoints);
                             }
-                            else
-                            {
-                                g.DrawString(gridObject.view.battle, new Font("宋体", 12), Brushes.Black, new PointF(diamondPoints[0].X - 12, diamondPoints[0].Y + 12));
-                            }
-                            g.DrawPolygon(Pens.Black, diamondPoints);
+                            g.DrawPolygon(Pens.Black, gridPoints);
                         }
-                        foreach (GridObject gridObject in grid.highland)
+                        if (grid.highland.Count > 0)
                         {
-                            PointF[] lowlandDiamondPoints = new PointF[4]
-                            {
-                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j) * DIAMOND_LENGTH / 2.0f),
-                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f),
-                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 2) * DIAMOND_LENGTH / 2.0f),
-                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f)
-                            };
-                            PointF[] diamondPoints;
+                            PointF[] lowlandGridPoints = new PointF[4]
+                                {
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
+                                };
+                            PointF[] gridPoints;
                             if (grid.isMiddleLand)
                             {
-                                diamondPoints = new PointF[4]
+                                gridPoints = new PointF[4]
                                 {
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (i + j) * DIAMOND_LENGTH / 2.0f),
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f),
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (i + j + 2) * DIAMOND_LENGTH / 2.0f),
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f)
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
                                 };
                             }
                             else
                             {
-                                diamondPoints = new PointF[4]
+                                gridPoints = new PointF[4]
                                 {
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j) * DIAMOND_LENGTH / 2.0f),
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j + 1) * DIAMOND_LENGTH / 2.0f),
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j + 2) * DIAMOND_LENGTH / 2.0f),
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j + 1) * DIAMOND_LENGTH / 2.0f)
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f)
                                 };
                             }
-                            if (gridObject.view.battle == "地面")
-                            {
-                                g.FillPolygon(Brushes.LightGray, diamondPoints);
-                            }
-                            else
-                            {
-                                g.DrawString(gridObject.view.battle, new Font("宋体", 12), Brushes.Black, new PointF(diamondPoints[0].X - 12, diamondPoints[0].Y + 12));
-                            }
-                            g.DrawPolygon(Pens.Red, diamondPoints);
                             for (int k = 0; k < 4; ++k)
                             {
-                                g.DrawLine(Pens.Red, diamondPoints[k], lowlandDiamondPoints[k]);
+                                g.DrawLine(Pens.Red, gridPoints[k], lowlandGridPoints[k]);
                             }
+                            foreach (GridObject gridObject in grid.highland)
+                            {
+                                this.BattleSceneObjectPresent(gridObject, g, gridPoints);
+                            }
+                            g.DrawPolygon(Pens.Red, gridPoints);
                         }
                     }
                 }
             }
             if (_mouseRow != -1 && _mouseCol != -1)
             {
-                int i = _mouseRow, j = _mouseCol;
-                Grid grid = _grids[i, j];
+                int row = _mouseRow, col = _mouseCol;
+                Grid grid = _grids[row, col];
                 PointF[] diamondPoints;
                 if (_mouseHighland)
                 {
@@ -401,20 +478,20 @@ namespace TextyClient
                     {
                         diamondPoints = new PointF[4]
                         {
-                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (i + j) * DIAMOND_LENGTH / 2.0f),
-                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f),
-                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (i + j + 2) * DIAMOND_LENGTH / 2.0f),
-                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f)
+                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
                         };
                     }
                     else
                     {
                         diamondPoints = new PointF[4]
                         {
-                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j) * DIAMOND_LENGTH / 2.0f),
-                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j + 1) * DIAMOND_LENGTH / 2.0f),
-                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j + 2) * DIAMOND_LENGTH / 2.0f),
-                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j + 1) * DIAMOND_LENGTH / 2.0f)
+                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col) * DIAMOND_LENGTH / 2.0f),
+                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f)
                         };
                     }
                 }
@@ -422,10 +499,10 @@ namespace TextyClient
                 {
                     diamondPoints = new PointF[4]
                     {
-                        new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j) * DIAMOND_LENGTH / 2.0f),
-                        new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f),
-                        new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 2) * DIAMOND_LENGTH / 2.0f),
-                        new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f)
+                        new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+                        new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                        new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                        new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
                     };
                 }
                 Pen pen;
@@ -450,11 +527,11 @@ namespace TextyClient
         {
             if (_grids != null)
             {
-                for (int i = 0; i < _rows; ++i)
+                for (int row = 0; row < _rows; ++row)
                 {
-                    for (int j = 0; j < _cols; ++j)
+                    for (int col = 0; col < _cols; ++col)
                     {
-                        Grid grid = _grids[i, j];
+                        Grid grid = _grids[row, col];
                         PointF[] diamondPoints;
                         if (grid.highland.Count > 0)
                         {
@@ -462,26 +539,26 @@ namespace TextyClient
                             {
                                 diamondPoints = new PointF[4]
                                 {
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (i + j) * DIAMOND_LENGTH / 2.0f),
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f),
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (i + j + 2) * DIAMOND_LENGTH / 2.0f),
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f)
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
                                 };
                             }
                             else
                             {
                                 diamondPoints = new PointF[4]
                                 {
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j) * DIAMOND_LENGTH / 2.0f),
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j + 1) * DIAMOND_LENGTH / 2.0f),
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j + 2) * DIAMOND_LENGTH / 2.0f),
-                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (i + j + 1) * DIAMOND_LENGTH / 2.0f)
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f)
                                 };
                             }
                             if (IsPointInPolygon(diamondPoints, new PointF(e.X, e.Y)))
                             {
-                                if (!(_mouseRow == i && _mouseCol == j && _mouseHighland == true)) _specifiedGridObject = null;
-                                _mouseRow = i; _mouseCol = j;
+                                if (!(_mouseRow == row && _mouseCol == col && _mouseHighland == true)) _specifiedGridObject = null;
+                                _mouseRow = row; _mouseCol = col;
                                 _mouseHighland = true;
                                 return;
                             }
@@ -490,15 +567,15 @@ namespace TextyClient
                         {
                             diamondPoints = new PointF[4]
                             {
-                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j) * DIAMOND_LENGTH / 2.0f),
-                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f),
-                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 2) * DIAMOND_LENGTH / 2.0f),
-                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (j - i - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (i + j + 1) * DIAMOND_LENGTH / 2.0f)
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
                             };
                             if (IsPointInPolygon(diamondPoints, new PointF(e.X, e.Y)))
                             {
-                                if (!(_mouseRow == i && _mouseCol == j && _mouseHighland == false)) _specifiedGridObject = null;
-                                _mouseRow = i; _mouseCol = j;
+                                if (!(_mouseRow == row && _mouseCol == col && _mouseHighland == false)) _specifiedGridObject = null;
+                                _mouseRow = row; _mouseCol = col;
                                 _mouseHighland = false;
                                 return;
                             }
@@ -514,10 +591,20 @@ namespace TextyClient
         private void battleSceneMenuStrip_Opening(object sender, CancelEventArgs e)
         {
             GridObject gridObject = this.GetSelectedGridObject();
-            if (!gridObject.actable)
+            if (gridObject == null)
             {
-
+                e.Cancel = true;
+                return;
             }
+            menuItemMove.Enabled = menuItemUseSkill.Enabled = menuItemUseStunt.Enabled = menuItemExtraMovePoint.Enabled = menuItemRoundOver.Enabled = false;
+            menuItemConfirm.Enabled = menuItemSelectAspect.Enabled = false;
+            if (gridObject.id == _operatableID && gridObject.actable)
+            {
+                menuItemUseSkill.Enabled = menuItemUseStunt.Enabled = true;
+                if (gridObject.movable) menuItemMove.Enabled = menuItemExtraMovePoint.Enabled = true;
+            }
+            if (_inChecking) menuItemSelectAspect.Enabled = true;
+            
         }
 
         private void battleScene_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -543,5 +630,29 @@ namespace TextyClient
             gridObjectSelectionList.Visible = false;
         }
 
+        private void menuItemMove_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void menuItemUseSkill_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void menuItemUseStunt_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void menuItemExtraMovePoint_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void menuItemRoundOver_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

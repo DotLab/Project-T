@@ -46,8 +46,9 @@ namespace GameLogic.Container
         private readonly IdentifiedObjList<LadderObject> _ladderObjList;
         private readonly List<ActableGridObject> _actableObjList;
         private readonly BattleMap _battleMap;
-        private ActableGridObject _currentActable;
-        private int _roundCount;
+        private ActableGridObject _currentActable = null;
+        private int _roundCount = 0;
+        private bool _inChecking = false;
 
         private GridObject _initiative;
         private SkillType _initiativeSkillType;
@@ -317,9 +318,9 @@ namespace GameLogic.Container
                 SkillProperty noticeProperty = actableObject.CharacterRef.GetSkillProperty(SkillType.Notice);
                 SkillProperty athleticsProperty = actableObject.CharacterRef.GetSkillProperty(SkillType.Athletics);
                 int[] dicePoints = FateDice.Roll();
-                if (actableObject.CharacterRef.Controller != null)
+                if (actableObject.CharacterRef.ControlPlayer != null)
                 {
-                    actableObject.CharacterRef.Controller.Client.BattleScene.DisplayDicePoints(dicePoints);
+                    actableObject.CharacterRef.ControlPlayer.Client.BattleScene.DisplayDicePoints(actableObject.CharacterRef.ControlPlayer, dicePoints);
                 }
                 int sumPoint = 0;
                 foreach (int point in dicePoints) sumPoint += point;
@@ -330,16 +331,25 @@ namespace GameLogic.Container
             _actableObjList.Sort((ActableGridObject a, ActableGridObject b) => { return b.ActionTurn - a.ActionTurn; });
             foreach (Player player in MainLogic.Players)
             {
-                player.Client.BattleScene.SetActingOrder(_actableObjList);
+                player.Client.BattleScene.SetActingOrder(_actableObjList, _actableObjList.Count);
             }
-            MainLogic.DM.Client.BattleScene.SetActingOrder(_actableObjList);
-            if (_actableObjList.Count > 0) _currentActable = _actableObjList[0];
+            MainLogic.DM.Client.BattleScene.SetActingOrder(_actableObjList, _actableObjList.Count);
+            if (_actableObjList.Count > 0)
+            {
+                _currentActable = _actableObjList[0];
+                foreach (Player player in MainLogic.Players)
+                {
+                    player.Client.BattleScene.NextTurn(_currentActable);
+                }
+                MainLogic.DM.Client.BattleScene.NextTurn(_currentActable);
+            }
             else _currentActable = null;
             ++_roundCount;
         }
         
         public void CurrentActionOver()
         {
+            if (_currentActable == null) throw new InvalidOperationException("Current acting character is null.");
             int next = _actableObjList.IndexOf(_currentActable) + 1;
             if (next >= _actableObjList.Count) // new round
             {
@@ -348,6 +358,11 @@ namespace GameLogic.Container
             else
             {
                 _currentActable = _actableObjList[next];
+                foreach (Player player in MainLogic.Players)
+                {
+                    player.Client.BattleScene.NextTurn(_currentActable);
+                }
+                MainLogic.DM.Client.BattleScene.NextTurn(_currentActable);
             }
             _currentActable.AddMovePoint();
             this.Update();
@@ -372,6 +387,7 @@ namespace GameLogic.Container
             foreach (int point in dicePoints) _initiativeRollPoint += point;
             // ...
             _currentPassive = null;
+            _inChecking = true;
         }
 
         public void InitiativeResult(SkillChecker.CheckResult result)
@@ -694,6 +710,11 @@ namespace GameLogic.Container.BattleComponent
         public void AddMovePoint()
         {
             int[] dicePoints = FateDice.Roll();
+            foreach (Player player in MainLogic.Players)
+            {
+                player.Client.BattleScene.DisplayDicePoints(this.CharacterRef.Controller, dicePoints);
+            }
+            MainLogic.DM.Client.BattleScene.DisplayDicePoints(this.CharacterRef.Controller, dicePoints);
             int sumPoint = 0;
             foreach (int point in dicePoints) sumPoint += point;
             SkillProperty athleticsProperty = this.CharacterRef.GetSkillProperty(SkillType.Athletics);
@@ -809,29 +830,81 @@ namespace GameLogic.Container.BattleComponent
             throw new NotImplementedException();
         }
 
-        public void UseSkill(SkillType skillType, int row, int col)
+        public void UseSkill(SkillType skillType, int centerRow, int centerCol, IEnumerable<GridObject> targets)
         {
+            if (skillType == null) throw new ArgumentNullException(nameof(skillType));
+            if (centerRow >= BattleSceneContainer.Instance.BattleMap.Rows || centerRow < 0)
+                throw new ArgumentOutOfRangeException(nameof(centerRow));
+            if (centerCol >= BattleSceneContainer.Instance.BattleMap.Cols || centerCol < 0)
+                throw new ArgumentOutOfRangeException(nameof(centerCol));
+
             SkillProperty skillProperty = this.CharacterRef.GetSkillProperty(skillType);
             if (skillProperty.islinearUse)
             {
                 do
                 {
-                    if ((skillProperty.linearUseDirection & Direction.POSITIVE_ROW) != 0 && col == this.GridRef.PosCol && skillProperty.useRange.InRange(row - this.GridRef.PosRow)) break;
-                    if ((skillProperty.linearUseDirection & Direction.NEGATIVE_ROW) != 0 && col == this.GridRef.PosCol && skillProperty.useRange.InRange(this.GridRef.PosRow - row)) break;
-                    if ((skillProperty.linearUseDirection & Direction.POSITIVE_COL) != 0 && row == this.GridRef.PosRow && skillProperty.useRange.InRange(col - this.GridRef.PosCol)) break;
-                    if ((skillProperty.linearUseDirection & Direction.NEGATIVE_COL) != 0 && row == this.GridRef.PosRow && skillProperty.useRange.InRange(this.GridRef.PosCol - col)) break;
+                    if ((skillProperty.linearUseDirection & Direction.POSITIVE_ROW) != 0 && centerCol == this.GridRef.PosCol && skillProperty.useRange.InRange(centerRow - this.GridRef.PosRow)) break;
+                    if ((skillProperty.linearUseDirection & Direction.NEGATIVE_ROW) != 0 && centerCol == this.GridRef.PosCol && skillProperty.useRange.InRange(this.GridRef.PosRow - centerRow)) break;
+                    if ((skillProperty.linearUseDirection & Direction.POSITIVE_COL) != 0 && centerRow == this.GridRef.PosRow && skillProperty.useRange.InRange(centerCol - this.GridRef.PosCol)) break;
+                    if ((skillProperty.linearUseDirection & Direction.NEGATIVE_COL) != 0 && centerRow == this.GridRef.PosRow && skillProperty.useRange.InRange(this.GridRef.PosCol - centerCol)) break;
                     throw new InvalidOperationException("Cannot use this skill at the specified position.");
                 } while (false);
             }
-            else if(skillProperty.useRange.OutOfRange(Math.Abs(row - this.GridRef.PosRow) + Math.Abs(col - this.GridRef.PosCol))) throw new InvalidOperationException("Cannot use this skill at the specified position.");
+            else if (skillProperty.useRange.OutOfRange(Math.Abs(centerRow - this.GridRef.PosRow) + Math.Abs(centerCol - this.GridRef.PosCol))) throw new InvalidOperationException("Cannot use this skill at the specified position.");
             if (skillProperty.targetCount == -1)
             {
+                List<GridObject> areaTargets = new List<GridObject>();
+                if (skillProperty.islinearAffect)
+                {
+                    if ((skillProperty.linearAffectDirection & Direction.POSITIVE_ROW) != 0)
+                    {
 
+                    }
+                    if ((skillProperty.linearAffectDirection & Direction.NEGATIVE_ROW) != 0)
+                    {
+
+                    }
+                    if ((skillProperty.linearAffectDirection & Direction.POSITIVE_COL) != 0)
+                    {
+
+                    }
+                    if ((skillProperty.linearAffectDirection & Direction.NEGATIVE_COL) != 0)
+                    {
+
+                    }
+                }
+                else
+                {
+
+                }
             }
             else
             {
+                if (targets == null) throw new ArgumentNullException(nameof(targets));
+                int count = 0;
+                foreach (GridObject target in targets)
+                {
+                    if (target == null) throw new ArgumentNullException(nameof(target));
+                    int row = target.GridRef.PosRow;
+                    int col = target.GridRef.PosCol;
+                    if (skillProperty.islinearAffect)
+                    {
+                        do
+                        {
+                            if ((skillProperty.linearAffectDirection & Direction.POSITIVE_ROW) != 0 && col == centerCol && skillProperty.affectRange.InRange(row - centerRow)) break;
+                            if ((skillProperty.linearAffectDirection & Direction.NEGATIVE_ROW) != 0 && col == centerCol && skillProperty.affectRange.InRange(centerRow - row)) break;
+                            if ((skillProperty.linearAffectDirection & Direction.POSITIVE_COL) != 0 && row == centerRow && skillProperty.affectRange.InRange(col - centerCol)) break;
+                            if ((skillProperty.linearAffectDirection & Direction.NEGATIVE_COL) != 0 && row == centerRow && skillProperty.affectRange.InRange(centerCol - col)) break;
+                            throw new InvalidOperationException("Target is not in range!");
+                        } while (false);
+                    }
+                    else if (skillProperty.affectRange.OutOfRange(Math.Abs(row - centerRow) + Math.Abs(col - centerCol))) throw new InvalidOperationException("Target is not in range!");
+                    ++count;
+                }
+                if (count > skillProperty.targetCount) throw new InvalidOperationException("Targets count is more than limit!");
 
             }
+            
         }
 
         public bool CanUseStunt()

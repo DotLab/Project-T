@@ -376,15 +376,16 @@ namespace GameLogic.CharacterSystem
         protected string _description = "";
         protected Extra _belong = null;
         protected readonly CharacterView _view;
-        protected Player _controller = null;
+        protected Player _controlPlayer = null;
 
         public string ID => _id;
         public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
         public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
         public Extra Belong { get => _belong; set => _belong = value; }
         public CharacterView View => _view;
-        public Player Controller { get => _controller; set => _controller = value; }
-
+        public Player ControlPlayer { get => _controlPlayer; set => _controlPlayer = value; }
+        public User Controller => _controlPlayer ?? (User)MainLogic.DM;
+        
         protected Character(string id, CharacterView view)
         {
             _id = id ?? throw new ArgumentNullException(nameof(id));

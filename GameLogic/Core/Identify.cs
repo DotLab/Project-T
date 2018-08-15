@@ -37,10 +37,4 @@ namespace GameLogic.Core
         string Name { get; set; }
         string Description { get; set; }
     }
-
-    public struct Describable : IDescribable
-    {
-        public string Name { get; set; }
-        public string Description { get; set; }
-    }
 }

@@ -319,7 +319,7 @@ namespace GameLogic.Core.Network.ClientMessages
         }
     }
     
-    public sealed class CancelSkillCheckMessage : Message
+    public sealed class StorySceneCancelSkillCheckMessage : Message
     {
         public const long MESSAGE_TYPE = 14L;
         public override long MessageType => MESSAGE_TYPE;
@@ -328,4 +328,23 @@ namespace GameLogic.Core.Network.ClientMessages
         public override void WriteTo(IDataOutputStream stream) { }
     }
 
+    public sealed class GetDirectResistSkillsMessage : Message
+    {
+        public const long MESSAGE_TYPE = 15L;
+        public override long MessageType => MESSAGE_TYPE;
+
+        public string initiativeSkillTypeID;
+        public string resistSkillTypeID;
+        public int actionType;
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

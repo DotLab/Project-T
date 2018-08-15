@@ -28,7 +28,7 @@ namespace GameLogic.Core
             _characters = new List<Character>(characters);
             foreach (Character character in characters)
             {
-                character.Controller = this;
+                character.ControlPlayer = this;
             }
         }
         

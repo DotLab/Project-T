@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static GameLogic.Core.Network.ServerMessages.BattleSceneSetActingOrderMessage;
 
 namespace TextyClient
 {
@@ -18,7 +19,7 @@ namespace TextyClient
         static void Main()
         {
             // connection initialization
-
+            
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new BattleSceneForm());

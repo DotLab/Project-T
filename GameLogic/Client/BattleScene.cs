@@ -11,6 +11,9 @@ namespace GameLogic.Client
 {
     public class BattleScene : ClientComponent
     {
+        private bool _canOperate = false;
+        private bool _passiveChecking = false;
+
         public override void MessageReceived(ulong timestamp, Message message)
         {
             
@@ -70,23 +73,42 @@ namespace GameLogic.Client
             _connection.SendMessage(message);
         }
 
-        public void DisplayDicePoints(int[] dicePoints)
+        public void DisplayDicePoints(User who, int[] dicePoints)
         {
             DisplayDicePointsMessage message = new DisplayDicePointsMessage();
             message.dicePoints = dicePoints;
-            //message.userID = _owner.Id;
+            message.userID = who.Id;
             _connection.SendMessage(message);
         }
 
-        public void SetActingOrder(IEnumerable<ActableGridObject> objects)
+        public void SetActingOrder(IEnumerable<ActableGridObject> objects, int count)
         {
-            BattleSceneSetActingOrderMessage message = new BattleSceneSetActingOrderMessage();
-            //message.objsOrder = new BattleSceneSetActingOrderMessage.ActableObject[];
+            var message = new BattleSceneSetActingOrderMessage();
+            message.objsOrder = new BattleSceneObj[count];
+            int i = 0;
+            foreach (ActableGridObject actableGridObject in objects)
+            {
+                var msgActableObj = message.objsOrder[i++];
+                msgActableObj.objID = actableGridObject.ID;
+                msgActableObj.row = actableGridObject.GridRef.PosRow;
+                msgActableObj.col = actableGridObject.GridRef.PosCol;
+            }
+            _connection.SendMessage(message);
         }
 
-        public void NextTurn(User who, ActableGridObject actable)
+        public void NextTurn(ActableGridObject actable)
         {
+            _canOperate = actable.CharacterRef.Controller == _owner;
+            var message = new BattleSceneNextTurnMessage();
+            message.canOperate = _canOperate;
+            message.gridObj = new BattleSceneObj(actable);
+            message.actionPoint = actable.ActionPoint;
+            _connection.SendMessage(message);
+        }
 
+        public void NotifyPassiveCheck(GridObject passive, GridObject initiative, SkillType initiativeSkillType)
+        {
+            
         }
 
         public void GridObjectMove(GridObject gridObject, Direction direction, bool stairway)

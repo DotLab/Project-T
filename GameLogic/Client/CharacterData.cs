@@ -141,7 +141,7 @@ namespace GameLogic.Client
         {
             CharacterInfoDataMessage message = new CharacterInfoDataMessage();
             message.characterID = character.ID;
-            message.describable = character;
+            message.describable = new Describable(character);
             _connection.SendMessage(message);
         }
 
@@ -177,7 +177,7 @@ namespace GameLogic.Client
                     {
                         message.properties[i] = new CharacterPropertiesDescriptionMessage.Property();
                         message.properties[i].propertyID = character.Aspects[i].ID;
-                        message.properties[i].describable = character.Aspects[i];
+                        message.properties[i].describable = new Describable(character.Aspects[i]);
                     }
                     break;
                 case GetCharacterDataMessage.DataType.CONSEQUENCES:
@@ -187,7 +187,7 @@ namespace GameLogic.Client
                     {
                         message.properties[i] = new CharacterPropertiesDescriptionMessage.Property();
                         message.properties[i].propertyID = character.Consequences[i].ID;
-                        message.properties[i].describable = character.Consequences[i];
+                        message.properties[i].describable = new Describable(character.Consequences[i]);
                     }
                     break;
                 case GetCharacterDataMessage.DataType.EXTRAS:
@@ -197,7 +197,7 @@ namespace GameLogic.Client
                     {
                         message.properties[i] = new CharacterPropertiesDescriptionMessage.Property();
                         message.properties[i].propertyID = character.Extras[i].ID;
-                        message.properties[i].describable = character.Extras[i];
+                        message.properties[i].describable = new Describable(character.Extras[i]);
                     }
                     break;
                 case GetCharacterDataMessage.DataType.SKILLS:
@@ -207,7 +207,7 @@ namespace GameLogic.Client
                     {
                         message.properties[i] = new CharacterPropertiesDescriptionMessage.Property();
                         message.properties[i].propertyID = character.ReadonlySkillList[i].SkillType.ID;
-                        message.properties[i].describable = character.ReadonlySkillList[i];
+                        message.properties[i].describable = new Describable(character.ReadonlySkillList[i]);
                     }
                     break;
                 case GetCharacterDataMessage.DataType.STUNTS:
@@ -217,7 +217,7 @@ namespace GameLogic.Client
                     {
                         message.properties[i] = new CharacterPropertiesDescriptionMessage.Property();
                         message.properties[i].propertyID = character.Stunts[i].ID;
-                        message.properties[i].describable = character.Stunts[i];
+                        message.properties[i].describable = new Describable(character.Stunts[i]);
                     }
                     break;
                 default:
