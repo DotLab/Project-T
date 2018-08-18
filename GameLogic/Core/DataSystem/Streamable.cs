@@ -1,4 +1,5 @@
 ﻿using GameLogic.CharacterSystem;
+using GameLogic.Container.BattleComponent;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -19,7 +20,7 @@ namespace GameLogic.Core.DataSystem
     public interface IDataInputStream
     {
         Boolean ReadBoolean();
-        String ReadString(int length);
+        String ReadString();
         Byte ReadByte();
         Int32 ReadInt32();
         Single ReadSingle();
@@ -95,7 +96,7 @@ namespace GameLogic.Core.DataSystem
             return Bit.ReadSingle(bytes, ref i);
         }
 
-        public string ReadString(int length)
+        public string ReadString()
         {
             int byteCount = Bit.ReadUInt16(bytes, ref i);
             return Bit.ReadString(bytes, ref i, byteCount);
@@ -110,6 +111,16 @@ namespace GameLogic.Core.DataSystem
 
     public static class OutputStreamHelper
     {
+        public static void WriteGuid(IDataOutputStream stream, Guid guid)
+        {
+            byte[] bs = guid.ToByteArray();
+            stream.WriteByte((byte)bs.Length);
+            foreach (var b in bs)
+            {
+                stream.WriteByte(b);
+            }
+        }
+
         public static void WriteLayout(IDataOutputStream stream, Layout val)
         {
             stream.WriteSingle(val.pos.X);
@@ -164,6 +175,17 @@ namespace GameLogic.Core.DataSystem
 
     public static class InputStreamHelper
     {
+        public static Guid ReadGuid(IDataInputStream stream)
+        {
+            byte length = stream.ReadByte();
+            byte[] bs = new byte[length];
+            for (int i = 0; i < length; ++i)
+            {
+                bs[i] = stream.ReadByte();
+            }
+            return new Guid(bs);
+        }
+
         public static Layout ReadLayout(IDataInputStream stream)
         {
             Layout ret = new Layout();
@@ -225,4 +247,118 @@ namespace GameLogic.Core.DataSystem
             return ret;
         }
     }
+
+    public struct Describable : IStreamable
+    {
+        public string name;
+        public string description;
+
+        public Describable(IDescribable describable)
+        {
+            name = describable.Name;
+            description = describable.Description;
+        }
+
+        public void ReadFrom(IDataInputStream stream)
+        {
+            name = stream.ReadString();
+            description = stream.ReadString();
+        }
+
+        public void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteString(name);
+            stream.WriteString(description);
+        }
+    }
+
+    public struct SkillTypeDescription : IStreamable
+    {
+        public string id;
+        public string name;
+
+        public SkillTypeDescription(SkillType skillType)
+        {
+            id = skillType.ID;
+            name = skillType.Name;
+        }
+
+        public void ReadFrom(IDataInputStream stream)
+        {
+            id = stream.ReadString();
+            name = stream.ReadString();
+        }
+
+        public void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteString(id);
+            stream.WriteString(name);
+        }
+    }
+
+    public struct CharacterPropertyDescription : IStreamable
+    {
+        public string propertyID;
+        public Describable describable;
+
+        public void ReadFrom(IDataInputStream stream)
+        {
+            propertyID = stream.ReadString();
+            describable.ReadFrom(stream);
+        }
+
+        public void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteString(propertyID);
+            describable.WriteTo(stream);
+        }
+
+        public CharacterPropertyDescription(ICharacterProperty characterProperty)
+        {
+            propertyID = characterProperty.ID;
+            describable = new Describable(characterProperty);
+        }
+
+        public CharacterPropertyDescription(Skill skill)
+        {
+            propertyID = skill.SkillType.ID;
+            describable = new Describable(skill);
+        }
+    }
+
+    public struct BattleSceneObj : IStreamable
+    {
+        public string objID;
+        public int row;
+        public int col;
+
+        public void ReadFrom(IDataInputStream stream)
+        {
+            objID = stream.ReadString();
+            row = stream.ReadInt32();
+            col = stream.ReadInt32();
+        }
+
+        public void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteString(objID);
+            stream.WriteInt32(row);
+            stream.WriteInt32(col);
+        }
+
+        public BattleSceneObj(GridObject gridObject)
+        {
+            row = gridObject.GridRef.PosRow;
+            col = gridObject.GridRef.PosCol;
+            objID = gridObject.ID;
+        }
+
+        public BattleSceneObj(LadderObject ladderObject)
+        {
+            row = ladderObject.GridRef.PosRow;
+            col = ladderObject.GridRef.PosCol;
+            objID = ladderObject.ID;
+        }
+    }
+
 }

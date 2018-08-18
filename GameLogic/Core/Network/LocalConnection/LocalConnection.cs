@@ -15,11 +15,11 @@ namespace GameLogic.Core.Network.LocalConnection
             
         }
 
-        public override void AddMessageReceiver(long messageType, IMessageReceiver receiver)
+        public override void AddMessageReceiver(int messageType, IMessageReceiver receiver)
         {
             throw new NotImplementedException();
         }
-
+        
         public override void SendMessage(Message message)
         {
             throw new NotImplementedException();

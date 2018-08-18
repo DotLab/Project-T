@@ -7,8 +7,8 @@ namespace GameLogic.Core.Network.ServerMessages
 {
     public sealed class StorySceneResetMessage : Message
     {
-        public const long MESSAGE_TYPE = -1L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -1;
+        public override int MessageType => MESSAGE_TYPE;
 
         public override void ReadFrom(IDataInputStream stream) { }
         public override void WriteTo(IDataOutputStream stream) { }
@@ -16,120 +16,110 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class StorySceneObjectAddMessage : Message
     {
-        public const long MESSAGE_TYPE = -2L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -2;
+        public override int MessageType => MESSAGE_TYPE;
         
         public string objID;
         public CharacterView view;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(objID.Length);
             stream.WriteString(objID);
             OutputStreamHelper.WriteCharacterView(stream, view);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            objID = stream.ReadString(length);
+            objID = stream.ReadString();
             view = InputStreamHelper.ReadCharacterView(stream);
         }
     }
 
     public sealed class StorySceneObjectRemoveMessage : Message
     {
-        public const long MESSAGE_TYPE = -2L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -2;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string objID;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(objID.Length);
             stream.WriteString(objID);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            objID = stream.ReadString(length);
+            objID = stream.ReadString();
         }
     }
 
     public sealed class StorySceneObjectTransformMessage : Message
     {
-        public const long MESSAGE_TYPE = -3L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -3;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string objID;
         public Layout to;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(objID.Length);
             stream.WriteString(objID);
             OutputStreamHelper.WriteLayout(stream, to);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            objID = stream.ReadString(length);
+            objID = stream.ReadString();
             to = InputStreamHelper.ReadLayout(stream);
         }
     }
 
     public sealed class StorySceneObjectViewEffectMessage : Message
     {
-        public const long MESSAGE_TYPE = -4L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -4;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string objID;
         public CharacterViewEffect effect;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(objID.Length);
             stream.WriteString(objID);
             OutputStreamHelper.WriteCharacterViewEffect(stream, effect);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            objID = stream.ReadString(length);
+            objID = stream.ReadString();
             effect = InputStreamHelper.ReadCharacterViewEffect(stream);
         }
     }
 
     public sealed class StorySceneObjectPortraitStyleMessage : Message
     {
-        public const long MESSAGE_TYPE = -5L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -5;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string objID;
         public PortraitStyle portrait;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(objID.Length);
             stream.WriteString(objID);
             OutputStreamHelper.WritePortraitStyle(stream, portrait);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            objID = stream.ReadString(length);
+            objID = stream.ReadString();
             portrait = InputStreamHelper.ReadPortraitStyle(stream);
         }
     }
 
     public sealed class StorySceneCameraTransformMessage : Message
     {
-        public const long MESSAGE_TYPE = -6L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -6;
+        public override int MessageType => MESSAGE_TYPE;
 
         public Layout to;
 
@@ -146,8 +136,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class StorySceneCameraEffectMessage : Message
     {
-        public const long MESSAGE_TYPE = -7L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -7;
+        public override int MessageType => MESSAGE_TYPE;
 
         public CameraEffect effect;
 
@@ -164,28 +154,26 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class PlayBGMMessage : Message
     {
-        public const long MESSAGE_TYPE = -8L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -8;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string bgmID;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(bgmID.Length);
             stream.WriteString(bgmID);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            bgmID = stream.ReadString(length);
+            bgmID = stream.ReadString();
         }
     }
 
     public sealed class StopBGMMessage : Message
     {
-        public const long MESSAGE_TYPE = -9L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -9;
+        public override int MessageType => MESSAGE_TYPE;
 
         public override void ReadFrom(IDataInputStream stream) { }
         public override void WriteTo(IDataOutputStream stream) { }
@@ -193,28 +181,26 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class PlaySEMessage : Message
     {
-        public const long MESSAGE_TYPE = -10L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -10;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string seID;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(seID.Length);
             stream.WriteString(seID);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            seID = stream.ReadString(length);
+            seID = stream.ReadString();
         }
     }
     
     public sealed class ShowSceneMessage : Message
     {
-        public const long MESSAGE_TYPE = -11L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -11;
+        public override int MessageType => MESSAGE_TYPE;
 
         public int sceneType;
 
@@ -231,51 +217,47 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class TextBoxAddParagraphMessage : Message
     {
-        public const long MESSAGE_TYPE = -12L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -12;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string text;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(text.Length);
             stream.WriteString(text);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            text = stream.ReadString(length);
+            text = stream.ReadString();
         }
     }
 
     public sealed class TextBoxAddSelectionMessage : Message
     {
-        public const long MESSAGE_TYPE = -13L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -13;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string text;
         public int selectionCode;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(text.Length);
             stream.WriteString(text);
             stream.WriteInt32(selectionCode);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            text = stream.ReadString(length);
+            text = stream.ReadString();
             selectionCode = stream.ReadInt32();
         }
     }
 
     public sealed class TextBoxClearMessage : Message
     {
-        public const long MESSAGE_TYPE = -14L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -14;
+        public override int MessageType => MESSAGE_TYPE;
 
         public override void ReadFrom(IDataInputStream stream) { }
         public override void WriteTo(IDataOutputStream stream) { }
@@ -283,8 +265,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class TextBoxSetPortraitMessage : Message
     {
-        public const long MESSAGE_TYPE = -15L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -15;
+        public override int MessageType => MESSAGE_TYPE;
 
         public CharacterView view;
 
@@ -301,8 +283,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class TextBoxPortraitStyleMessage : Message
     {
-        public const long MESSAGE_TYPE = -16L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -16;
+        public override int MessageType => MESSAGE_TYPE;
 
         public PortraitStyle style;
 
@@ -319,8 +301,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class TextBoxPortraitEffectMessage : Message
     {
-        public const long MESSAGE_TYPE = -17L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -17;
+        public override int MessageType => MESSAGE_TYPE;
 
         public CharacterViewEffect effect;
 
@@ -335,88 +317,37 @@ namespace GameLogic.Core.Network.ServerMessages
         }
     }
 
-    public struct Describable : IStreamable
-    {
-        public string name;
-        public string description;
-
-        public Describable(IDescribable describable)
-        {
-            name = describable.Name;
-            description = describable.Description;
-        }
-
-        public void ReadFrom(IDataInputStream stream)
-        {
-            int length = stream.ReadInt32();
-            name = stream.ReadString(length);
-            length = stream.ReadInt32();
-            description = stream.ReadString(length);
-        }
-
-        public void WriteTo(IDataOutputStream stream)
-        {
-            stream.WriteInt32(name.Length);
-            stream.WriteString(name);
-            stream.WriteInt32(description.Length);
-            stream.WriteString(description);
-        }
-    }
-
     public sealed class CharacterInfoDataMessage : Message
     {
-        public const long MESSAGE_TYPE = -18L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -18;
+        public override int MessageType => MESSAGE_TYPE;
         
         public string characterID;
         public Describable describable;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
             describable.WriteTo(stream);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            characterID = stream.ReadString(length);
+            characterID = stream.ReadString();
             describable.ReadFrom(stream);
         }
     }
 
     public abstract class CharacterPropertiesDescriptionMessage : Message
     {
-        public struct Property : IStreamable
-        {
-            public string propertyID;
-            public Describable describable;
-
-            public void ReadFrom(IDataInputStream stream)
-            {
-                int length = stream.ReadInt32();
-                propertyID = stream.ReadString(length);
-                describable.ReadFrom(stream);
-            }
-
-            public void WriteTo(IDataOutputStream stream)
-            {
-                stream.WriteInt32(propertyID.Length);
-                stream.WriteString(propertyID);
-                describable.WriteTo(stream);
-            }
-        }
-        
         public string characterID;
-        public Property[] properties;
+        public CharacterPropertyDescription[] properties;
 
         public override void ReadFrom(IDataInputStream stream)
         {
+            characterID = stream.ReadString();
             int length = stream.ReadInt32();
-            characterID = stream.ReadString(length);
-            length = stream.ReadInt32();
-            properties = new Property[length];
+            properties = new CharacterPropertyDescription[length];
             for (int i = 0; i < length; ++i)
             {
                 properties[i].ReadFrom(stream);
@@ -425,10 +356,9 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
             stream.WriteInt32(properties.Length);
-            foreach (Property property in properties)
+            foreach (CharacterPropertyDescription property in properties)
             {
                 property.WriteTo(stream);
             }
@@ -438,38 +368,38 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class CharacterSkillsDescriptionMessage : CharacterPropertiesDescriptionMessage
     {
-        public const long MESSAGE_TYPE = -19L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -19;
+        public override int MessageType => MESSAGE_TYPE;
     }
     
     public sealed class CharacterAspectsDescriptionMessage : CharacterPropertiesDescriptionMessage
     {
-        public const long MESSAGE_TYPE = -20L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -20;
+        public override int MessageType => MESSAGE_TYPE;
     }
 
     public sealed class CharacterStuntsDescriptionMessage : CharacterPropertiesDescriptionMessage
     {
-        public const long MESSAGE_TYPE = -21L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -21;
+        public override int MessageType => MESSAGE_TYPE;
     }
 
     public sealed class CharacterExtrasDescriptionMessage : CharacterPropertiesDescriptionMessage
     {
-        public const long MESSAGE_TYPE = -22L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -22;
+        public override int MessageType => MESSAGE_TYPE;
     }
 
     public sealed class CharacterConsequencesDescriptionMessage : CharacterPropertiesDescriptionMessage
     {
-        public const long MESSAGE_TYPE = -23L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -23;
+        public override int MessageType => MESSAGE_TYPE;
     }
 
     public sealed class CharacterStressDataMessage : Message
     {
-        public const long MESSAGE_TYPE = -24L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -24;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string characterID;
         public int physicsStress;
@@ -479,8 +409,7 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            characterID = stream.ReadString(length);
+            characterID = stream.ReadString();
             physicsStress = stream.ReadInt32();
             physicsStressMax = stream.ReadInt32();
             mentalStress = stream.ReadInt32();
@@ -489,7 +418,6 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
             stream.WriteInt32(physicsStress);
             stream.WriteInt32(physicsStressMax);
@@ -500,8 +428,8 @@ namespace GameLogic.Core.Network.ServerMessages
     
     public sealed class CharacterFatePointDataMessage : Message
     {
-        public const long MESSAGE_TYPE = -25L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -25;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string characterID;
         public int fatePoint;
@@ -509,15 +437,13 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            characterID = stream.ReadString(length);
+            characterID = stream.ReadString();
             fatePoint = stream.ReadInt32();
             refreshPoint = stream.ReadInt32();
         }
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
             stream.WriteInt32(fatePoint);
             stream.WriteInt32(refreshPoint);
@@ -526,8 +452,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class AspectDataMessage : Message
     {
-        public const long MESSAGE_TYPE = -26L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -26;
+        public override int MessageType => MESSAGE_TYPE;
         
         public string characterID;
         public string aspectID;
@@ -537,33 +463,27 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
-            stream.WriteInt32(aspectID.Length);
             stream.WriteString(aspectID);
             stream.WriteInt32(persistenceType);
-            stream.WriteInt32(benefitCharacterID.Length);
             stream.WriteString(benefitCharacterID);
             stream.WriteInt32(benefitTimes);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            characterID = stream.ReadString(length);
-            length = stream.ReadInt32();
-            aspectID = stream.ReadString(length);
+            characterID = stream.ReadString();
+            aspectID = stream.ReadString();
             persistenceType = stream.ReadInt32();
-            length = stream.ReadInt32();
-            benefitCharacterID = stream.ReadString(length);
+            benefitCharacterID = stream.ReadString();
             benefitTimes = stream.ReadInt32();
         }
     }
     
     public sealed class ConsequenceDataMessage : Message
     {
-        public const long MESSAGE_TYPE = -27L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -27;
+        public override int MessageType => MESSAGE_TYPE;
         
         public string characterID;
         public string consequenceID;
@@ -574,12 +494,9 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
-            stream.WriteInt32(consequenceID.Length);
             stream.WriteString(consequenceID);
             stream.WriteInt32(persistenceType);
-            stream.WriteInt32(benefitCharacterID.Length);
             stream.WriteString(benefitCharacterID);
             stream.WriteInt32(benefitTimes);
             stream.WriteInt32(counteractLevel);
@@ -587,13 +504,10 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            characterID = stream.ReadString(length);
-            length = stream.ReadInt32();
-            consequenceID = stream.ReadString(length);
+            characterID = stream.ReadString();
+            consequenceID = stream.ReadString();
             persistenceType = stream.ReadInt32();
-            length = stream.ReadInt32();
-            benefitCharacterID = stream.ReadString(length);
+            benefitCharacterID = stream.ReadString();
             benefitTimes = stream.ReadInt32();
             counteractLevel = stream.ReadInt32();
         }
@@ -601,8 +515,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class SkillDataMessage : Message
     {
-        public const long MESSAGE_TYPE = -28L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -28;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string characterID;
         public string skillTypeID;
@@ -610,27 +524,23 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
-            stream.WriteInt32(skillTypeID.Length);
             stream.WriteString(skillTypeID);
             OutputStreamHelper.WriteSkillProperty(stream, skillProperty);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            characterID = stream.ReadString(length);
-            length = stream.ReadInt32();
-            skillTypeID = stream.ReadString(length);
+            characterID = stream.ReadString();
+            skillTypeID = stream.ReadString();
             skillProperty = InputStreamHelper.ReadSkillProperty(stream);
         }
     }
 
     public sealed class StuntDataMessage : Message
     {
-        public const long MESSAGE_TYPE = -29L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -29;
+        public override int MessageType => MESSAGE_TYPE;
         
         public string characterID;
         public string stuntID;
@@ -639,31 +549,25 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
-            stream.WriteInt32(stuntID.Length);
             stream.WriteString(stuntID);
-            stream.WriteInt32(boundSkillTypeID.Length);
             stream.WriteString(boundSkillTypeID);
             stream.WriteBoolean(needDMCheck);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            characterID = stream.ReadString(length);
-            length = stream.ReadInt32();
-            stuntID = stream.ReadString(length);
-            length = stream.ReadInt32();
-            boundSkillTypeID = stream.ReadString(length);
+            characterID = stream.ReadString();
+            stuntID = stream.ReadString();
+            boundSkillTypeID = stream.ReadString();
             needDMCheck = stream.ReadBoolean();
         }
     }
 
     public sealed class ExtraDataMessage : Message
     {
-        public const long MESSAGE_TYPE = -30L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -30;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string characterID;
         public string extraID;
@@ -674,11 +578,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
-            stream.WriteInt32(extraID.Length);
             stream.WriteString(extraID);
-            stream.WriteInt32(itemID.Length);
             stream.WriteString(itemID);
             stream.WriteBoolean(isTool);
             stream.WriteBoolean(isLongRangeWeapon);
@@ -687,12 +588,9 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            characterID = stream.ReadString(length);
-            length = stream.ReadInt32();
-            extraID = stream.ReadString(length);
-            length = stream.ReadInt32();
-            itemID = stream.ReadString(length);
+            characterID = stream.ReadString();
+            extraID = stream.ReadString();
+            itemID = stream.ReadString();
             isTool = stream.ReadBoolean();
             isLongRangeWeapon = stream.ReadBoolean();
             isVehicle = stream.ReadBoolean();
@@ -701,8 +599,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class SkillCheckPanelShowMessage : Message
     {
-        public const long MESSAGE_TYPE = -31L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -31;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string initiativeCharacterID;
         public CharacterView initiativeView;
@@ -712,10 +610,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(initiativeCharacterID.Length);
             stream.WriteString(initiativeCharacterID);
             OutputStreamHelper.WriteCharacterView(stream, initiativeView);
-            stream.WriteInt32(passiveCharacterID.Length);
             stream.WriteString(passiveCharacterID);
             OutputStreamHelper.WriteCharacterView(stream, passiveView);
             stream.WriteInt32(playerState);
@@ -723,11 +619,9 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            initiativeCharacterID = stream.ReadString(length);
+            initiativeCharacterID = stream.ReadString();
             initiativeView = InputStreamHelper.ReadCharacterView(stream);
-            length = stream.ReadInt32();
-            passiveCharacterID = stream.ReadString(length);
+            passiveCharacterID = stream.ReadString();
             passiveView = InputStreamHelper.ReadCharacterView(stream);
             playerState = stream.ReadInt32();
         }
@@ -735,8 +629,8 @@ namespace GameLogic.Core.Network.ServerMessages
     
     public sealed class SkillCheckPanelHideMessage : Message
     {
-        public const long MESSAGE_TYPE = -32L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -32;
+        public override int MessageType => MESSAGE_TYPE;
 
         public override void ReadFrom(IDataInputStream stream) { }
         public override void WriteTo(IDataOutputStream stream) { }
@@ -744,28 +638,26 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class DMCheckPanelShowMessage : Message
     {
-        public const long MESSAGE_TYPE = -33L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -33;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string text;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(text.Length);
             stream.WriteString(text);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
-            int length = stream.ReadInt32();
-            text = stream.ReadString(length);
+            text = stream.ReadString();
         }
     }
 
     public sealed class DMCheckPanelHideMessage : Message
     {
-        public const long MESSAGE_TYPE = -34L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -34;
+        public override int MessageType => MESSAGE_TYPE;
 
         public override void ReadFrom(IDataInputStream stream) { }
         public override void WriteTo(IDataOutputStream stream) { }
@@ -773,15 +665,14 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class DisplayDicePointsMessage : Message
     {
-        public const long MESSAGE_TYPE = -35L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -35;
+        public override int MessageType => MESSAGE_TYPE;
 
         public string userID;
         public int[] dicePoints;
 
         public override void WriteTo(IDataOutputStream stream)
         {
-            stream.WriteInt32(userID.Length);
             stream.WriteString(userID);
             stream.WriteInt32(dicePoints.Length);
             foreach (int point in dicePoints)
@@ -792,9 +683,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
         public override void ReadFrom(IDataInputStream stream)
         {
+            userID = stream.ReadString();
             int length = stream.ReadInt32();
-            userID = stream.ReadString(length);
-            length = stream.ReadInt32();
             dicePoints = new int[length];
             for (int i = 0; i < length; ++i)
             {
@@ -805,8 +695,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class SkillCheckPanelUpdateSumPointMessage : Message
     {
-        public const long MESSAGE_TYPE = -36L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -36;
+        public override int MessageType => MESSAGE_TYPE;
 
         public bool isInitiative;
         public int point;
@@ -826,8 +716,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class SkillCheckPanelDisplaySkillReadyMessage : Message
     {
-        public const long MESSAGE_TYPE = -37L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -37;
+        public override int MessageType => MESSAGE_TYPE;
 
         public bool isInitiative;
         public string skillTypeID;
@@ -836,15 +726,13 @@ namespace GameLogic.Core.Network.ServerMessages
         public override void ReadFrom(IDataInputStream stream)
         {
             isInitiative = stream.ReadBoolean();
-            int length = stream.ReadInt32();
-            skillTypeID = stream.ReadString(length);
+            skillTypeID = stream.ReadString();
             bigone = stream.ReadBoolean();
         }
 
         public override void WriteTo(IDataOutputStream stream)
         {
             stream.WriteBoolean(isInitiative);
-            stream.WriteInt32(skillTypeID.Length);
             stream.WriteString(skillTypeID);
             stream.WriteBoolean(bigone);
         }
@@ -852,8 +740,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class SkillCheckPanelDisplayUsingAspectMessage : Message
     {
-        public const long MESSAGE_TYPE = -38L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -38;
+        public override int MessageType => MESSAGE_TYPE;
 
         public bool isInitiative;
         public string characterID;
@@ -862,26 +750,22 @@ namespace GameLogic.Core.Network.ServerMessages
         public override void ReadFrom(IDataInputStream stream)
         {
             isInitiative = stream.ReadBoolean();
-            int length = stream.ReadInt32();
-            characterID = stream.ReadString(length);
-            length = stream.ReadInt32();
-            aspectID = stream.ReadString(length);
+            characterID = stream.ReadString();
+            aspectID = stream.ReadString();
         }
 
         public override void WriteTo(IDataOutputStream stream)
         {
             stream.WriteBoolean(isInitiative);
-            stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
-            stream.WriteInt32(aspectID.Length);
             stream.WriteString(aspectID);
         }
     }
 
     public sealed class StorySceneAddPlayerCharacterMessage : Message
     {
-        public const long MESSAGE_TYPE = -39L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -39;
+        public override int MessageType => MESSAGE_TYPE;
 
         public int playerIndex;
         public string characterID;
@@ -890,7 +774,6 @@ namespace GameLogic.Core.Network.ServerMessages
         public override void WriteTo(IDataOutputStream stream)
         {
             stream.WriteInt32(playerIndex);
-            stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
             OutputStreamHelper.WriteCharacterView(stream, view);
         }
@@ -898,16 +781,15 @@ namespace GameLogic.Core.Network.ServerMessages
         public override void ReadFrom(IDataInputStream stream)
         {
             playerIndex = stream.ReadInt32();
-            int length = stream.ReadInt32();
-            characterID = stream.ReadString(length);
+            characterID = stream.ReadString();
             view = InputStreamHelper.ReadCharacterView(stream);
         }
     }
 
     public sealed class StorySceneRemovePlayerCharacterMessage : Message
     {
-        public const long MESSAGE_TYPE = -40L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -40;
+        public override int MessageType => MESSAGE_TYPE;
 
         public int playerIndex;
         public string characterID;
@@ -915,59 +797,20 @@ namespace GameLogic.Core.Network.ServerMessages
         public override void WriteTo(IDataOutputStream stream)
         {
             stream.WriteInt32(playerIndex);
-            stream.WriteInt32(characterID.Length);
             stream.WriteString(characterID);
         }
 
         public override void ReadFrom(IDataInputStream stream)
         {
             playerIndex = stream.ReadInt32();
-            int length = stream.ReadInt32();
-            characterID = stream.ReadString(length);
-        }
-    }
-
-    public struct BattleSceneObj : IStreamable
-    {
-        public string objID;
-        public int row;
-        public int col;
-
-        public void ReadFrom(IDataInputStream stream)
-        {
-            int length = stream.ReadInt32();
-            objID = stream.ReadString(length);
-            row = stream.ReadInt32();
-            col = stream.ReadInt32();
-        }
-
-        public void WriteTo(IDataOutputStream stream)
-        {
-            stream.WriteInt32(objID.Length);
-            stream.WriteString(objID);
-            stream.WriteInt32(row);
-            stream.WriteInt32(col);
-        }
-
-        public BattleSceneObj(GridObject gridObject)
-        {
-            row = gridObject.GridRef.PosRow;
-            col = gridObject.GridRef.PosCol;
-            objID = gridObject.ID;
-        }
-
-        public BattleSceneObj(LadderObject ladderObject)
-        {
-            row = ladderObject.GridRef.PosRow;
-            col = ladderObject.GridRef.PosCol;
-            objID = ladderObject.ID;
+            characterID = stream.ReadString();
         }
     }
 
     public sealed class BattleScenePushGridObjectMessage : Message
     {
-        public const long MESSAGE_TYPE = -41L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -41;
+        public override int MessageType => MESSAGE_TYPE;
 
         public BattleSceneObj gridObj;
         public CharacterView view;
@@ -999,8 +842,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class BattleSceneRemoveGridObjectMessage : Message
     {
-        public const long MESSAGE_TYPE = -42L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -42;
+        public override int MessageType => MESSAGE_TYPE;
 
         public BattleSceneObj gridObj;
 
@@ -1017,8 +860,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class BattleSceneAddLadderObjectMessage : Message
     {
-        public const long MESSAGE_TYPE = -43L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -43;
+        public override int MessageType => MESSAGE_TYPE;
 
         public BattleSceneObj ladderObj;
         public CharacterView view;
@@ -1041,8 +884,8 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class BattleSceneRemoveLadderObjectMessage : Message
     {
-        public const long MESSAGE_TYPE = -44L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -44;
+        public override int MessageType => MESSAGE_TYPE;
 
         public BattleSceneObj ladderObj;
 
@@ -1059,8 +902,8 @@ namespace GameLogic.Core.Network.ServerMessages
     
     public sealed class BattleSceneResetMessage : Message
     {
-        public const long MESSAGE_TYPE = -45L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -45;
+        public override int MessageType => MESSAGE_TYPE;
 
         public int rows;
         public int cols;
@@ -1080,15 +923,33 @@ namespace GameLogic.Core.Network.ServerMessages
 
     public sealed class BattleSceneSetActingOrderMessage : Message
     {
-        public const long MESSAGE_TYPE = -46L;
-        public override long MessageType => MESSAGE_TYPE;
-        
-        public BattleSceneObj[] objsOrder;
+        public const int MESSAGE_TYPE = -46;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public struct ObjOrder : IStreamable
+        {
+            public BattleSceneObj actableObj;
+            public int actionPoint;
+
+            public void ReadFrom(IDataInputStream stream)
+            {
+                actableObj.ReadFrom(stream);
+                actionPoint = stream.ReadInt32();
+            }
+
+            public void WriteTo(IDataOutputStream stream)
+            {
+                actableObj.WriteTo(stream);
+                stream.WriteInt32(actionPoint);
+            }
+        }
+
+        public ObjOrder[] objsOrder;
 
         public override void ReadFrom(IDataInputStream stream)
         {
             int length = stream.ReadInt32();
-            objsOrder = new BattleSceneObj[length];
+            objsOrder = new ObjOrder[length];
             for (int i = 0; i < length; ++i)
             {
                 objsOrder[i].ReadFrom(stream);
@@ -1098,42 +959,75 @@ namespace GameLogic.Core.Network.ServerMessages
         public override void WriteTo(IDataOutputStream stream)
         {
             stream.WriteInt32(objsOrder.Length);
-            foreach (BattleSceneObj obj in objsOrder)
+            foreach (ObjOrder objOrder in objsOrder)
             {
-                obj.WriteTo(stream);
+                objOrder.WriteTo(stream);
             }
         }
 
     }
 
-    public sealed class BattleSceneNextTurnMessage : Message
+    public sealed class BattleSceneChangeTurnMessage : Message
     {
-        public const long MESSAGE_TYPE = -47L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -47;
+        public override int MessageType => MESSAGE_TYPE;
 
         public bool canOperate;
         public BattleSceneObj gridObj;
-        public int actionPoint;
 
         public override void ReadFrom(IDataInputStream stream)
         {
             canOperate = stream.ReadBoolean();
             gridObj.ReadFrom(stream);
-            actionPoint = stream.ReadInt32();
         }
 
         public override void WriteTo(IDataOutputStream stream)
         {
             stream.WriteBoolean(canOperate);
             gridObj.WriteTo(stream);
-            stream.WriteInt32(actionPoint);
         }
+    }
+
+    public sealed class BattleScenePassiveCheckSelectSkillMessage : Message
+    {
+        public const int MESSAGE_TYPE = -48;
+        public override int MessageType => MESSAGE_TYPE;
+        
+        public BattleSceneObj passiveObj;
+        public BattleSceneObj initiativeObj;
+        public SkillTypeDescription initiativeSkillType;
+        public int action;
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            passiveObj.ReadFrom(stream);
+            initiativeObj.ReadFrom(stream);
+            initiativeSkillType.ReadFrom(stream);
+            action = stream.ReadInt32();
+        }
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            passiveObj.WriteTo(stream);
+            initiativeObj.WriteTo(stream);
+            initiativeSkillType.WriteTo(stream);
+            stream.WriteInt32(action);
+        }
+    }
+
+    public sealed class BattleScenePassiveCheckSelectAspectMessage : Message
+    {
+        public const int MESSAGE_TYPE = -49;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public override void ReadFrom(IDataInputStream stream) { }
+        public override void WriteTo(IDataOutputStream stream) { }
     }
 
     public sealed class BattleSceneMoveInfoMessage : Message
     {
-        public const long MESSAGE_TYPE = -48L;
-        public override long MessageType => MESSAGE_TYPE;
+        public const int MESSAGE_TYPE = -50;
+        public override int MessageType => MESSAGE_TYPE;
 
         public int direction;
         public bool canMove;
@@ -1149,5 +1043,68 @@ namespace GameLogic.Core.Network.ServerMessages
             stream.WriteInt32(direction);
             stream.WriteBoolean(canMove);
         }
+    }
+    
+    public sealed class DirectResistSkillsDataMessage : Message
+    {
+        public const int MESSAGE_TYPE = -60;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public SkillTypeDescription[] skillTypes;
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(skillTypes.Length);
+            foreach (var skillType in skillTypes)
+            {
+                skillType.WriteTo(stream);
+            }
+        }
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            int length = stream.ReadInt32();
+            skillTypes = new SkillTypeDescription[length];
+            for (int i = 0; i < length; ++i)
+            {
+                skillTypes[i].ReadFrom(stream);
+            }
+        }
+    }
+
+    public sealed class SkillTypeListDataMessage : Message
+    {
+        public const int MESSAGE_TYPE = -61;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public SkillTypeDescription[] skillTypes;
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(skillTypes.Length);
+            foreach (var skillType in skillTypes)
+            {
+                skillType.WriteTo(stream);
+            }
+        }
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            int length = stream.ReadInt32();
+            skillTypes = new SkillTypeDescription[length];
+            for (int i = 0; i < length; ++i)
+            {
+                skillTypes[i].ReadFrom(stream);
+            }
+        }
+    }
+
+    public sealed class NotFoundMessage : Message
+    {
+        public const int MESSAGE_TYPE = -62;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public override void ReadFrom(IDataInputStream stream) { }
+        public override void WriteTo(IDataOutputStream stream) { }
     }
 }

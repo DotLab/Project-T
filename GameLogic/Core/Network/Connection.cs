@@ -7,13 +7,15 @@ using System.Text;
 
 namespace GameLogic.Core.Network
 {
-    public abstract class Message : Networkf.Message, IStreamable
+    public abstract class Message : IStreamable
     {
         #region Message Creator
-        public static Message New(long messageType)
+        public static Message New(int messageType)
         {
             switch (messageType)
             {
+                case IdentifiedMessage.MESSAGE_TYPE:
+                    return new IdentifiedMessage();
                 case StorySceneObjectActionMessage.MESSAGE_TYPE:
                     return new StorySceneObjectActionMessage();
                 case TextSelectedMessage.MESSAGE_TYPE:
@@ -23,45 +25,110 @@ namespace GameLogic.Core.Network
                     return null;
             }
         }
-        
-        public static Networkf.Message ParseMessage(byte[] buf, ref int i)
-        {
-            int type = ReadMessageType(buf, ref i);
-            var stream = new BitDataInputStream(buf, i);
-            var message = New(type);
-            message.ReadFrom(stream);
-            i = stream.i;
-            return message;
-        }
         #endregion
+
         public abstract void WriteTo(IDataOutputStream stream);
         public abstract void ReadFrom(IDataInputStream stream);
 
-        public abstract long MessageType { get; }
+        public abstract int MessageType { get; }
+    }
 
-        protected Message() : base(0) {
-            type = (int)MessageType;
+    public sealed class IdentifiedMessage : Message
+    {
+        public Message innerMessage;
+        public Guid guid;
+        public bool resp;
+
+        public const int MESSAGE_TYPE = 0;
+        public override int MessageType => MESSAGE_TYPE;
+        public int InnerMsgType => innerMessage.MessageType;
+
+        public IdentifiedMessage() { }
+
+        public IdentifiedMessage(Message message)
+        {
+            this.innerMessage = message;
+            this.guid = Guid.NewGuid();
+            this.resp = false;
         }
 
-        public override void WriteTo(byte[] buf, ref int i)
+        public override void ReadFrom(IDataInputStream stream)
         {
-            var stream = new BitDataOutputStream(buf, i);
-            WriteTo(stream);
-            i = stream.i;
+            int innerType = stream.ReadInt32();
+            innerMessage = New(innerType);
+            innerMessage.ReadFrom(stream);
+            guid = InputStreamHelper.ReadGuid(stream);
+            resp = stream.ReadBoolean();
+        }
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(this.InnerMsgType);
+            innerMessage.WriteTo(stream);
+            OutputStreamHelper.WriteGuid(stream, guid);
+            stream.WriteBoolean(resp);
         }
     }
 
     public interface IMessageReceiver
     {
-        void MessageReceived(ulong timestamp, Message message);
+        void MessageReceived(Message message);
     }
 
-    public abstract class Connection
+    public interface IRequestHandler
     {
-        public event EventHandler<ExceptionCaughtEventArgs> ExceptionCaught;
+        Message MakeResponse(Message request);
+    }
 
+    public abstract class Connection : IMessageReceiver
+    {
+        private readonly Dictionary<Guid, Action<Message>> _callbackDict = new Dictionary<Guid, Action<Message>>();
+        private readonly Dictionary<int, IRequestHandler> _reqHandlerDict = new Dictionary<int, IRequestHandler>();
+        
+        public void MessageReceived(Message message)
+        {
+            var identifiedMessage = (IdentifiedMessage)message;
+            if (identifiedMessage.resp)
+            {
+                if (_callbackDict.TryGetValue(identifiedMessage.guid, out Action<Message> callback))
+                {
+                    callback(identifiedMessage.innerMessage);
+                    _callbackDict.Remove(identifiedMessage.guid);
+                }
+            }
+            else
+            {
+                if (_reqHandlerDict.TryGetValue(identifiedMessage.InnerMsgType, out IRequestHandler handler))
+                {
+                    var resp = handler.MakeResponse(identifiedMessage.innerMessage);
+                    var respWrapper = new IdentifiedMessage() { innerMessage = resp, guid = identifiedMessage.guid, resp = true };
+                    SendMessage(respWrapper);
+                }
+            }
+        }
+
+        public void Request(Message message, Action<Message> callback)
+        {
+            var identifiedMsg = new IdentifiedMessage(message);
+            while (_callbackDict.ContainsKey(identifiedMsg.guid)) identifiedMsg.guid = Guid.NewGuid();
+            _callbackDict.Add(identifiedMsg.guid, callback);
+            SendMessage(identifiedMsg);
+        }
+
+        public void SetRequestHandler(int messageType, IRequestHandler handler)
+        {
+            _reqHandlerDict[messageType] = handler;
+        }
+
+        public Connection()
+        {
+            AddMessageReceiver(IdentifiedMessage.MESSAGE_TYPE, this);
+        }
+
+        public event EventHandler<ExceptionCaughtEventArgs> ExceptionCaught;
+        
         public abstract void SendMessage(Message message);
-        public abstract void AddMessageReceiver(long messageType, IMessageReceiver receiver);
+        public abstract void AddMessageReceiver(int messageType, IMessageReceiver receiver);
         public abstract void UpdateReceiver();
     }
 
@@ -72,65 +139,100 @@ namespace GameLogic.Core.Network
         // ...
     }
 
+    public sealed class NetworkfMessage : Networkf.Message
+    {
+        private readonly Message _innerMessage;
+
+        public Message InnerMessage => _innerMessage;
+
+        public static Networkf.Message ParseMessage(byte[] buf, ref int i)
+        {
+            int type = ReadMessageType(buf, ref i);
+            var stream = new BitDataInputStream(buf, i);
+            var message = Message.New(type);
+            message.ReadFrom(stream);
+            i = stream.i;
+            return new NetworkfMessage(message);
+        }
+
+        public NetworkfMessage(Message message) :
+            base(message.MessageType)
+        {
+            _innerMessage = message;
+        }
+
+        public override void WriteTo(byte[] buf, ref int i)
+        {
+            var stream = new BitDataOutputStream(buf, i);
+            _innerMessage.WriteTo(stream);
+            i = stream.i;
+        }
+    }
+
     public sealed class NetworkfConnection : Connection
     {
-        public readonly Networkf.NetworkService service;
-        public readonly List<Message> messageList = new List<Message>();
-        public readonly Dictionary<long, List<IMessageReceiver>> messageReceiverDict = new Dictionary<long, List<IMessageReceiver>>();
+        static NetworkfConnection()
+        {
+            Networkf.NetworkService.ParseMessage = NetworkfMessage.ParseMessage;
+        }
 
+        private readonly Networkf.NetworkService _service;
+        private readonly List<Message> _messageList = new List<Message>();
+        private readonly Dictionary<int, List<IMessageReceiver>> _messageReceiverDict = new Dictionary<int, List<IMessageReceiver>>();
+        
         public NetworkfConnection(Networkf.NetworkService service)
         {
-            this.service = service;
+            _service = service;
             service.OnMessageReceived += OnMessageReceived;
             service.OnServiceTeardown += OnServiceTeardown;
         }
 
-        public override void AddMessageReceiver(long messageType, IMessageReceiver receiver)
+        public override void AddMessageReceiver(int messageType, IMessageReceiver receiver)
         {
-            if (messageReceiverDict.ContainsKey(messageType))
+            if (_messageReceiverDict.ContainsKey(messageType))
             {
-                messageReceiverDict[messageType].Add(receiver);
+                _messageReceiverDict[messageType].Add(receiver);
             } else
             {
-                messageReceiverDict.Add(messageType, new List<IMessageReceiver>() { receiver });
+                _messageReceiverDict.Add(messageType, new List<IMessageReceiver>() { receiver });
             }
         }
 
         public override void SendMessage(Message message)
         {
-            service.SendMessage(message);
+            _service.SendMessage(new NetworkfMessage(message));
         }
 
         public override void UpdateReceiver()
         {
-            lock (messageList)
+            lock (_messageList)
             {
-                foreach (var message in messageList)
+                foreach (var message in _messageList)
                 {
-                    if (messageReceiverDict.ContainsKey(message.MessageType))
+                    if (_messageReceiverDict.ContainsKey(message.MessageType))
                     {
-                        foreach (var receiver in messageReceiverDict[message.MessageType])
+                        foreach (var receiver in _messageReceiverDict[message.MessageType])
                         {
-                            receiver.MessageReceived(0, message);
+                            receiver.MessageReceived(message);
                         }
                     }
                 }
-                messageList.Clear();
+                _messageList.Clear();
             }
         }
-
+        
         private void OnMessageReceived(int id, Networkf.Message message)
         {
-            lock (messageList)
+            lock (_messageList)
             {
-                messageList.Add(message as Message);
+                _messageList.Add(((NetworkfMessage)message).InnerMessage);
             }
         }
 
         private void OnServiceTeardown()
         {
-            service.OnMessageReceived -= OnMessageReceived;
-            service.OnServiceTeardown -= OnServiceTeardown;
+            _service.OnMessageReceived -= OnMessageReceived;
+            _service.OnServiceTeardown -= OnServiceTeardown;
         }
     }
 }
