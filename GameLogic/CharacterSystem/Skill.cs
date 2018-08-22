@@ -1,41 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using GameLogic.Container.BattleComponent;
 using GameLogic.Core;
-using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.CharacterSystem
 {
-    public struct SkillProperty
-    {
-        public static readonly SkillProperty INIT = new SkillProperty
-        {
-            level = 0, canAttack = false, canDefend = false, canMove = false,
-            useRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
-            affectRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
-            islinearUse = false, islinearAffect = false,
-            linearAffectDirection = Direction.POSITIVE_ROW & Direction.POSITIVE_COL & Direction.NEGATIVE_ROW & Direction.NEGATIVE_COL,
-            linearUseDirection = Direction.POSITIVE_ROW & Direction.POSITIVE_COL & Direction.NEGATIVE_ROW & Direction.NEGATIVE_COL,
-            targetCount = 1
-        };
-
-        public int level;
-        public bool canAttack;
-        public bool canDefend;
-        public bool canMove;
-        public Range useRange;
-        public bool islinearUse;
-        public Direction linearUseDirection;
-        public Range affectRange;
-        public bool islinearAffect;
-        public Direction linearAffectDirection;
-        public int targetCount;
-    }
-
     public sealed class SkillType : IEquatable<SkillType>
     {
-        public static readonly SkillType Athletics = new SkillType("Athletics", "运动", false, true, true);
+        public static readonly SkillType Athletics = new SkillType("Athletics", "运动", false, true);
         public static readonly SkillType Burglary = new SkillType("Burglary", "盗窃");
         public static readonly SkillType Contacts = new SkillType("Contacts", "人脉");
         public static readonly SkillType Crafts = new SkillType("Crafts", "工艺");
@@ -87,14 +59,13 @@ namespace GameLogic.CharacterSystem
         public string Name => _name;
         public SkillProperty Property => _property;
 
-        private SkillType(string id, string name, bool canAttack = false, bool canDefend = false, bool canMove = false)
+        private SkillType(string id, string name, bool canAttack = false, bool canDefend = false)
         {
             _id = id ?? throw new ArgumentNullException(nameof(id));
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _property = SkillProperty.INIT;
             _property.canAttack = canAttack;
             _property.canDefend = canDefend;
-            _property.canMove = canMove;
         }
 
         public bool Equals(SkillType other)

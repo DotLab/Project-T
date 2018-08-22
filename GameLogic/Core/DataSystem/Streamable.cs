@@ -169,7 +169,6 @@ namespace GameLogic.Core.DataSystem
             stream.WriteInt32(property.level);
             stream.WriteBoolean(property.canAttack);
             stream.WriteBoolean(property.canDefend);
-            stream.WriteBoolean(property.canMove);
         }
     }
 
@@ -243,7 +242,6 @@ namespace GameLogic.Core.DataSystem
             ret.level = stream.ReadInt32();
             ret.canAttack = stream.ReadBoolean();
             ret.canDefend = stream.ReadBoolean();
-            ret.canMove = stream.ReadBoolean();
             return ret;
         }
     }

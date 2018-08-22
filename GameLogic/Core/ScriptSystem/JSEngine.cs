@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GameLogic.Core.DataSystem;
 using GameLogic.Core.ScriptSystem.EngineWrapper;
 
 namespace GameLogic.Core.ScriptSystem
 {
     public interface IJSEngineRaw
     {
-        void Log(string log);
         void BindType(string typeName, Type type);
         object GetVar(string name);
         void SetVar(string name, object[] array);
@@ -78,7 +78,7 @@ namespace GameLogic.Core.ScriptSystem
         
         public void Log(string log)
         {
-            _engine.Log(log);
+            Logger.WriteLine("Javascript Engine Log:" + log);
         }
 
         public void SynchronizeContext(string varname, IJSContextProvider provider)

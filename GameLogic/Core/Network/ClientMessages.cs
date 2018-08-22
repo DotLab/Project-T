@@ -5,6 +5,15 @@ using System.Text;
 
 namespace GameLogic.Core.Network.ClientMessages
 {
+    public sealed class ClientInitMessage : Message
+    {
+        public const int MESSAGE_TYPE = 1;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public override void ReadFrom(IDataInputStream stream) { }
+        public override void WriteTo(IDataOutputStream stream) { }
+    }
+
     public sealed class StorySceneObjectActionMessage : Message
     {
         public enum PlayerAction : byte
@@ -15,7 +24,7 @@ namespace GameLogic.Core.Network.ClientMessages
             HINDER
         }
 
-        public const int MESSAGE_TYPE = 1;
+        public const int MESSAGE_TYPE = 2;
         public override int MessageType => MESSAGE_TYPE;
 
         public string objID;
@@ -36,7 +45,7 @@ namespace GameLogic.Core.Network.ClientMessages
 
     public sealed class TextSelectedMessage : Message
     {
-        public const int MESSAGE_TYPE = 2;
+        public const int MESSAGE_TYPE = 3;
         public override int MessageType => MESSAGE_TYPE;
 
         public int selection;
@@ -52,9 +61,18 @@ namespace GameLogic.Core.Network.ClientMessages
         }
     }
 
-    public sealed class SkillSelectedMessage : Message
+    public sealed class StorySceneNextActionMessage : Message
     {
-        public const int MESSAGE_TYPE = 3;
+        public const int MESSAGE_TYPE = 4;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public override void ReadFrom(IDataInputStream stream) { }
+        public override void WriteTo(IDataOutputStream stream) { }
+    }
+
+    public sealed class CheckerSkillSelectedMessage : Message
+    {
+        public const int MESSAGE_TYPE = 5;
         public override int MessageType => MESSAGE_TYPE;
 
         public string skillTypeID;
@@ -70,9 +88,9 @@ namespace GameLogic.Core.Network.ClientMessages
         }
     }
     
-    public sealed class AspectSelectedMessage : Message
+    public sealed class CheckerAspectSelectedMessage : Message
     {
-        public const int MESSAGE_TYPE = 4;
+        public const int MESSAGE_TYPE = 6;
         public override int MessageType => MESSAGE_TYPE;
 
         public string characterID;
@@ -94,9 +112,9 @@ namespace GameLogic.Core.Network.ClientMessages
         }
     }
 
-    public sealed class StuntSelectedMessage : Message
+    public sealed class CheckerStuntSelectedMessage : Message
     {
-        public const int MESSAGE_TYPE = 5;
+        public const int MESSAGE_TYPE = 7;
         public override int MessageType => MESSAGE_TYPE;
 
         public string stuntID;
@@ -111,25 +129,7 @@ namespace GameLogic.Core.Network.ClientMessages
             stuntID = stream.ReadString();
         }
     }
-
-    public sealed class StorySceneNextActionMessage : Message
-    {
-        public const int MESSAGE_TYPE = 6;
-        public override int MessageType => MESSAGE_TYPE;
-
-        public override void ReadFrom(IDataInputStream stream) { }
-        public override void WriteTo(IDataOutputStream stream) { }
-    }
-
-    public sealed class ClientInitMessage : Message
-    {
-        public const int MESSAGE_TYPE = 7;
-        public override int MessageType => MESSAGE_TYPE;
-
-        public override void ReadFrom(IDataInputStream stream) { }
-        public override void WriteTo(IDataOutputStream stream) { }
-    }
-
+    
     public sealed class GetCharacterDataMessage : Message
     {
         public const int MESSAGE_TYPE = 8;
@@ -268,27 +268,9 @@ namespace GameLogic.Core.Network.ClientMessages
         }
     }
 
-    public sealed class DMCheckResultMessage : Message
-    {
-        public const int MESSAGE_TYPE = 14;
-        public override int MessageType => MESSAGE_TYPE;
-
-        public bool result;
-
-        public override void WriteTo(IDataOutputStream stream)
-        {
-            stream.WriteBoolean(result);
-        }
-
-        public override void ReadFrom(IDataInputStream stream)
-        {
-            result = stream.ReadBoolean();
-        }
-    }
-    
     public sealed class GetDirectResistSkillsMessage : Message
     {
-        public const int MESSAGE_TYPE = 15;
+        public const int MESSAGE_TYPE = 14;
         public override int MessageType => MESSAGE_TYPE;
 
         public string initiativeSkillTypeID;
@@ -306,13 +288,173 @@ namespace GameLogic.Core.Network.ClientMessages
             stream.WriteInt32(actionType);
         }
     }
-    
+
     public sealed class GetSkillTypeListMessage : Message
     {
-        public const int MESSAGE_TYPE = 16;
+        public const int MESSAGE_TYPE = 15;
         public override int MessageType => MESSAGE_TYPE;
 
         public override void ReadFrom(IDataInputStream stream) { }
         public override void WriteTo(IDataOutputStream stream) { }
     }
+
+    public sealed class DMCheckResultMessage : Message
+    {
+        public const int MESSAGE_TYPE = 16;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public bool result;
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteBoolean(result);
+        }
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            result = stream.ReadBoolean();
+        }
+    }
+    
+    public sealed class BattleSceneSetSkipSelectAspectMessage : Message
+    {
+        public const int MESSAGE_TYPE = 17;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public bool val;
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteBoolean(val);
+        }
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            val = stream.ReadBoolean();
+        }
+    }
+
+    public sealed class SelectAspectOverMessage : Message
+    {
+        public const int MESSAGE_TYPE = 18;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public override void WriteTo(IDataOutputStream stream) { }
+        public override void ReadFrom(IDataInputStream stream) { }
+    }
+
+    public sealed class BattleSceneGetActableObjectMovePathInfoMessage : Message
+    {
+        public const int MESSAGE_TYPE = 19;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public override void WriteTo(IDataOutputStream stream) { }
+        public override void ReadFrom(IDataInputStream stream) { }
+    }
+
+    public sealed class BattleSceneActableObjectMoveMessage : Message
+    {
+        public const int MESSAGE_TYPE = 20;
+        public override int MessageType => MESSAGE_TYPE;
+        
+        public int dstRow;
+        public int dstCol;
+        public bool dstHighland;
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteInt32(dstRow);
+            stream.WriteInt32(dstCol);
+            stream.WriteBoolean(dstHighland);
+        }
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            dstRow = stream.ReadInt32();
+            dstCol = stream.ReadInt32();
+            dstHighland = stream.ReadBoolean();
+        }
+    }
+    
+    public sealed class BattleSceneActableObjectDoActionMessage : Message
+    {
+        public const int MESSAGE_TYPE = 21;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public string skillTypeOrStuntID;
+        public bool isStunt;
+        public int action;
+        public int dstRow;
+        public int dstCol;
+        public BattleSceneObj[] targets;
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            skillTypeOrStuntID = stream.ReadString();
+            isStunt = stream.ReadBoolean();
+            action = stream.ReadInt32();
+            dstRow = stream.ReadInt32();
+            dstCol = stream.ReadInt32();
+            int length = stream.ReadInt32();
+            targets = new BattleSceneObj[length];
+            for (int i = 0; i < length; ++i)
+            {
+                targets[i].ReadFrom(stream);
+            }
+        }
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteString(skillTypeOrStuntID);
+            stream.WriteBoolean(isStunt);
+            stream.WriteInt32(action);
+            stream.WriteInt32(dstRow);
+            stream.WriteInt32(dstCol);
+            stream.WriteInt32(targets.Length);
+            foreach (var target in targets)
+            {
+                target.WriteTo(stream);
+            }
+        }
+    }
+    
+    public sealed class BattleSceneActableObjectDoSpecialActionMessage : Message
+    {
+        public const int MESSAGE_TYPE = 22;
+        public override int MessageType => MESSAGE_TYPE;
+
+        public string skillTypeOrStuntID;
+        public bool isStunt;
+        public int dstRow;
+        public int dstCol;
+        public BattleSceneObj[] targets;
+
+        public override void ReadFrom(IDataInputStream stream)
+        {
+            skillTypeOrStuntID = stream.ReadString();
+            isStunt = stream.ReadBoolean();
+            dstRow = stream.ReadInt32();
+            dstCol = stream.ReadInt32();
+            int length = stream.ReadInt32();
+            targets = new BattleSceneObj[length];
+            for (int i = 0; i < length; ++i)
+            {
+                targets[i].ReadFrom(stream);
+            }
+        }
+
+        public override void WriteTo(IDataOutputStream stream)
+        {
+            stream.WriteString(skillTypeOrStuntID);
+            stream.WriteBoolean(isStunt);
+            stream.WriteInt32(dstRow);
+            stream.WriteInt32(dstCol);
+            stream.WriteInt32(targets.Length);
+            foreach (var target in targets)
+            {
+                target.WriteTo(stream);
+            }
+        }
+    }
+    
 }

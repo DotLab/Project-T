@@ -4,7 +4,7 @@ using GameLogic.Core.Network.ClientMessages;
 using GameLogic.Core.Network.ServerMessages;
 using System;
 
-namespace GameLogic.Client
+namespace GameLogic.ClientComponents
 {
     public class DMCheckDialog : ClientComponent
     {
@@ -13,7 +13,7 @@ namespace GameLogic.Client
 
         public bool IsChecking => _isChecking;
 
-        public override void MessageReceived(ulong timestamp, Message message)
+        public override void MessageReceived(Message message)
         {
             DMCheckResultMessage resultMessage = (DMCheckResultMessage)message;
             if (_isChecking)
@@ -30,9 +30,14 @@ namespace GameLogic.Client
             _connection.AddMessageReceiver(DMCheckResultMessage.MESSAGE_TYPE, this);
         }
 
-        public void RequestCheck(string text, Action<bool> result)
+        public void RequestCheck(User user, string text, Action<bool> result)
         {
             if (_isChecking) return;
+            if (user.IsDM)
+            {
+                result(true);
+                return;
+            }
             _resultCallback = result;
             _isChecking = true;
             this.Show(text);

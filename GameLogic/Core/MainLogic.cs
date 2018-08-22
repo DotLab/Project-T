@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
-using System.Diagnostics;
+using GameLogic.Core.DataSystem;
 
 namespace GameLogic.Core
 {
@@ -35,16 +35,15 @@ namespace GameLogic.Core
         
         public static void Init(DM dm, IEnumerable<Player> players)
         {
-            Debug.Assert(dm != null && players != null);
+            //Logger.ApplyLogger();
+
             _dm = dm;
             _players = new List<Player>(players);
 
             foreach (Player player in _players)
             {
-                Debug.Assert(player != null);
                 foreach (Character character in player.Characters)
                 {
-                    Debug.Assert(character != null);
                     CharacterManager.Instance.PlayerCharacters.Add(character);
                 }
             }

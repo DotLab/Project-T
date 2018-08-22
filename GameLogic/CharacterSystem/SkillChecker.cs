@@ -17,7 +17,6 @@ namespace GameLogic.CharacterSystem
 
         public enum CheckResult
         {
-            CANCEL,
             FAIL,
             TIE,
             SUCCEED,
@@ -27,11 +26,11 @@ namespace GameLogic.CharacterSystem
         public enum CheckerState
         {
             IDLE,
-            INITIATIVE_SKILL,
-            PASSIVE_SKILL,
+            INITIATIVE_SKILL_OR_STUNT,
+            PASSIVE_SKILL_OR_STUNT,
             INITIATIVE_ASPECT,
             PASSIVE_ASPECT,
-            END
+            WAITING_FOR_END
         }
 
         private static Range FAIL;
@@ -112,6 +111,7 @@ namespace GameLogic.CharacterSystem
         private CharacterAction _action;
         private Action<CheckResult> _initiativeCallback;
         private Action<CheckResult> _passiveCallback;
+        private Action _checkOverCallback;
 
         private SkillType _initiativeSkillType;
         private SkillType _passiveSkillType;
@@ -170,7 +170,8 @@ namespace GameLogic.CharacterSystem
 
         public void StartCheck(
             Character initiative, Character passive, CharacterAction action,
-            Action<CheckResult> initiativeCallback, Action<CheckResult> passiveCallback
+            Action<CheckResult> initiativeCallback, Action<CheckResult> passiveCallback,
+            Action checkOverCallback = null
             )
         {
             if (_state != CheckerState.IDLE) throw new InvalidOperationException("Already in checking state.");
@@ -185,28 +186,22 @@ namespace GameLogic.CharacterSystem
             _action = action;
             _initiativeCallback = initiativeCallback ?? throw new ArgumentNullException(nameof(initiativeCallback));
             _passiveCallback = passiveCallback ?? throw new ArgumentNullException(nameof(passiveCallback));
-            _state = CheckerState.INITIATIVE_SKILL;
+            _checkOverCallback = checkOverCallback;
+            _state = CheckerState.INITIATIVE_SKILL_OR_STUNT;
         }
-
-        public void CancelCheck()
-        {
-            if (_state != CheckerState.INITIATIVE_SKILL) throw new InvalidOperationException("Cannot cancel at this time.");
-            _initiativeCallback(CheckResult.CANCEL);
-            _passiveCallback(CheckResult.CANCEL);
-            _state = CheckerState.IDLE;
-        }
-
+        
         public void ForceEndCheck(CheckResult initiativeResult, CheckResult passiveResult)
         {
             if (_state == CheckerState.IDLE) throw new InvalidOperationException("Skill checking is not working.");
             _initiativeCallback(initiativeResult);
             _passiveCallback(passiveResult);
             _state = CheckerState.IDLE;
+            _checkOverCallback?.Invoke();
         }
         
         public void EndCheck()
         {
-            if (_state != CheckerState.END) throw new InvalidOperationException("Cannot make checking over.");
+            if (_state != CheckerState.WAITING_FOR_END) throw new InvalidOperationException("Cannot make checking over.");
             CheckResult initiativeResult;
             CheckResult passiveResult;
             int delta = this.InitiativePoint - this.PassivePoint;
@@ -245,11 +240,12 @@ namespace GameLogic.CharacterSystem
             _initiativeCallback(initiativeResult);
             _passiveCallback(passiveResult);
             _state = CheckerState.IDLE;
+            _checkOverCallback?.Invoke();
         }
-        
+
         public void InitiativeSelectSkill(SkillType skillType)
         {
-            if (_state != CheckerState.INITIATIVE_SKILL) throw new InvalidOperationException("State incorrect.");
+            if (_state != CheckerState.INITIATIVE_SKILL_OR_STUNT) throw new InvalidOperationException("State incorrect.");
             if (_action == CharacterAction.ATTACK)
             {
                 SkillProperty skillProperty = _initiative.GetSkillProperty(skillType);
@@ -268,8 +264,8 @@ namespace GameLogic.CharacterSystem
 
         public void InitiativeSkillSelectionOver()
         {
-            if (_state != CheckerState.INITIATIVE_SKILL || _initiativeSkillType == null) throw new InvalidOperationException("State incorrect.");
-            _state = CheckerState.PASSIVE_SKILL;
+            if (_state != CheckerState.INITIATIVE_SKILL_OR_STUNT || _initiativeSkillType == null) throw new InvalidOperationException("State incorrect.");
+            _state = CheckerState.PASSIVE_SKILL_OR_STUNT;
         }
         
         public void InitiativeAspectSelectionOver()
@@ -278,7 +274,18 @@ namespace GameLogic.CharacterSystem
             _state = CheckerState.PASSIVE_ASPECT;
         }
 
-        public void InitiativeSelectAspect(Aspect aspect, bool reroll)
+        public bool CanInitiativeUseAspect(Aspect aspect, out string msg)
+        {
+            msg = "";
+            if (aspect.Benefit != _initiative && _initiative.FatePoint - 1 < 0)
+            {
+                msg = "命运点不足";
+                return false;
+            }
+            return true;
+        }
+
+        public void InitiativeUseAspect(Aspect aspect, bool reroll)
         {
             if (_state != CheckerState.INITIATIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
             if (aspect.Benefit != _initiative && _initiative.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
@@ -294,10 +301,10 @@ namespace GameLogic.CharacterSystem
             if (reroll) this.InitiativeRollDice();
             else _initiativeExtraPoint += 2;
         }
-        
+
         public void PassiveSelectSkill(SkillType skillType)
         {
-            if (_state != CheckerState.PASSIVE_SKILL) throw new InvalidOperationException("State incorrect.");
+            if (_state != CheckerState.PASSIVE_SKILL_OR_STUNT) throw new InvalidOperationException("State incorrect.");
             if (_action == CharacterAction.ATTACK)
             {
                 SkillProperty skillProperty = _passive.GetSkillProperty(skillType);
@@ -316,17 +323,28 @@ namespace GameLogic.CharacterSystem
 
         public void PassiveSkillSelectionOver()
         {
-            if (_state != CheckerState.PASSIVE_SKILL || _passiveSkillType == null) throw new InvalidOperationException("State incorrect.");
+            if (_state != CheckerState.PASSIVE_SKILL_OR_STUNT || _passiveSkillType == null) throw new InvalidOperationException("State incorrect.");
             _state = CheckerState.INITIATIVE_ASPECT;
         }
         
         public void PassiveAspectSelectionOver()
         {
             if (_state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
-            _state = CheckerState.END;
+            _state = CheckerState.WAITING_FOR_END;
         }
 
-        public void PassiveSelectAspect(Aspect aspect, bool reroll)
+        public bool CanPassiveUseAspect(Aspect aspect, out string msg)
+        {
+            msg = "";
+            if (aspect.Benefit != _passive && _passive.FatePoint - 1 < 0)
+            {
+                msg = "命运点不足";
+                return false;
+            }
+            return true;
+        }
+
+        public void PassiveUseAspect(Aspect aspect, bool reroll)
         {
             if (_state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
             if (aspect.Benefit != _passive && _passive.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");

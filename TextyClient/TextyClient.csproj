@@ -45,6 +45,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AdvancedConsole.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="AdvancedConsole.Designer.cs">
+      <DependentUpon>AdvancedConsole.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CharacterInfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CharacterInfo.Designer.cs">
+      <DependentUpon>CharacterInfo.cs</DependentUpon>
+    </Compile>
     <Compile Include="GameScene.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -65,8 +77,14 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="AdvancedConsole.resx">
+      <DependentUpon>AdvancedConsole.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="BattleSceneForm.resx">
       <DependentUpon>BattleSceneForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CharacterInfo.resx">
+      <DependentUpon>CharacterInfo.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="StorySceneForm.resx">
       <DependentUpon>StorySceneForm.cs</DependentUpon>

@@ -4,7 +4,6 @@ using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 using GameLogic.CharacterSystem;
 using GameLogic.Container.StoryComponent;
-using System.Numerics;
 
 namespace GameLogic.Container
 {
@@ -259,37 +258,27 @@ namespace GameLogic.Container
             SkillChecker.Instance.StartCheck(initiative, passive, action, initiativeCallback, passiveCallback);
             foreach (Player player in MainLogic.Players)
             {
-                if (initiative.ControlPlayer == player) player.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.INITIATIVE);
-                else if (passive.ControlPlayer == player) player.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.PASSIVE);
-                else player.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.OBSERVER);
+                if (initiative.Controller == player) player.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.INITIATIVE);
+                else if (passive.Controller == player) player.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.PASSIVE);
+                else player.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.OBSERVER);
             }
-            if (initiative.ControlPlayer == null) MainLogic.DM.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.INITIATIVE);
-            else if (passive.ControlPlayer == null) MainLogic.DM.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.PASSIVE);
-            else MainLogic.DM.Client.SkillCheckPanel.Show(initiative, passive, Client.SkillCheckPanel.ClientPosition.OBSERVER);
+            if (initiative.Controller.IsDM) MainLogic.DM.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.INITIATIVE);
+            else if (passive.Controller.IsDM) MainLogic.DM.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.PASSIVE);
+            else MainLogic.DM.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.OBSERVER);
         }
-
-        public void CancelCheck()
-        {
-            SkillChecker.Instance.CancelCheck();
-            foreach (User user in MainLogic.Players)
-            {
-                user.AsPlayer.Client.SkillCheckPanel.Hide();
-            }
-            MainLogic.DM.AsDM.Client.SkillCheckPanel.Hide();
-        }
-
+        
         public void ForceEndCheck(SkillChecker.CheckResult initiativeResult, SkillChecker.CheckResult passiveResult)
         {
             SkillChecker.Instance.ForceEndCheck(initiativeResult, passiveResult);
             foreach (Player player in MainLogic.Players)
             {
-                if (SkillChecker.Instance.Initiative.ControlPlayer == player) player.Client.SkillCheckPanel.Hide();
-                else if (SkillChecker.Instance.Passive.ControlPlayer == player) player.Client.SkillCheckPanel.Hide();
-                else player.Client.SkillCheckPanel.Hide();
+                if (SkillChecker.Instance.Initiative.Controller == player) player.Client.StoryScene.SkillCheckPanel.Close();
+                else if (SkillChecker.Instance.Passive.Controller == player) player.Client.StoryScene.SkillCheckPanel.Close();
+                else player.Client.StoryScene.SkillCheckPanel.Close();
             }
-            if (SkillChecker.Instance.Initiative.ControlPlayer == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
-            else if (SkillChecker.Instance.Passive.ControlPlayer == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
-            else MainLogic.DM.Client.SkillCheckPanel.Hide();
+            if (SkillChecker.Instance.Initiative.Controller.IsDM) MainLogic.DM.Client.StoryScene.SkillCheckPanel.Close();
+            else if (SkillChecker.Instance.Passive.Controller.IsDM) MainLogic.DM.Client.StoryScene.SkillCheckPanel.Close();
+            else MainLogic.DM.Client.StoryScene.SkillCheckPanel.Close();
         }
 
         public void EndCheck()
@@ -297,13 +286,13 @@ namespace GameLogic.Container
             SkillChecker.Instance.EndCheck();
             foreach (Player player in MainLogic.Players)
             {
-                if (SkillChecker.Instance.Initiative.ControlPlayer == player) player.Client.SkillCheckPanel.Hide();
-                else if (SkillChecker.Instance.Passive.ControlPlayer == player) player.Client.SkillCheckPanel.Hide();
-                else player.Client.SkillCheckPanel.Hide();
+                if (SkillChecker.Instance.Initiative.Controller == player) player.Client.StoryScene.SkillCheckPanel.Close();
+                else if (SkillChecker.Instance.Passive.Controller == player) player.Client.StoryScene.SkillCheckPanel.Close();
+                else player.Client.StoryScene.SkillCheckPanel.Close();
             }
-            if (SkillChecker.Instance.Initiative.ControlPlayer == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
-            else if (SkillChecker.Instance.Passive.ControlPlayer == null) MainLogic.DM.Client.SkillCheckPanel.Hide();
-            else MainLogic.DM.Client.SkillCheckPanel.Hide();
+            if (SkillChecker.Instance.Initiative.Controller.IsDM) MainLogic.DM.Client.StoryScene.SkillCheckPanel.Close();
+            else if (SkillChecker.Instance.Passive.Controller.IsDM) MainLogic.DM.Client.StoryScene.SkillCheckPanel.Close();
+            else MainLogic.DM.Client.StoryScene.SkillCheckPanel.Close();
         }
 
         private void InitiativeSelectSkill(SkillType skillType, bool bigone, int[] fixedDicePoints)
@@ -313,13 +302,13 @@ namespace GameLogic.Container
             SkillChecker.Instance.InitiativeSkillSelectionOver();
             foreach (Player player in MainLogic.Players)
             {
-                player.Client.SkillCheckPanel.DisplayDicePoint(true, dicePoints);
-                player.Client.SkillCheckPanel.DisplaySkillReady(true, skillType, bigone);
-                player.Client.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.InitiativePoint);
+                player.Client.StoryScene.SkillCheckPanel.DisplayDicePoint(true, dicePoints);
+                player.Client.StoryScene.SkillCheckPanel.DisplaySkillReady(true, skillType, bigone);
+                player.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.InitiativePoint);
             }
-            MainLogic.DM.Client.SkillCheckPanel.DisplayDicePoint(true, dicePoints);
-            MainLogic.DM.Client.SkillCheckPanel.DisplaySkillReady(true, skillType, bigone);
-            MainLogic.DM.Client.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.InitiativePoint);
+            MainLogic.DM.Client.StoryScene.SkillCheckPanel.DisplayDicePoint(true, dicePoints);
+            MainLogic.DM.Client.StoryScene.SkillCheckPanel.DisplaySkillReady(true, skillType, bigone);
+            MainLogic.DM.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.InitiativePoint);
         }
 
         public void InitiativeUseSkill(SkillType skillType, bool force, bool bigone, int[] fixedDicePoints = null)
@@ -330,7 +319,8 @@ namespace GameLogic.Container
             }
             else if (SkillChecker.Instance.Action == SkillChecker.CharacterAction.CREATE_ASPECT || SkillChecker.Instance.Action == SkillChecker.CharacterAction.HINDER)
             {
-                MainLogic.DM.Client.DMCheckDialog.RequestCheck(SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
+                MainLogic.DM.DMClient.DMCheckDialog.RequestCheck(SkillChecker.Instance.Initiative.Controller,
+                    SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
                     result => { if (result) this.InitiativeSelectSkill(skillType, bigone, fixedDicePoints); });
             }
         }
@@ -339,7 +329,8 @@ namespace GameLogic.Container
         {
             if (stunt.Belong != SkillChecker.Instance.Initiative) throw new ArgumentException("This stunt is not belong to initiative character.", nameof(stunt));
             if (stunt.NeedDMCheck)
-                MainLogic.DM.Client.DMCheckDialog.RequestCheck(SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + stunt.Name + ",可以吗？",
+                MainLogic.DM.DMClient.DMCheckDialog.RequestCheck(SkillChecker.Instance.Initiative.Controller,
+                    SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + stunt.Name + ",可以吗？",
                     result => { if (result) stunt.InitiativeEffect.DoAction(); });
             else stunt.InitiativeEffect.DoAction();
         }
@@ -351,13 +342,13 @@ namespace GameLogic.Container
             SkillChecker.Instance.PassiveSkillSelectionOver();
             foreach (Player player in MainLogic.Players)
             {
-                player.Client.SkillCheckPanel.DisplayDicePoint(false, dicePoints);
-                player.Client.SkillCheckPanel.DisplaySkillReady(false, skillType, bigone);
-                player.Client.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.PassivePoint);
+                player.Client.StoryScene.SkillCheckPanel.DisplayDicePoint(false, dicePoints);
+                player.Client.StoryScene.SkillCheckPanel.DisplaySkillReady(false, skillType, bigone);
+                player.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.PassivePoint);
             }
-            MainLogic.DM.Client.SkillCheckPanel.DisplayDicePoint(false, dicePoints);
-            MainLogic.DM.Client.SkillCheckPanel.DisplaySkillReady(false, skillType, bigone);
-            MainLogic.DM.Client.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.PassivePoint);
+            MainLogic.DM.Client.StoryScene.SkillCheckPanel.DisplayDicePoint(false, dicePoints);
+            MainLogic.DM.Client.StoryScene.SkillCheckPanel.DisplaySkillReady(false, skillType, bigone);
+            MainLogic.DM.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.PassivePoint);
         }
 
         public void PassiveUseSkill(SkillType skillType, bool force, bool bigone, int[] fixedDicePoints = null)
@@ -374,7 +365,8 @@ namespace GameLogic.Container
                 }
                 else
                 {
-                    MainLogic.DM.Client.DMCheckDialog.RequestCheck(SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
+                    MainLogic.DM.DMClient.DMCheckDialog.RequestCheck(SkillChecker.Instance.Passive.Controller,
+                        SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
                         result => { if (result) this.PassiveSelectSkill(skillType, bigone, fixedDicePoints); });
                 }
             }
@@ -384,7 +376,8 @@ namespace GameLogic.Container
         {
             if (stunt.Belong != SkillChecker.Instance.Passive) throw new ArgumentException("This stunt is not belong to passive character.", nameof(stunt));
             if (stunt.NeedDMCheck)
-                MainLogic.DM.Client.DMCheckDialog.RequestCheck(SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + stunt.Name + ",可以吗？",
+                MainLogic.DM.DMClient.DMCheckDialog.RequestCheck(SkillChecker.Instance.Passive.Controller,
+                    SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + stunt.Name + ",可以吗？",
                     result => { if (result) stunt.InitiativeEffect.DoAction(); });
             else stunt.InitiativeEffect.DoAction();
         }
@@ -393,20 +386,21 @@ namespace GameLogic.Container
         {
             foreach (Player player in MainLogic.Players)
             {
-                player.Client.SkillCheckPanel.DisplayUsingAspect(true, aspect);
+                player.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(true, aspect);
             }
-            MainLogic.DM.Client.SkillCheckPanel.DisplayUsingAspect(true, aspect);
-            MainLogic.DM.Client.DMCheckDialog.RequestCheck(SkillChecker.Instance.Initiative.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
+            MainLogic.DM.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(true, aspect);
+            MainLogic.DM.DMClient.DMCheckDialog.RequestCheck(SkillChecker.Instance.Initiative.Controller,
+                SkillChecker.Instance.Initiative.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
                 result =>
                 {
                     if (result)
                     {
-                        SkillChecker.Instance.InitiativeSelectAspect(aspect, reroll);
+                        SkillChecker.Instance.InitiativeUseAspect(aspect, reroll);
                         foreach (Player player in MainLogic.Players)
                         {
-                            player.Client.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.InitiativePoint);
+                            player.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.InitiativePoint);
                         }
-                        MainLogic.DM.Client.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.InitiativePoint);
+                        MainLogic.DM.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.InitiativePoint);
                     }
                 });
         }
@@ -420,20 +414,21 @@ namespace GameLogic.Container
         {
             foreach (Player player in MainLogic.Players)
             {
-                player.Client.SkillCheckPanel.DisplayUsingAspect(false, aspect);
+                player.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(false, aspect);
             }
-            MainLogic.DM.Client.SkillCheckPanel.DisplayUsingAspect(false, aspect);
-            MainLogic.DM.Client.DMCheckDialog.RequestCheck(SkillChecker.Instance.Passive.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
+            MainLogic.DM.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(false, aspect);
+            MainLogic.DM.DMClient.DMCheckDialog.RequestCheck(SkillChecker.Instance.Passive.Controller,
+                SkillChecker.Instance.Passive.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
                 result =>
                 {
                     if (result)
                     {
-                        SkillChecker.Instance.PassiveSelectAspect(aspect, reroll);
+                        SkillChecker.Instance.PassiveUseAspect(aspect, reroll);
                         foreach (Player player in MainLogic.Players)
                         {
-                            player.Client.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.PassivePoint);
+                            player.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.PassivePoint);
                         }
-                        MainLogic.DM.Client.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.PassivePoint);
+                        MainLogic.DM.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.PassivePoint);
                     }
                 });
         }

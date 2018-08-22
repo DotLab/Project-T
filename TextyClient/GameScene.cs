@@ -12,6 +12,7 @@ namespace TextyClient
 {
     public partial class GameScene : UserControl
     {
+        private Timer _updateTimer = new Timer();
         private Bitmap _backbuffer = null;
         private Point _viewerRectangleLeftTop = new Point(0, 0);
 
@@ -22,6 +23,7 @@ namespace TextyClient
         public int ViewerRectangleLeft { get => _viewerRectangleLeftTop.X; set => _viewerRectangleLeftTop.X = value; }
         public int ViewerRectangleTop { get => _viewerRectangleLeftTop.Y; set => _viewerRectangleLeftTop.Y = value; }
         public Point ViewerRectangleLeftTop { get => _viewerRectangleLeftTop; set => _viewerRectangleLeftTop = value; }
+        public int UpdateInterval { get => _updateTimer.Interval; set => _updateTimer.Interval = value; }
 
         public event EventHandler<CanvasDrawingEventArgs> CanvasDrawing;
         public event EventHandler<MouseEventArgs> CanvasMouseMove;
@@ -39,10 +41,9 @@ namespace TextyClient
             ControlStyles.AllPaintingInWmPaint |
             ControlStyles.DoubleBuffer, true);
 
-            Timer GameTimer = new Timer();
-            GameTimer.Interval = 16;
-            GameTimer.Tick += new EventHandler(this.GameTimer_Tick);
-            GameTimer.Start();
+            _updateTimer.Interval = 16;
+            _updateTimer.Tick += new EventHandler(this.GameTimer_Tick);
+            _updateTimer.Start();
         }
         
         public void InitCanvas(Size size)

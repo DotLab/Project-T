@@ -1,5 +1,7 @@
 ﻿using GameLogic.Core;
+using GameLogic.Core.DataSystem;
 using GameLogic.Core.Network;
+using GameLogic.Core.Network.ClientMessages;
 using GameLogic.Core.Network.ServerMessages;
 using System;
 using System.Collections.Generic;
@@ -26,7 +28,6 @@ namespace TextyClient
         private class GridObject
         {
             public readonly string id;
-            public bool highland;
             public readonly CharacterView view;
             public Direction direction;
             public bool actable;
@@ -71,13 +72,52 @@ namespace TextyClient
             public SideObject negativeColLadder;
             public bool isMiddleLand;
 
-            public Grid()
+            public readonly int row;
+            public readonly int col;
+
+            public Grid(int row, int col)
             {
+                this.row = row;
+                this.col = col;
                 highland = new List<GridObject>();
                 lowland = new List<GridObject>();
             }
         }
-        
+
+        private struct ActableObjWithAP
+        {
+            public GridObject actable;
+            public int actionPoint;
+            public bool currentActing;
+
+            public override string ToString()
+            {
+                return currentActing ? "→" : "" + actable.ToString();
+            }
+        }
+
+        private class ReachablePlace
+        {
+            public ReachablePlace prevPlace;
+            public int row;
+            public int col;
+            public bool highland;
+            public int leftMovePoint;
+        }
+
+        private enum PassiveCheckingState
+        {
+            IDLE,
+            SELECT_SKILL_OR_STUNT,
+            SELECT_ASPECT
+        }
+
+        private enum InitiativeState
+        {
+            ACTING,
+            CHECKING_SELECT_ASPECT
+        }
+
         private Grid[,] _grids = null;
         private int _rows = -1;
         private int _cols = -1;
@@ -87,12 +127,19 @@ namespace TextyClient
         private int _mouseCol = -1;
         private bool _mouseHighland = false;
         private GridObject _specifiedGridObject = null;
+        
+        private List<ActableObjWithAP> _actingOrder = new List<ActableObjWithAP>();
+        private string _actingObjID = null;
+        private bool _canActing = false;
+        private InitiativeState _initiativeState = InitiativeState.ACTING;
+        private PassiveCheckingState _checkingStateAsPassive = PassiveCheckingState.IDLE;
+        private List<CharacterPropertyInfo> _selectionList = new List<CharacterPropertyInfo>();
+        private List<CharacterPropertyInfo> _selectionList2 = new List<CharacterPropertyInfo>();
+        
+        private ReachablePlace[] _movePathInfo = null;
+        private ReachablePlace _selectedPlace = null;
 
-        private string _operatableID = null;
-        private List<GridObject> _actingOrder;
-        private bool _inChecking = false;
-
-        public void MessageReceived(ulong timestamp, GameLogic.Core.Network.Message message)
+        public void MessageReceived(GameLogic.Core.Network.Message message)
         {
             switch (message.MessageType)
             {
@@ -203,29 +250,253 @@ namespace TextyClient
                     {
                         var orderMessage = (BattleSceneSetActingOrderMessage)message;
                         _actingOrder.Clear();
-                        _actingOrder.Add(null);
-                        foreach (var msgActableObj in orderMessage.objsOrder)
+                        foreach (var objOrder in orderMessage.objsOrder)
                         {
-                            GridObject gridObject = this.GetGridObject(msgActableObj.row, msgActableObj.col, msgActableObj.objID);
-                            _actingOrder.Add(gridObject);
+                            var gridObject = this.GetGridObject(objOrder.actableObj.row, objOrder.actableObj.col, objOrder.actableObj.objID);
+                            var objWithAP = new ActableObjWithAP
+                            {
+                                actable = gridObject,
+                                actionPoint = objOrder.actionPoint
+                            };
+                            _actingOrder.Add(objWithAP);
                         }
                     }
                     break;
-                case BattleSceneNextTurnMessage.MESSAGE_TYPE:
+                case BattleSceneChangeTurnMessage.MESSAGE_TYPE:
                     {
-                        var orderMessage = (BattleSceneNextTurnMessage)message;
+                        var orderMessage = (BattleSceneChangeTurnMessage)message;
+                        _canActing = orderMessage.canOperate;
+                        _actingObjID = orderMessage.gridObj.objID;
                         if (orderMessage.canOperate)
                         {
                             roundInfoLbl.Text = "你的回合";
-                            _operatableID = orderMessage.gridObj.objID;
                         }
                         else
                         {
-                            roundInfoLbl.Text = _actingOrder[0].ToString() + " 的回合";
-                            _operatableID = null;
+                            roundInfoLbl.Text = this.GetGridObject(orderMessage.gridObj) + " 的回合";
                         }
-                        if (_actingOrder.Count > 0) _actingOrder.RemoveAt(0);
+                        for (int i = 0; i < _actingOrder.Count; ++i)
+                        {
+                            if (_actingOrder[i].actable.id == orderMessage.gridObj.objID)
+                            {
+                                var val = _actingOrder[i];
+                                val.currentActing = true;
+                                _actingOrder[i] = val;
+                            }
+                            else
+                            {
+                                var val = _actingOrder[i];
+                                val.currentActing = false;
+                                _actingOrder[i] = val;
+                            }
+                        }
                         this.BattleSceneLookAtGrid(orderMessage.gridObj.row, orderMessage.gridObj.col);
+                    }
+                    break;
+                case BattleSceneDisplayActableObjectMovingMessage.MESSAGE_TYPE:
+                    {
+                        var moveMsg = (BattleSceneDisplayActableObjectMovingMessage)message;
+                        var grid = _grids[moveMsg.obj.row, moveMsg.obj.col];
+                        GridObject gridObject = null;
+                        bool highland = false;
+                        foreach (var lowObj in grid.lowland)
+                        {
+                            if (lowObj.id == moveMsg.obj.objID)
+                            {
+                                gridObject = lowObj;
+                                break;
+                            }
+                        }
+                        if (gridObject == null)
+                        {
+                            foreach (var highObj in grid.highland)
+                            {
+                                if (highObj.id == moveMsg.obj.objID)
+                                {
+                                    gridObject = highObj;
+                                    highland = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (gridObject == null) throw new InvalidOperationException("Invalid message.");
+                        BattleMapDirection direction = (BattleMapDirection)moveMsg.direction;
+                        switch (direction)
+                        {
+                            case BattleMapDirection.POSITIVE_ROW:
+                                MoveGridObjectStack(grid.row, grid.col, highland, grid.row + 1, grid.col, highland ^ moveMsg.stairway);
+                                break;
+                            case BattleMapDirection.POSITIVE_COL:
+                                MoveGridObjectStack(grid.row, grid.col, highland, grid.row, grid.col + 1, highland ^ moveMsg.stairway);
+                                break;
+                            case BattleMapDirection.NEGATIVE_ROW:
+                                MoveGridObjectStack(grid.row, grid.col, highland, grid.row - 1, grid.col, highland ^ moveMsg.stairway);
+                                break;
+                            case BattleMapDirection.NEGATIVE_COL:
+                                MoveGridObjectStack(grid.row, grid.col, highland, grid.row, grid.col - 1, highland ^ moveMsg.stairway);
+                                break;
+                            default:
+                                throw new InvalidOperationException("Invalid message.");
+                        }
+                    }
+                    break;
+                case BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage.MESSAGE_TYPE:
+                    {
+                        if (_checkingStateAsPassive != PassiveCheckingState.IDLE) return;
+                        var selectSkillMsg = (BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage)message;
+                        var getDirectResistRequest = new GetDirectResistSkillsMessage
+                        {
+                            actionType = selectSkillMsg.action,
+                            initiativeSkillTypeID = selectSkillMsg.initiativeSkillType.id
+                        };
+                        var stuntsIDRequest = new GetCharacterDataMessage
+                        {
+                            dataType = GetCharacterDataMessage.DataType.STUNTS,
+                            characterID = selectSkillMsg.passiveObj.objID
+                        };
+                        _selectionList.Clear();
+                        _selectionList2.Clear();
+                        selectionTypeGroupPanel.Visible = true;
+                        skillRbn.Checked = true;
+                        stuntRbn.Checked = false;
+                        selectionTypeLbl.Text = "对抗技能选择";
+                        selectionListBox.DataSource = _selectionList;
+                        _checkingStateAsPassive = PassiveCheckingState.SELECT_SKILL_OR_STUNT;
+                        Program.connection.Request(getDirectResistRequest, result => {
+                            var resp = result as DirectResistSkillsDataMessage;
+                            if (resp != null)
+                            {
+                                foreach (var skillType in resp.skillTypes)
+                                {
+                                    _selectionList.Add(new CharacterPropertyInfo() {
+                                        name = skillType.name,
+                                        propertyID = skillType.id
+                                    });
+                                }
+                                foreach (var skillType in Program.skillTypes)
+                                {
+                                    bool contain = false;
+                                    foreach (var match in resp.skillTypes)
+                                    {
+                                        if (match.id == skillType.propertyID)
+                                        {
+                                            contain = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!contain)
+                                    {
+                                        _selectionList.Add(new CharacterPropertyInfo() {
+                                            name = skillType.name,
+                                            propertyID = skillType.propertyID,
+                                            extraMessage = "*"
+                                        });
+                                    }
+                                }
+                            }
+                        });
+                        Program.connection.Request(stuntsIDRequest, result => {
+                            var resp = result as CharacterStuntsDescriptionMessage;
+                            if (resp != null)
+                            {
+                                foreach (var property in resp.properties)
+                                {
+                                    var stuntDataRequest = new GetStuntDataMessage()
+                                    {
+                                        characterID = resp.characterID,
+                                        stuntID = property.propertyID
+                                    };
+                                    Program.connection.Request(stuntDataRequest, dataResult => {
+                                        var dataResp = dataResult as StuntDataMessage;
+                                        if (dataResp != null)
+                                        {
+                                            _selectionList2.Add(new CharacterPropertyInfo()
+                                            {
+                                                name = property.describable.name,
+                                                description = property.describable.description,
+                                                propertyID = property.propertyID,
+                                                extraMessage = dataResp.needDMCheck ? "*" : ""
+                                            });
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    }
+                    break;
+                case CheckerSelectSkillOrStuntCompleteMessage.MESSAGE_TYPE:
+                    {
+                        var completeMsg = (CheckerSelectSkillOrStuntCompleteMessage)message;
+                        if (completeMsg.failure)
+                        {
+                            MessageBox.Show(completeMsg.extraMessage, "失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                        else
+                        {
+                            if (_checkingStateAsPassive == PassiveCheckingState.SELECT_SKILL_OR_STUNT && !completeMsg.isInitiative)
+                            {
+                                _selectionList.Clear();
+                                _selectionList2.Clear();
+                                selectionTypeGroupPanel.Visible = false;
+                                selectionTypeLbl.Text = "";
+                                selectionListBox.DataSource = _selectionList;
+                                _checkingStateAsPassive = PassiveCheckingState.IDLE;
+                            }
+                            else if (_checkingStateAsPassive == PassiveCheckingState.IDLE)
+                            {
+                                if (_canActing && _initiativeState == InitiativeState.ACTING && completeMsg.isInitiative)
+                                {
+
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case BattleSceneCheckerNotifySelectAspectMessage.MESSAGE_TYPE:
+                    {
+                        var selectAspectMsg = (BattleSceneCheckerNotifySelectAspectMessage)message;
+                        if (selectAspectMsg.isInitiative)
+                        {
+                            if (!_canActing || _initiativeState == InitiativeState.CHECKING_SELECT_ASPECT) return;
+                            _initiativeState = InitiativeState.CHECKING_SELECT_ASPECT;
+                        }
+                        else
+                        {
+                            if (_checkingStateAsPassive != PassiveCheckingState.IDLE) return;
+                            _checkingStateAsPassive = PassiveCheckingState.SELECT_ASPECT;
+                        }
+                        _selectionList.Clear();
+                        selectionTypeLbl.Text = "特征选择";
+                        selectionListBox.DataSource = _selectionList;
+                        selectAspectOverBtn.Visible = true;
+                    }
+                    break;
+                case CheckerSelectAspectCompleteMessage.MESSAGE_TYPE:
+                    {
+                        var completeMsg = (CheckerSelectAspectCompleteMessage)message;
+                        if (completeMsg.over)
+                        {
+                            if (completeMsg.isInitiative)
+                            {
+                                if (_initiativeState != InitiativeState.CHECKING_SELECT_ASPECT) return;
+                                _selectionList.Clear();
+                                selectionTypeLbl.Text = "";
+                                selectAspectOverBtn.Visible = false;
+                                _initiativeState = InitiativeState.ACTING;
+                            }
+                            else
+                            {
+                                if (_checkingStateAsPassive != PassiveCheckingState.SELECT_ASPECT) return;
+                                _selectionList.Clear();
+                                selectionTypeLbl.Text = "";
+                                selectAspectOverBtn.Visible = false;
+                                _checkingStateAsPassive = PassiveCheckingState.IDLE;
+                            }
+                        }
+                        if (completeMsg.failure)
+                        {
+                            MessageBox.Show(completeMsg.extraMessage, "失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
                     }
                     break;
                 default:
@@ -241,15 +512,16 @@ namespace TextyClient
             connectionUpdater.Interval = 10;
             connectionUpdater.Tick += new EventHandler(this.ConnectionUpdate);
             connectionUpdater.Start();
+            
+            roundInfoListBox.DataSource = _actingOrder;
+            selectionListBox.DataSource = _selectionList;
 
-            _actingOrder = new List<GridObject>();
-            roundInfoList.DataSource = _actingOrder;
-            //Program.connection.AddMessageReceiver(DisplayDicePointsMessage.MESSAGE_TYPE, this);
+            Program.connection.AddMessageReceiver(DisplayDicePointsMessage.MESSAGE_TYPE, this);
         }
 
         private void ConnectionUpdate(object sender, EventArgs e)
         {
-            //Program.connection.UpdateReceiver();
+            Program.connection.UpdateReceiver();
         }
         
         private GridObject GetSelectedGridObject()
@@ -276,6 +548,11 @@ namespace TextyClient
             }
         }
 
+        private GridObject GetGridObject(BattleSceneObj messageObj)
+        {
+            return this.GetGridObject(messageObj.row, messageObj.col, messageObj.objID);
+        }
+
         private GridObject GetGridObject(int row, int col, string id)
         {
             Grid grid = _grids[row, col];
@@ -289,7 +566,7 @@ namespace TextyClient
             }
             return null;
         }
-
+        
         private void BattleSceneLookAtGrid(int row, int col)
         {
             Point pos = new Point((int)(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f)), (int)(DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f));
@@ -306,12 +583,79 @@ namespace TextyClient
             hScrollBar.Value = pos.X;
             vScrollBar.Value = pos.Y;
         }
-
-        private void updateTimer_Tick(object sender, EventArgs e)
+        
+        private void SelectedObjectChanged(GridObject oldOne, GridObject newOne)
         {
-            mouseGridPosLbl.Text = "Row:" + _mouseRow.ToString() + ", Col:" + _mouseCol.ToString() + ", Highland:" + _mouseHighland.ToString();
-            GridObject gridObject = this.GetSelectedGridObject();
-            selectedGridObjectLbl.Text = gridObject != null ? gridObject.ToString() : "无";
+            selectedGridObjectLbl.Text = newOne != null ? newOne.ToString() : "无";
+
+            if (_checkingStateAsPassive == PassiveCheckingState.SELECT_ASPECT || _initiativeState == InitiativeState.CHECKING_SELECT_ASPECT)
+            {
+                if (newOne != null)
+                {
+                    _selectionList.Clear();
+                    var aspectsRequest = new GetCharacterDataMessage();
+                    aspectsRequest.characterID = newOne.id;
+                    aspectsRequest.dataType = GetCharacterDataMessage.DataType.ASPECTS;
+                    Program.connection.Request(aspectsRequest, result => {
+                        var resp = (CharacterPropertiesDescriptionMessage)result;
+                        if (resp != null)
+                        {
+                            foreach (var aspect in resp.properties)
+                            {
+                                var newItem = new CharacterPropertyInfo()
+                                {
+                                    ownerID = resp.characterID,
+                                    propertyID = aspect.propertyID,
+                                    name = aspect.describable.name,
+                                    description = aspect.describable.description
+                                };
+                                _selectionList.Add(newItem);
+                            }
+                        }
+                    });
+                    aspectsRequest.dataType = GetCharacterDataMessage.DataType.CONSEQUENCES;
+                    Program.connection.Request(aspectsRequest, result => {
+                        var resp = (CharacterPropertiesDescriptionMessage)result;
+                        if (resp != null)
+                        {
+                            foreach (var consequence in resp.properties)
+                            {
+                                var newItem = new CharacterPropertyInfo()
+                                {
+                                    ownerID = resp.characterID,
+                                    propertyID = consequence.propertyID,
+                                    name = consequence.describable.name,
+                                    description = consequence.describable.description,
+                                    extraMessage = "伤痕"
+                                };
+                                _selectionList.Add(newItem);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        private void SelectedGridChanged(int oldRow, int oldCol, bool oldHighland, int newRow, int newCol, bool newHighland)
+        {
+            var oldSelectedObject = GetSelectedGridObject();
+            _specifiedGridObject = null;
+            var gridObject = GetSelectedGridObject();
+            SelectedObjectChanged(oldSelectedObject, gridObject);
+            mouseGridPosLbl.Text = "Row:" + newRow.ToString() + ", Col:" + newCol.ToString() + ", Highland:" + newHighland.ToString();
+
+            if (_movePathInfo != null)
+            {
+                _selectedPlace = null;
+                foreach (var place in _movePathInfo)
+                {
+                    if (place.row == newRow && place.col == newCol && place.highland == newHighland)
+                    {
+                        _selectedPlace = place;
+                        break;
+                    }
+                }
+            }
         }
 
         private void vScrollBar_ValueChanged(object sender, EventArgs e)
@@ -362,13 +706,31 @@ namespace TextyClient
             {
                 for (int j = 0; j < cols; ++j)
                 {
-                    _grids[i, j] = new Grid();
+                    _grids[i, j] = new Grid(i, j);
                 }
             }
             battleScene.InitCanvas(new Size((int)(DIAMOND_LENGTH / 2.0f * Math.Sqrt(3.0f) * (rows + cols)), (int)(DIAMOND_LENGTH / 2.0f + DIAMOND_LENGTH / 2.0f * (rows + cols))));
         }
 
-        private bool IsPointInPolygon(PointF[] polygon, PointF point)
+        private void MoveGridObjectStack(int srcRow, int srcCol, bool srcHighland, int dstRow, int dstCol, bool dstHighland, int count = 1)
+        {
+            Grid srcGrid = _grids[srcRow, srcCol];
+            Grid dstGrid = _grids[dstRow, dstCol];
+            List<GridObject> srcLand, dstLand;
+            if (srcHighland) srcLand = srcGrid.highland;
+            else srcLand = srcGrid.lowland;
+            if (dstHighland) dstLand = dstGrid.highland;
+            else dstLand = dstGrid.lowland;
+            int lastIndex = dstLand.Count;
+            for (int i = srcLand.Count - 1; srcLand.Count - i <= count; --i)
+            {
+                GridObject gridObject = srcLand[i];
+                dstLand.Insert(lastIndex, gridObject);
+                srcLand.RemoveAt(i);
+            }
+        }
+
+        private static bool IsPointInPolygon(PointF[] polygon, PointF point)
         {
             bool isInside = false;
             for (int i = 0, j = polygon.Length - 1; i < polygon.Length; j = i++)
@@ -384,20 +746,39 @@ namespace TextyClient
 
         private void BattleSceneObjectPresent(GridObject gridObject, Graphics g, PointF[] gridPoints)
         {
-            if (gridObject.view.battle == "地面")
+            if (gridObject == GetSelectedGridObject())
             {
-                g.FillPolygon(Brushes.LightGray, gridPoints);
-            }
-            else if (gridObject.view.battle == "障碍")
-            {
-                g.FillPolygon(Brushes.DarkGray, gridPoints);
+                if (gridObject.view.battle == "地面")
+                {
+                    g.FillPolygon(Brushes.Red, gridPoints);
+                }
+                else if (gridObject.view.battle == "障碍")
+                {
+                    g.FillPolygon(Brushes.DarkRed, gridPoints);
+                }
+                else
+                {
+                    g.DrawString(gridObject.view.battle, new Font("宋体", 12), Brushes.Red, new PointF(gridPoints[0].X - 12, gridPoints[0].Y + 12));
+                }
             }
             else
             {
-                g.DrawString(gridObject.view.battle, new Font("宋体", 12), Brushes.Black, new PointF(gridPoints[0].X - 12, gridPoints[0].Y + 12));
+                if (gridObject.view.battle == "地面")
+                {
+                    g.FillPolygon(Brushes.LightGray, gridPoints);
+                }
+                else if (gridObject.view.battle == "障碍")
+                {
+                    g.FillPolygon(Brushes.DarkGray, gridPoints);
+                }
+                else
+                {
+                    g.DrawString(gridObject.view.battle, new Font("宋体", 12), Brushes.Black, new PointF(gridPoints[0].X - 12, gridPoints[0].Y + 12));
+                }
             }
         }
 
+        #region Canvas Drawing
         private void battleScene_CanvasDrawing(object sender, CanvasDrawingEventArgs e)
         {
             Graphics g = e.g;
@@ -456,15 +837,105 @@ namespace TextyClient
                             }
                             for (int k = 0; k < 4; ++k)
                             {
-                                g.DrawLine(Pens.Red, gridPoints[k], lowlandGridPoints[k]);
+                                g.DrawLine(Pens.Cyan, gridPoints[k], lowlandGridPoints[k]);
                             }
                             foreach (GridObject gridObject in grid.highland)
                             {
                                 this.BattleSceneObjectPresent(gridObject, g, gridPoints);
                             }
-                            g.DrawPolygon(Pens.Red, gridPoints);
+                            g.DrawPolygon(Pens.Cyan, gridPoints);
                         }
                     }
+                }
+            }
+            if (_movePathInfo != null)
+            {
+                foreach (var path in _movePathInfo)
+                {
+                    int row = path.row;
+                    int col = path.col;
+                    if (!path.highland)
+                    {
+                        PointF[] gridPoints = new PointF[4]
+                        {
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
+                        };
+                        g.FillPolygon(Brushes.Blue, gridPoints);
+                    }
+                    else
+                    {
+                        PointF[] gridPoints;
+                        if (_grids[row, col].isMiddleLand)
+                        {
+                            gridPoints = new PointF[4]
+                            {
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
+                            };
+                        }
+                        else
+                        {
+                            gridPoints = new PointF[4]
+                            {
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                                    new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f)
+                            };
+                        }
+                        g.FillPolygon(Brushes.Blue, gridPoints);
+                    }
+                }
+                ReachablePlace pathEnd = _selectedPlace;
+                if (_selectedPlace != null)
+                {
+                    do
+                    {
+                        int row = pathEnd.row;
+                        int col = pathEnd.col;
+                        if (!pathEnd.highland)
+                        {
+                            PointF[] gridPoints = new PointF[4]
+                            {
+                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                            new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
+                            };
+                            g.FillPolygon(Brushes.Green, gridPoints);
+                        }
+                        else
+                        {
+                            PointF[] gridPoints;
+                            if (_grids[row, col].isMiddleLand)
+                            {
+                                gridPoints = new PointF[4]
+                                {
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
+                                };
+                            }
+                            else
+                            {
+                                gridPoints = new PointF[4]
+                                {
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+                                new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f)
+                                };
+                            }
+                            g.FillPolygon(Brushes.Green, gridPoints);
+                        }
+                        pathEnd = pathEnd.prevPlace;
+                    } while (pathEnd != null);
                 }
             }
             if (_mouseRow != -1 && _mouseCol != -1)
@@ -517,12 +988,9 @@ namespace TextyClient
                 g.DrawPolygon(pen, diamondPoints);
             }
         }
+        #endregion
 
-        private void battleScene_SizeChanged(object sender, EventArgs e)
-        {
-            this.UpdateScrollBar();
-        }
-        
+        #region Canvas Mouse Down
         private void battleScene_CanvasMouseDown(object sender, MouseEventArgs e)
         {
             if (_grids != null)
@@ -557,9 +1025,14 @@ namespace TextyClient
                             }
                             if (IsPointInPolygon(diamondPoints, new PointF(e.X, e.Y)))
                             {
-                                if (!(_mouseRow == row && _mouseCol == col && _mouseHighland == true)) _specifiedGridObject = null;
-                                _mouseRow = row; _mouseCol = col;
-                                _mouseHighland = true;
+                                if (!(_mouseRow == row && _mouseCol == col && _mouseHighland == true))
+                                {
+                                    int oldRow = _mouseRow, oldCol = _mouseCol;
+                                    bool oldHighland = _mouseHighland;
+                                    _mouseRow = row; _mouseCol = col;
+                                    _mouseHighland = true;
+                                    SelectedGridChanged(oldRow, oldCol, oldHighland, _mouseRow, _mouseCol, _mouseHighland);
+                                }
                                 return;
                             }
                         }
@@ -574,18 +1047,34 @@ namespace TextyClient
                             };
                             if (IsPointInPolygon(diamondPoints, new PointF(e.X, e.Y)))
                             {
-                                if (!(_mouseRow == row && _mouseCol == col && _mouseHighland == false)) _specifiedGridObject = null;
-                                _mouseRow = row; _mouseCol = col;
-                                _mouseHighland = false;
+                                if (!(_mouseRow == row && _mouseCol == col && _mouseHighland == false))
+                                {
+                                    int oldRow = _mouseRow, oldCol = _mouseCol;
+                                    bool oldHighland = _mouseHighland;
+                                    _mouseRow = row; _mouseCol = col;
+                                    _mouseHighland = false;
+                                    SelectedGridChanged(oldRow, oldCol, oldHighland, _mouseRow, _mouseCol, _mouseHighland);
+                                }
                                 return;
                             }
                         }
                     }
                 }
             }
-            _specifiedGridObject = null;
-            _mouseRow = -1; _mouseCol = -1;
-            _mouseHighland = false;
+            if (_mouseRow != -1 || _mouseCol != -1)
+            {
+                int oldRow = _mouseRow, oldCol = _mouseCol;
+                bool oldHighland = _mouseHighland;
+                _mouseRow = -1; _mouseCol = -1;
+                _mouseHighland = false;
+                SelectedGridChanged(oldRow, oldCol, oldHighland, _mouseRow, _mouseCol, _mouseHighland);
+            }
+        }
+        #endregion
+
+        private void battleScene_SizeChanged(object sender, EventArgs e)
+        {
+            this.UpdateScrollBar();
         }
 
         private void battleSceneMenuStrip_Opening(object sender, CancelEventArgs e)
@@ -596,15 +1085,17 @@ namespace TextyClient
                 e.Cancel = true;
                 return;
             }
-            menuItemMove.Enabled = menuItemUseSkill.Enabled = menuItemUseStunt.Enabled = menuItemExtraMovePoint.Enabled = menuItemRoundOver.Enabled = false;
-            menuItemConfirm.Enabled = menuItemSelectAspect.Enabled = false;
-            if (gridObject.id == _operatableID && gridObject.actable)
+            menuItemConfirmGrid.Enabled = false;
+            menuItemMove.Enabled = menuItemExtraMovePoint.Enabled = menuItemCreateAspect.Enabled = menuItemAttack.Enabled = menuItemSpecialAction.Enabled = menuItemRoundOver.Enabled = false;
+            if (_canActing && gridObject.id == _actingObjID && gridObject.actable)
             {
-                menuItemUseSkill.Enabled = menuItemUseStunt.Enabled = true;
+                menuItemCreateAspect.Enabled = menuItemAttack.Enabled = menuItemSpecialAction.Enabled = menuItemRoundOver.Enabled = true;
                 if (gridObject.movable) menuItemMove.Enabled = menuItemExtraMovePoint.Enabled = true;
             }
-            if (_inChecking) menuItemSelectAspect.Enabled = true;
-            
+            if (_movePathInfo != null && _selectedPlace != null)
+            {
+                menuItemConfirmGrid.Enabled = true;
+            }
         }
 
         private void battleScene_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -612,37 +1103,58 @@ namespace TextyClient
             if (_mouseRow != -1 && _mouseCol != -1)
             {
                 Grid grid = _grids[_mouseRow, _mouseCol];
-                if (_mouseHighland) gridObjectSelectionList.DataSource = grid.highland;
-                else gridObjectSelectionList.DataSource = grid.lowland;
-                gridObjectSelectionList.Location = new Point(e.X + battleScene.Left, e.Y + battleScene.Top);
-                gridObjectSelectionList.Visible = true;
+                if (_mouseHighland) gridObjectSelectionListBox.DataSource = grid.highland;
+                else gridObjectSelectionListBox.DataSource = grid.lowland;
+                gridObjectSelectionListBox.Location = new Point(e.X + battleScene.Left, e.Y + battleScene.Top);
+                gridObjectSelectionListBox.Visible = true;
             }
         }
 
         private void battleScene_MouseClick(object sender, MouseEventArgs e)
         {
-            gridObjectSelectionList.Visible = false;
+            gridObjectSelectionListBox.Visible = false;
         }
 
         private void gridObjectSelectionList_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            _specifiedGridObject = (GridObject)gridObjectSelectionList.SelectedValue;
-            gridObjectSelectionList.Visible = false;
+            var oldSelectedObject = GetSelectedGridObject();
+            _specifiedGridObject = (GridObject)gridObjectSelectionListBox.SelectedValue;
+            gridObjectSelectionListBox.Visible = false;
+            SelectedObjectChanged(oldSelectedObject, GetSelectedGridObject());
         }
 
         private void menuItemMove_Click(object sender, EventArgs e)
         {
-
-        }
-
-        private void menuItemUseSkill_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void menuItemUseStunt_Click(object sender, EventArgs e)
-        {
-
+            if (_movePathInfo != null)
+            {
+                _movePathInfo = null;
+                _selectedPlace = null;
+                menuItemMove.Text = "移动";
+            }
+            else
+            {
+                var message = new BattleSceneGetActableObjectMovePathInfoMessage();
+                Program.connection.Request(message, result => {
+                    var resp = (BattleSceneMovePathInfoMessage)result;
+                    if (resp != null)
+                    {
+                        _movePathInfo = new ReachablePlace[resp.pathInfo.Length];
+                        for (int i = 0; i < resp.pathInfo.Length; ++i)
+                        {
+                            _movePathInfo[i] = new ReachablePlace();
+                            _movePathInfo[i].row = resp.pathInfo[i].row;
+                            _movePathInfo[i].col = resp.pathInfo[i].col;
+                            _movePathInfo[i].highland = resp.pathInfo[i].highland;
+                            _movePathInfo[i].leftMovePoint = resp.pathInfo[i].leftMovePoint;
+                        }
+                        for (int i = 0; i < resp.pathInfo.Length; ++i)
+                        {
+                            _movePathInfo[i].prevPlace = _movePathInfo[resp.pathInfo[i].prevPlaceIndex];
+                        }
+                        menuItemMove.Text = "取消移动";
+                    }
+                });
+            }
         }
 
         private void menuItemExtraMovePoint_Click(object sender, EventArgs e)
@@ -650,9 +1162,125 @@ namespace TextyClient
 
         }
 
+        private void menuItemCreateAspect_Click(object sender, EventArgs e)
+        {
+            
+        }
+        
+        private void menuItemAttack_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void menuItemSpecialAction_Click(object sender, EventArgs e)
+        {
+
+        }
+
         private void menuItemRoundOver_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void menuItemConfirmGrid_Click(object sender, EventArgs e)
+        {
+            if (_movePathInfo != null && _selectedPlace != null)
+            {
+                var message = new BattleSceneActableObjectMoveMessage();
+                message.dstRow = _selectedPlace.row;
+                message.dstCol = _selectedPlace.col;
+                message.dstHighland = _selectedPlace.highland;
+                Program.connection.SendMessage(message);
+                _movePathInfo = null;
+                _selectedPlace = null;
+                menuItemMove.Text = "移动";
+            }
+
+        }
+
+        private void menuItemViewData_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void skipAspectSelectionCbx_CheckedChanged(object sender, EventArgs e)
+        {
+            var message = new BattleSceneSetSkipSelectAspectMessage();
+            message.val = skipAspectSelectionCbx.Checked;
+            Program.connection.SendMessage(message);
+        }
+
+        private void confirmSelectionBtn_Click(object sender, EventArgs e)
+        {
+            if (_checkingStateAsPassive == PassiveCheckingState.SELECT_SKILL_OR_STUNT)
+            {
+                if (skillRbn.Checked)
+                {
+                    var message = new CheckerSkillSelectedMessage();
+                    message.skillTypeID = ((CharacterPropertyInfo)selectionListBox.SelectedValue).propertyID;
+                    Program.connection.SendMessage(message);
+                }
+                else if (stuntRbn.Checked)
+                {
+                    var message = new CheckerStuntSelectedMessage();
+                    message.stuntID = ((CharacterPropertyInfo)selectionListBox.SelectedValue).propertyID;
+                    Program.connection.SendMessage(message);
+                }
+            }
+            else if ((_canActing && _initiativeState == InitiativeState.CHECKING_SELECT_ASPECT) || _checkingStateAsPassive == PassiveCheckingState.SELECT_ASPECT)
+            {
+                DialogResult dr = MessageBox.Show("+2（是）还是重投（否）？", "选项", MessageBoxButtons.YesNo);
+                var selectedAspect = (CharacterPropertyInfo)selectionListBox.SelectedValue;
+                var message = new CheckerAspectSelectedMessage();
+                message.characterID = selectedAspect.ownerID;
+                message.aspectID = selectedAspect.propertyID;
+                message.reroll = dr == DialogResult.No;
+                Program.connection.SendMessage(message);
+            }
+            else
+            {
+                /*
+                if (skillRbn.Checked)
+                {
+                    var message = new SkillSelectedMessage();
+                    message.skillTypeID = ((CharacterPropertyInfo)selectionListBox.SelectedValue).propertyID;
+                    Program.connection.SendMessage(message);
+                }
+                else if (stuntRbn.Checked)
+                {
+                    var message = new StuntSelectedMessage();
+                    message.stuntID = ((CharacterPropertyInfo)selectionListBox.SelectedValue).propertyID;
+                    Program.connection.SendMessage(message);
+                }
+                */
+            }
+        }
+
+        private void stuntRbn_CheckedChanged(object sender, EventArgs e)
+        {
+            if (stuntRbn.Checked)
+            {
+                selectionTypeLbl.Text = "对抗特技选择";
+                selectionListBox.DataSource = _selectionList2;
+            }
+        }
+
+        private void skillRbn_CheckedChanged(object sender, EventArgs e)
+        {
+            if (skillRbn.Checked)
+            {
+                selectionTypeLbl.Text = "对抗技能选择";
+                selectionListBox.DataSource = _selectionList;
+            }
+        }
+
+        private void selectAspectOverBtn_Click(object sender, EventArgs e)
+        {
+            if ((_canActing && _initiativeState == InitiativeState.CHECKING_SELECT_ASPECT) || _checkingStateAsPassive == PassiveCheckingState.SELECT_ASPECT)
+            {
+                var message = new SelectAspectOverMessage();
+                Program.connection.SendMessage(message);
+            }
         }
     }
 }

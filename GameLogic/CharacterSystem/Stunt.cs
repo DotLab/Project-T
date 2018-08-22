@@ -139,6 +139,7 @@ namespace GameLogic.CharacterSystem
 
         public Stunt(InitiativeEffect effect, SkillType boundSkillType, bool needDMCheck = true, string name = "", string description = "")
         {
+            if (effect == null) throw new ArgumentNullException(nameof(effect));
             if (effect.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(effect));
             _initiativeEffect = effect;
             effect.Belong = this;
@@ -160,6 +161,7 @@ namespace GameLogic.CharacterSystem
             get => _initiativeEffect;
             set
             {
+                if (value == null) throw new ArgumentNullException(nameof(value));
                 if (value.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(value));
                 _initiativeEffect.Belong = null;
                 _initiativeEffect = value;

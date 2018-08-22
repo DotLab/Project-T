@@ -1,9 +1,11 @@
 ﻿using GameLogic.Core.DataSystem;
 using GameLogic.Core.Network.ClientMessages;
+using GameLogic.Core.Network.ServerMessages;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace GameLogic.Core.Network
 {
@@ -16,13 +18,181 @@ namespace GameLogic.Core.Network
             {
                 case IdentifiedMessage.MESSAGE_TYPE:
                     return new IdentifiedMessage();
+
+                case ServerReadyMessage.MESSAGE_TYPE:
+                    return new ServerReadyMessage();
+                case StorySceneResetMessage.MESSAGE_TYPE:
+                    return new StorySceneResetMessage();
+                case StorySceneObjectAddMessage.MESSAGE_TYPE:
+                    return new StorySceneObjectAddMessage();
+                case StorySceneObjectRemoveMessage.MESSAGE_TYPE:
+                    return new StorySceneObjectRemoveMessage();
+                case StorySceneObjectTransformMessage.MESSAGE_TYPE:
+                    return new StorySceneObjectTransformMessage();
+                case StorySceneObjectViewEffectMessage.MESSAGE_TYPE:
+                    return new StorySceneObjectViewEffectMessage();
+                case StorySceneObjectPortraitStyleMessage.MESSAGE_TYPE:
+                    return new StorySceneObjectPortraitStyleMessage();
+                case StorySceneCameraTransformMessage.MESSAGE_TYPE:
+                    return new StorySceneCameraTransformMessage();
+                case StorySceneCameraEffectMessage.MESSAGE_TYPE:
+                    return new StorySceneCameraEffectMessage();
+                case PlayBGMMessage.MESSAGE_TYPE:
+                    return new PlayBGMMessage();
+                case StopBGMMessage.MESSAGE_TYPE:
+                    return new StopBGMMessage();
+                case PlaySEMessage.MESSAGE_TYPE:
+                    return new PlaySEMessage();
+                case ShowSceneMessage.MESSAGE_TYPE:
+                    return new ShowSceneMessage();
+                case TextBoxAddParagraphMessage.MESSAGE_TYPE:
+                    return new TextBoxAddParagraphMessage();
+                case TextBoxAddSelectionMessage.MESSAGE_TYPE:
+                    return new TextBoxAddSelectionMessage();
+                case TextBoxClearMessage.MESSAGE_TYPE:
+                    return new TextBoxClearMessage();
+                case TextBoxSetPortraitMessage.MESSAGE_TYPE:
+                    return new TextBoxSetPortraitMessage();
+                case TextBoxPortraitStyleMessage.MESSAGE_TYPE:
+                    return new TextBoxPortraitStyleMessage();
+                case TextBoxPortraitEffectMessage.MESSAGE_TYPE:
+                    return new TextBoxPortraitEffectMessage();
+                case CharacterInfoDataMessage.MESSAGE_TYPE:
+                    return new CharacterInfoDataMessage();
+                case CharacterSkillsDescriptionMessage.MESSAGE_TYPE:
+                    return new CharacterSkillsDescriptionMessage();
+                case CharacterAspectsDescriptionMessage.MESSAGE_TYPE:
+                    return new CharacterAspectsDescriptionMessage();
+                case CharacterStuntsDescriptionMessage.MESSAGE_TYPE:
+                    return new CharacterStuntsDescriptionMessage();
+                case CharacterExtrasDescriptionMessage.MESSAGE_TYPE:
+                    return new CharacterExtrasDescriptionMessage();
+                case CharacterConsequencesDescriptionMessage.MESSAGE_TYPE:
+                    return new CharacterConsequencesDescriptionMessage();
+                case CharacterStressDataMessage.MESSAGE_TYPE:
+                    return new CharacterStressDataMessage();
+                case CharacterFatePointDataMessage.MESSAGE_TYPE:
+                    return new CharacterFatePointDataMessage();
+                case AspectDataMessage.MESSAGE_TYPE:
+                    return new AspectDataMessage();
+                case ConsequenceDataMessage.MESSAGE_TYPE:
+                    return new ConsequenceDataMessage();
+                case SkillDataMessage.MESSAGE_TYPE:
+                    return new SkillDataMessage();
+                case StuntDataMessage.MESSAGE_TYPE:
+                    return new StuntDataMessage();
+                case ExtraDataMessage.MESSAGE_TYPE:
+                    return new ExtraDataMessage();
+                case DirectResistSkillsDataMessage.MESSAGE_TYPE:
+                    return new DirectResistSkillsDataMessage();
+                case SkillTypeListDataMessage.MESSAGE_TYPE:
+                    return new SkillTypeListDataMessage();
+                case SkillCheckPanelShowMessage.MESSAGE_TYPE:
+                    return new SkillCheckPanelShowMessage();
+                case SkillCheckPanelHideMessage.MESSAGE_TYPE:
+                    return new SkillCheckPanelHideMessage();
+                case DMCheckPanelShowMessage.MESSAGE_TYPE:
+                    return new DMCheckPanelShowMessage();
+                case DMCheckPanelHideMessage.MESSAGE_TYPE:
+                    return new DMCheckPanelHideMessage();
+                case DisplayDicePointsMessage.MESSAGE_TYPE:
+                    return new DisplayDicePointsMessage();
+                case StorySceneCheckerNotifyInitiativeSelectSkillOrStuntMessage.MESSAGE_TYPE:
+                    return new StorySceneCheckerNotifyInitiativeSelectSkillOrStuntMessage();
+                case StorySceneCheckerNotifyPassiveSelectSkillOrStuntMessage.MESSAGE_TYPE:
+                    return new StorySceneCheckerNotifyPassiveSelectSkillOrStuntMessage();
+                case CheckerSelectSkillOrStuntCompleteMessage.MESSAGE_TYPE:
+                    return new CheckerSelectSkillOrStuntCompleteMessage();
+                case StorySceneCheckerNotifySelectAspectMessage.MESSAGE_TYPE:
+                    return new StorySceneCheckerNotifySelectAspectMessage();
+                case CheckerSelectAspectCompleteMessage.MESSAGE_TYPE:
+                    return new CheckerSelectAspectCompleteMessage();
+                case StorySceneCheckerUpdateSumPointMessage.MESSAGE_TYPE:
+                    return new StorySceneCheckerUpdateSumPointMessage();
+                case StorySceneCheckerDisplaySkillReadyMessage.MESSAGE_TYPE:
+                    return new StorySceneCheckerDisplaySkillReadyMessage();
+                case StorySceneCheckerDisplayUsingAspectMessage.MESSAGE_TYPE:
+                    return new StorySceneCheckerDisplayUsingAspectMessage();
+                case StorySceneAddPlayerCharacterMessage.MESSAGE_TYPE:
+                    return new StorySceneAddPlayerCharacterMessage();
+                case StorySceneRemovePlayerCharacterMessage.MESSAGE_TYPE:
+                    return new StorySceneRemovePlayerCharacterMessage();
+                case BattleScenePushGridObjectMessage.MESSAGE_TYPE:
+                    return new BattleScenePushGridObjectMessage();
+                case BattleSceneRemoveGridObjectMessage.MESSAGE_TYPE:
+                    return new BattleSceneRemoveGridObjectMessage();
+                case BattleSceneAddLadderObjectMessage.MESSAGE_TYPE:
+                    return new BattleSceneAddLadderObjectMessage();
+                case BattleSceneRemoveLadderObjectMessage.MESSAGE_TYPE:
+                    return new BattleSceneRemoveLadderObjectMessage();
+                case BattleSceneResetMessage.MESSAGE_TYPE:
+                    return new BattleSceneResetMessage();
+                case BattleSceneSetActingOrderMessage.MESSAGE_TYPE:
+                    return new BattleSceneSetActingOrderMessage();
+                case BattleSceneChangeTurnMessage.MESSAGE_TYPE:
+                    return new BattleSceneChangeTurnMessage();
+                case BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage.MESSAGE_TYPE:
+                    return new BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage();
+                case BattleSceneCheckerNotifySelectAspectMessage.MESSAGE_TYPE:
+                    return new BattleSceneCheckerNotifySelectAspectMessage();
+                case BattleSceneCheckerUpdateSumPointMessage.MESSAGE_TYPE:
+                    return new BattleSceneCheckerUpdateSumPointMessage();
+                case BattleSceneCheckerDisplaySkillReadyMessage.MESSAGE_TYPE:
+                    return new BattleSceneCheckerDisplaySkillReadyMessage();
+                case BattleSceneCheckerDisplayUsingAspectMessage.MESSAGE_TYPE:
+                    return new BattleSceneCheckerDisplayUsingAspectMessage();
+                case BattleSceneMovePathInfoMessage.MESSAGE_TYPE:
+                    return new BattleSceneMovePathInfoMessage();
+                case BattleSceneDisplayActableObjectMovingMessage.MESSAGE_TYPE:
+                    return new BattleSceneDisplayActableObjectMovingMessage();
+                    
+                case ClientInitMessage.MESSAGE_TYPE:
+                    return new ClientInitMessage();
                 case StorySceneObjectActionMessage.MESSAGE_TYPE:
                     return new StorySceneObjectActionMessage();
                 case TextSelectedMessage.MESSAGE_TYPE:
                     return new TextSelectedMessage();
-                // ...
+                case StorySceneNextActionMessage.MESSAGE_TYPE:
+                    return new StorySceneNextActionMessage();
+                case CheckerSkillSelectedMessage.MESSAGE_TYPE:
+                    return new CheckerSkillSelectedMessage();
+                case CheckerAspectSelectedMessage.MESSAGE_TYPE:
+                    return new CheckerAspectSelectedMessage();
+                case CheckerStuntSelectedMessage.MESSAGE_TYPE:
+                    return new CheckerStuntSelectedMessage();
+                case GetCharacterDataMessage.MESSAGE_TYPE:
+                    return new GetCharacterDataMessage();
+                case GetAspectDataMessage.MESSAGE_TYPE:
+                    return new GetAspectDataMessage();
+                case GetConsequenceDataMessage.MESSAGE_TYPE:
+                    return new GetConsequenceDataMessage();
+                case GetSkillDataMessage.MESSAGE_TYPE:
+                    return new GetSkillDataMessage();
+                case GetStuntDataMessage.MESSAGE_TYPE:
+                    return new GetStuntDataMessage();
+                case GetExtraDataMessage.MESSAGE_TYPE:
+                    return new GetExtraDataMessage();
+                case GetDirectResistSkillsMessage.MESSAGE_TYPE:
+                    return new GetDirectResistSkillsMessage();
+                case GetSkillTypeListMessage.MESSAGE_TYPE:
+                    return new GetSkillTypeListMessage();
+                case DMCheckResultMessage.MESSAGE_TYPE:
+                    return new DMCheckResultMessage();
+                case BattleSceneSetSkipSelectAspectMessage.MESSAGE_TYPE:
+                    return new BattleSceneSetSkipSelectAspectMessage();
+                case SelectAspectOverMessage.MESSAGE_TYPE:
+                    return new SelectAspectOverMessage();
+                case BattleSceneGetActableObjectMovePathInfoMessage.MESSAGE_TYPE:
+                    return new BattleSceneGetActableObjectMovePathInfoMessage();
+                case BattleSceneActableObjectMoveMessage.MESSAGE_TYPE:
+                    return new BattleSceneActableObjectMoveMessage();
+                case BattleSceneActableObjectDoActionMessage.MESSAGE_TYPE:
+                    return new BattleSceneActableObjectDoActionMessage();
+                case BattleSceneActableObjectDoSpecialActionMessage.MESSAGE_TYPE:
+                    return new BattleSceneActableObjectDoSpecialActionMessage();
+                    
                 default:
-                    return null;
+                    throw new NotImplementedException();
             }
         }
         #endregion
@@ -98,12 +268,13 @@ namespace GameLogic.Core.Network
             }
             else
             {
+                Message resp = null;
                 if (_reqHandlerDict.TryGetValue(identifiedMessage.InnerMsgType, out IRequestHandler handler))
                 {
-                    var resp = handler.MakeResponse(identifiedMessage.innerMessage);
-                    var respWrapper = new IdentifiedMessage() { innerMessage = resp, guid = identifiedMessage.guid, resp = true };
-                    SendMessage(respWrapper);
+                    resp = handler.MakeResponse(identifiedMessage.innerMessage);
                 }
+                var respWrapper = new IdentifiedMessage() { innerMessage = resp, guid = identifiedMessage.guid, resp = true };
+                SendMessage(respWrapper);
             }
         }
 
@@ -125,20 +296,24 @@ namespace GameLogic.Core.Network
             AddMessageReceiver(IdentifiedMessage.MESSAGE_TYPE, this);
         }
 
-        public event EventHandler<ExceptionCaughtEventArgs> ExceptionCaught;
+        protected void OnEventCaught(NetworkEventCaughtEventArgs args)
+        {
+            EventCaught?.Invoke(this, args);
+        }
+
+        public event EventHandler<NetworkEventCaughtEventArgs> EventCaught; // network thread invoke
         
         public abstract void SendMessage(Message message);
         public abstract void AddMessageReceiver(int messageType, IMessageReceiver receiver);
         public abstract void UpdateReceiver();
     }
 
-    public sealed class ExceptionCaughtEventArgs : EventArgs
+    public sealed class NetworkEventCaughtEventArgs : EventArgs
     {
-        public ulong timestamp;
         public string message;
         // ...
     }
-
+    
     public sealed class NetworkfMessage : Networkf.Message
     {
         private readonly Message _innerMessage;
@@ -171,28 +346,32 @@ namespace GameLogic.Core.Network
 
     public sealed class NetworkfConnection : Connection
     {
-        static NetworkfConnection()
+        private volatile Networkf.NetworkService _service = null;
+        private readonly List<Message> _sendingMsgCache = new List<Message>();
+        private readonly List<Message> _receivedMsgCache = new List<Message>();
+        private readonly Dictionary<int, List<IMessageReceiver>> _messageReceiverDict = new Dictionary<int, List<IMessageReceiver>>();
+
+        public NetworkfConnection()
         {
-            Networkf.NetworkService.ParseMessage = NetworkfMessage.ParseMessage;
+            Task.Run((Action)SendCachedMessage);
         }
 
-        private readonly Networkf.NetworkService _service;
-        private readonly List<Message> _messageList = new List<Message>();
-        private readonly Dictionary<int, List<IMessageReceiver>> _messageReceiverDict = new Dictionary<int, List<IMessageReceiver>>();
-        
-        public NetworkfConnection(Networkf.NetworkService service)
+        public void ApplyService(Networkf.NetworkService service)
         {
-            _service = service;
+            if (_service != null) return;
             service.OnMessageReceived += OnMessageReceived;
             service.OnServiceTeardown += OnServiceTeardown;
+            _service = service;
         }
 
         public override void AddMessageReceiver(int messageType, IMessageReceiver receiver)
         {
             if (_messageReceiverDict.ContainsKey(messageType))
             {
-                _messageReceiverDict[messageType].Add(receiver);
-            } else
+                var receivers = _messageReceiverDict[messageType];
+                if (!receivers.Contains(receiver)) receivers.Add(receiver);
+            }
+            else
             {
                 _messageReceiverDict.Add(messageType, new List<IMessageReceiver>() { receiver });
             }
@@ -200,14 +379,34 @@ namespace GameLogic.Core.Network
 
         public override void SendMessage(Message message)
         {
-            _service.SendMessage(new NetworkfMessage(message));
+            if (_service != null)
+            {
+                lock (_sendingMsgCache)
+                {
+                    _sendingMsgCache.Add(message);
+                }
+            }
+            else
+            {
+                var identifiedMsg = message as IdentifiedMessage;
+                if (identifiedMsg != null)
+                {
+                    if (_messageReceiverDict.TryGetValue(IdentifiedMessage.MESSAGE_TYPE, out List<IMessageReceiver> receivers))
+                    {
+                        foreach (var receiver in receivers)
+                        {
+                            receiver.MessageReceived(new IdentifiedMessage() { resp = true, guid = identifiedMsg.guid, innerMessage = null });
+                        }
+                    }
+                }
+            }
         }
 
         public override void UpdateReceiver()
         {
-            lock (_messageList)
+            lock (_receivedMsgCache)
             {
-                foreach (var message in _messageList)
+                foreach (var message in _receivedMsgCache)
                 {
                     if (_messageReceiverDict.ContainsKey(message.MessageType))
                     {
@@ -217,22 +416,61 @@ namespace GameLogic.Core.Network
                         }
                     }
                 }
-                _messageList.Clear();
+                _receivedMsgCache.Clear();
             }
         }
         
-        private void OnMessageReceived(int id, Networkf.Message message)
+        private void SendCachedMessage()
         {
-            lock (_messageList)
+            while (true)
             {
-                _messageList.Add(((NetworkfMessage)message).InnerMessage);
+                var service = _service;
+                if (service != null)
+                {
+                    Message message = null;
+                    lock (_sendingMsgCache)
+                    {
+                        if (_sendingMsgCache.Count > 0)
+                        {
+                            message = _sendingMsgCache[0];
+                            _sendingMsgCache.RemoveAt(0);
+                        }
+                    }
+                    if (message != null)
+                    {
+                        int sendingResult = service.SendMessage(new NetworkfMessage(message));
+                        if (sendingResult == -1)
+                        {
+                            var eventArgs = new NetworkEventCaughtEventArgs()
+                            {
+                                message = "A network error occured during sending data."
+                            };
+                            OnEventCaught(eventArgs);
+                        }
+                    }
+                }
             }
         }
 
+        private void OnMessageReceived(int id, Networkf.Message message)
+        {
+            lock (_receivedMsgCache)
+            {
+                _receivedMsgCache.Add(((NetworkfMessage)message).InnerMessage);
+            }
+        }
+        
         private void OnServiceTeardown()
         {
-            _service.OnMessageReceived -= OnMessageReceived;
-            _service.OnServiceTeardown -= OnServiceTeardown;
+            var service = _service;
+            _service = null;
+            service.OnMessageReceived -= OnMessageReceived;
+            service.OnServiceTeardown -= OnServiceTeardown;
+            var eventArgs = new NetworkEventCaughtEventArgs()
+            {
+                message = "Connection is closed."
+            };
+            OnEventCaught(eventArgs);
         }
     }
 }

@@ -409,6 +409,33 @@ namespace GameLogic.CharacterSystem
 
         public IReadOnlyList<Skill> ReadonlySkillList => this.Skills;
 
+        public IDescribable GetSkillNameAndDescription(SkillType skillType)
+        {
+            foreach (Skill skill in this.Skills)
+            {
+                if (skill.SkillType == skillType)
+                {
+                    return skill;
+                }
+            }
+            return new Skill(skillType);
+        }
+
+        public void SetSkillDescription(SkillType skillType, string description)
+        {
+            foreach (Skill skill in this.Skills)
+            {
+                if (skill.SkillType == skillType)
+                {
+                    skill.Description = description;
+                    return;
+                }
+            }
+            Skill newSkill = new Skill(skillType);
+            newSkill.Description = description;
+            this.Skills.Add(newSkill);
+        }
+
         public SkillProperty GetSkillProperty(SkillType skillType)
         {
             foreach (Skill skill in this.Skills)
@@ -419,17 +446,6 @@ namespace GameLogic.CharacterSystem
                 }
             }
             SkillProperty ret = skillType.Property;
-            if (skillType == SkillType.Drive)
-            {
-                foreach (Extra extra in this.Extras)
-                {
-                    if (extra.IsVehicle)
-                    {
-                        ret.canMove = true;
-                        break;
-                    }
-                }
-            }
             if (skillType == SkillType.Shoot)
             {
                 foreach (Extra extra in this.Extras)

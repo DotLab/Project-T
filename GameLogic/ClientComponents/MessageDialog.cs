@@ -4,11 +4,11 @@ using System.Text;
 using GameLogic.Core;
 using GameLogic.Core.Network;
 
-namespace GameLogic.Client
+namespace GameLogic.ClientComponents
 {
     public class MessageDialog : ClientComponent
     {
-        public override void MessageReceived(ulong timestamp, Message message) { }
+        public override void MessageReceived(Message message) { }
 
         public MessageDialog(Connection connection, User owner) :
             base(connection, owner)
