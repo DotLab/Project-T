@@ -333,7 +333,7 @@ namespace GameLogic.Core.Network {
 
 		public void ApplyService(Networkf.NetworkService service) {
 			if (_service != null) return;
-			service.ParseMessage = NetworkfMessage.ParseMessage;
+			service.parseMessage = NetworkfMessage.ParseMessage;
 			service.OnMessageReceived += OnMessageReceived;
 			service.OnServiceTeardown += OnServiceTeardown;
 			_service = service;
@@ -406,6 +406,7 @@ namespace GameLogic.Core.Network {
 						}
 					}
 				}
+				Thread.Sleep(100);
 			}
 		}
 
@@ -418,7 +419,7 @@ namespace GameLogic.Core.Network {
 		private void OnServiceTeardown() {
 			var service = _service;
 			_service = null;
-			service.ParseMessage = null;
+			service.parseMessage = null;
 			service.OnMessageReceived -= OnMessageReceived;
 			service.OnServiceTeardown -= OnServiceTeardown;
 			var eventArgs = new NetworkEventCaughtEventArgs() {
@@ -575,19 +576,19 @@ namespace GameLogic.Core.Network.Initializer {
 
 		public NSInitializer(Networkf.NetworkService service, int retryCount = 10, int retryDelay = 1000) {
 			_service = service;
-			service.ParseMessage = ParseInitMessage;
+			service.parseMessage = ParseInitMessage;
 			service.OnMessageReceived += OnRawMessageReceived;
 			_retryCount = retryCount;
 			_retryDelay = retryDelay;
 		}
 
 		private void ReleaseService() {
-			_service.ParseMessage = null;
+			_service.parseMessage = null;
 			_service.OnMessageReceived -= OnRawMessageReceived;
 		}
 
 		private void Log(string str) {
-			Console.WriteLine(str);
+			Logger.WriteLine(str);
 		}
 
 		public void OnRawMessageReceived(int id, Networkf.Message message) {
@@ -641,10 +642,13 @@ namespace GameLogic.Core.Network.Initializer {
 				applyTo.ApplyService(_service);
 				applyTo.AddMessageReceiver(ServerReadyMessage.MESSAGE_TYPE, this);
 				_service.SendMessage(new CltReadyMessage());
+				Log("client ready has sent");
+				Log("waiting server ready...");
 				while (!_hasReceivedServerReady) {
 					Thread.Sleep(100);
 					applyTo.UpdateReceiver();
 				}
+				Log("server ready received");
 				applyTo.RemoveMessageReceiver(ServerReadyMessage.MESSAGE_TYPE, this);
 				return true;
 			} else return false;

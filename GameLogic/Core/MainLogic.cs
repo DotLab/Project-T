@@ -64,6 +64,7 @@ namespace GameLogic.Core {
 				player.UpdateClient();
 			}
 			_dm.UpdateClient();
+			Thread.Sleep(100);
 		}
 
 		public static void Cleanup() {

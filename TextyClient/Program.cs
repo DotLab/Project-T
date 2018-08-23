@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using NetworkHelper = Networkf.NetworkHelper;
-using System.Threading;
 using GameLogic.Core.Network.Initializer;
 
 namespace TextyClient {
