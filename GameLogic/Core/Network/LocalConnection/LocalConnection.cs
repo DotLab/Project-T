@@ -12,14 +12,19 @@ namespace GameLogic.Core.Network.LocalConnection
         public LocalConnection(bool server)
         {
             _memoryStream = new MemoryStream();
-            
+            throw new NotImplementedException();
         }
 
         public override void AddMessageReceiver(int messageType, IMessageReceiver receiver)
         {
             throw new NotImplementedException();
         }
-        
+
+        public override bool RemoveMessageReceiver(int messageType, IMessageReceiver receiver)
+        {
+            throw new NotImplementedException();
+        }
+
         public override void SendMessage(Message message)
         {
             throw new NotImplementedException();

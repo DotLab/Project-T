@@ -4,8 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-using Bit = Networkf.BitHelper;
-
 namespace GameLogic.Core.DataSystem
 {
     public interface IDataOutputStream
@@ -24,83 +22,6 @@ namespace GameLogic.Core.DataSystem
         Byte ReadByte();
         Int32 ReadInt32();
         Single ReadSingle();
-    }
-
-    public sealed class BitDataOutputStream : IDataOutputStream
-    {
-        public readonly byte[] bytes;
-        public int start, i;
-
-        public BitDataOutputStream(byte[] bytes, int i = 0)
-        {
-            this.bytes = bytes;
-            this.start = this.i = i;
-        }
-
-        public void WriteBoolean(bool val)
-        {
-            Bit.WriteUInt8(bytes, ref i, (byte)(val ? 1 : 0));
-        }
-
-        public void WriteByte(byte val)
-        {
-            Bit.WriteUInt8(bytes, ref i, val);
-        }
-
-        public void WriteInt32(int val)
-        {
-            Bit.WriteInt32(bytes, ref i, val);
-        }
-
-        public void WriteSingle(float val)
-        {
-            Bit.WriteSingle(bytes, ref i, val);
-        }
-
-        public void WriteString(string val)
-        {
-            Bit.WriteUInt16(bytes, ref i, (ushort)Bit.GetStringByteCount(val));
-            Bit.WriteString(bytes, ref i, val);
-        }
-    }
-
-    public sealed class BitDataInputStream : IDataInputStream
-    {
-        public readonly byte[] bytes;
-        public int start, i;
-
-        public BitDataInputStream(byte[] bytes, int i = 0)
-        {
-            this.bytes = bytes;
-            this.start = this.i = i;
-        }
-
-        public bool ReadBoolean()
-        {
-            byte val = Bit.ReadUInt8(bytes, ref i);
-            return val != 0;
-        }
-
-        public byte ReadByte()
-        {
-            return Bit.ReadUInt8(bytes, ref i);
-        }
-
-        public int ReadInt32()
-        {
-            return Bit.ReadInt32(bytes, ref i);
-        }
-
-        public float ReadSingle()
-        {
-            return Bit.ReadSingle(bytes, ref i);
-        }
-
-        public string ReadString()
-        {
-            int byteCount = Bit.ReadUInt16(bytes, ref i);
-            return Bit.ReadString(bytes, ref i, byteCount);
-        }
     }
 
     public interface IStreamable

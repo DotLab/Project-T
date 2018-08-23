@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <StartupObject></StartupObject>
     <Platforms>AnyCPU</Platforms>
 	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
