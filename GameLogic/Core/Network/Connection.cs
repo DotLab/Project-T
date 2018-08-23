@@ -331,6 +331,10 @@ namespace GameLogic.Core.Network {
 			Task.Run((Action)SendCachedMessage);
 		}
 
+		public bool HasAppliedService() {
+			return _service != null;
+		}
+
 		public void ApplyService(Networkf.NetworkService service) {
 			if (_service != null) return;
 			service.parseMessage = NetworkfMessage.ParseMessage;
@@ -359,6 +363,7 @@ namespace GameLogic.Core.Network {
 			if (_service != null) {
 				lock (_sendingMsgCache) {
 					_sendingMsgCache.Add(message);
+					Monitor.Pulse(_sendingMsgCache);
 				}
 			} else {
 				var identifiedMsg = message as IdentifiedMessage;
@@ -387,26 +392,22 @@ namespace GameLogic.Core.Network {
 
 		private void SendCachedMessage() {
 			while (true) {
+				Message message;
+				lock (_sendingMsgCache) {
+					while (_sendingMsgCache.Count <= 0) Monitor.Wait(_sendingMsgCache);
+					message = _sendingMsgCache[0];
+					_sendingMsgCache.RemoveAt(0);
+				}
 				var service = _service;
 				if (service != null) {
-					Message message = null;
-					lock (_sendingMsgCache) {
-						if (_sendingMsgCache.Count > 0) {
-							message = _sendingMsgCache[0];
-							_sendingMsgCache.RemoveAt(0);
-						}
-					}
-					if (message != null) {
-						int sendingResult = service.SendMessage(new NetworkfMessage(message));
-						if (sendingResult == -1) {
-							var eventArgs = new NetworkEventCaughtEventArgs() {
-								message = "A network error occured during sending data."
-							};
-							OnEventCaught(eventArgs);
-						}
+					int sendingResult = service.SendMessage(new NetworkfMessage(message));
+					if (sendingResult == -1) {
+						var eventArgs = new NetworkEventCaughtEventArgs() {
+							message = "A network error occured during sending data."
+						};
+						OnEventCaught(eventArgs);
 					}
 				}
-				Thread.Sleep(100);
 			}
 		}
 
@@ -668,7 +669,7 @@ namespace GameLogic.Core.Network.Initializer {
 			if (_verificationCode == null) {
 				Log("broken client");
 				ReleaseService();
-				_service.socket.Close();
+				_service.TeardownService();
 				return null;
 			}
 			Log("client verification received");
@@ -681,9 +682,19 @@ namespace GameLogic.Core.Network.Initializer {
 			_service.SendMessage(serMsg);
 			Log("verification result has sent");
 			if (applyTo != null) {
+				int tryCount = 0;
 				Log("waiting client ready...");
 				lock (mtx) {
-					while (!_hasReceivedClientReady) Monitor.Wait(mtx);
+					while (!_hasReceivedClientReady && tryCount < _retryCount) {
+						Monitor.Wait(mtx, _retryDelay);
+						++tryCount;
+					}
+				}
+				if (!_hasReceivedClientReady) {
+					Log("broken client");
+					ReleaseService();
+					_service.TeardownService();
+					return;
 				}
 				Log("client ready received");
 				ReleaseService();
@@ -691,7 +702,7 @@ namespace GameLogic.Core.Network.Initializer {
 				applyTo.SendMessage(new ServerReadyMessage());
 			} else {
 				ReleaseService();
-				_service.socket.Close();
+				_service.TeardownService();
 			}
 		}
 	}
