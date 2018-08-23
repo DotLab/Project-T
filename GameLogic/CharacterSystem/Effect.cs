@@ -5,149 +5,118 @@ using GameLogic.Core;
 using GameLogic.Core.ScriptSystem;
 using GameLogic.EventSystem;
 
-namespace GameLogic.CharacterSystem
-{
-    public sealed class InitiativeEffect : Command, IStuntProperty
-    {
-        #region Javascript API class
-        private sealed class JSAPI : IJSAPI<InitiativeEffect>
-        {
-            private readonly InitiativeEffect _outer;
+namespace GameLogic.CharacterSystem {
+	public sealed class InitiativeEffect : Command, IStuntProperty {
+		#region Javascript API class
+		private sealed class JSAPI : IJSAPI<InitiativeEffect> {
+			private readonly InitiativeEffect _outer;
 
-            public JSAPI(InitiativeEffect outer)
-            {
-                _outer = outer;
-            }
-            
-            public IJSAPI<Stunt> getBelongStunt()
-            {
-                try
-                {
-                    if (_outer.Belong != null) return (IJSAPI<Stunt>)_outer.Belong.GetContext();
-                    else return null;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return null;
-                }
-            }
-            
-            public InitiativeEffect Origin(JSContextHelper proof)
-            {
-                try
-                {
-                    if (proof == JSContextHelper.Instance)
-                    {
-                        return _outer;
-                    }
-                    return null;
-                }
-                catch (Exception)
-                {
-                    return null;
-                }
-            }
-        }
-        #endregion
-        private readonly JSAPI _apiObj;
+			public JSAPI(InitiativeEffect outer) {
+				_outer = outer;
+			}
 
-        private Stunt _belong = null;
+			public IJSAPI<Stunt> getBelongStunt() {
+				try {
+					if (_outer.Belong != null) return (IJSAPI<Stunt>)_outer.Belong.GetContext();
+					else return null;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
 
-        public Stunt Belong { get => _belong; set => _belong = value; }
+			public InitiativeEffect Origin(JSContextHelper proof) {
+				try {
+					if (proof == JSContextHelper.Instance) {
+						return _outer;
+					}
+					return null;
+				} catch (Exception) {
+					return null;
+				}
+			}
+		}
+		#endregion
+		private readonly JSAPI _apiObj;
 
-        public InitiativeEffect(Action action) : this(false, action, null) { }
+		private Stunt _belong = null;
 
-        public InitiativeEffect(string jscode) : this(true, null, jscode) { }
+		public Stunt Belong { get => _belong; set => _belong = value; }
 
-        public InitiativeEffect(bool javascript, Action action, string jscode) :
-            base(javascript, action, jscode)
-        {
-            _apiObj = new JSAPI(this);
-        }
+		public InitiativeEffect(Action action) : this(false, action, null) { }
 
-        public override void DoAction()
-        {
-            JSEngineManager.Engine.SynchronizeContext("$__belongStunt__", _belong);
-            base.DoAction();
-            JSEngineManager.Engine.RemoveContext("$__belongStunt__");
-        }
+		public InitiativeEffect(string jscode) : this(true, null, jscode) { }
 
-        public IJSContext GetContext()
-        {
-            return _apiObj;
-        }
+		public InitiativeEffect(bool javascript, Action action, string jscode) :
+			base(javascript, action, jscode) {
+			_apiObj = new JSAPI(this);
+		}
 
-        public void SetContext(IJSContext context) { }
-    }
+		public override void DoAction() {
+			JSEngineManager.Engine.SynchronizeContext("$__belongStunt__", _belong);
+			base.DoAction();
+			JSEngineManager.Engine.RemoveContext("$__belongStunt__");
+		}
 
-    public sealed class PassiveEffect : Trigger, IExtraProperty
-    {
-        #region Javascript API class
-        private new class JSAPI : Trigger.JSAPI, IJSAPI<PassiveEffect>
-        {
-            private readonly PassiveEffect _outer;
+		public IJSContext GetContext() {
+			return _apiObj;
+		}
 
-            public JSAPI(PassiveEffect outer) :
-                base(outer)
-            {
-                _outer = outer;
-            }
+		public void SetContext(IJSContext context) { }
+	}
 
-            public IJSAPI<Extra> getBelongExtra()
-            {
-                try
-                {
-                    if (_outer.Belong != null) return (IJSAPI<Extra>)_outer.Belong.GetContext();
-                    else return null;
-                }
-                catch (Exception e)
-                {
-                    JSEngineManager.Engine.Log(e.Message);
-                    return null;
-                }
-            }
+	public sealed class PassiveEffect : Trigger, IExtraProperty {
+		#region Javascript API class
+		private new class JSAPI : Trigger.JSAPI, IJSAPI<PassiveEffect> {
+			private readonly PassiveEffect _outer;
 
-            PassiveEffect IJSAPI<PassiveEffect>.Origin(JSContextHelper proof)
-            {
-                try
-                {
-                    if (proof == JSContextHelper.Instance)
-                    {
-                        return _outer;
-                    }
-                    return null;
-                }
-                catch (Exception)
-                {
-                    return null;
-                }
-            }
-        }
-        #endregion
-        private readonly JSAPI _apiObj;
+			public JSAPI(PassiveEffect outer) :
+				base(outer) {
+				_outer = outer;
+			}
 
-        private Extra _belong = null;
+			public IJSAPI<Extra> getBelongExtra() {
+				try {
+					if (_outer.Belong != null) return (IJSAPI<Extra>)_outer.Belong.GetContext();
+					else return null;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
 
-        public PassiveEffect(string boundEventID, Command command) :
-            base(boundEventID, command)
-        {
-            _apiObj = new JSAPI(this);
-        }
+			PassiveEffect IJSAPI<PassiveEffect>.Origin(JSContextHelper proof) {
+				try {
+					if (proof == JSContextHelper.Instance) {
+						return _outer;
+					}
+					return null;
+				} catch (Exception) {
+					return null;
+				}
+			}
+		}
+		#endregion
+		private readonly JSAPI _apiObj;
 
-        public override void Notify()
-        {
-            JSEngineManager.Engine.SynchronizeContext("$__belongExtra__", _belong);
-            base.Notify();
-            JSEngineManager.Engine.RemoveContext("$__belongExtra__");
-        }
+		private Extra _belong = null;
 
-        public Extra Belong { get => _belong; set => _belong = value; }
+		public PassiveEffect(string boundEventID, Command command) :
+			base(boundEventID, command) {
+			_apiObj = new JSAPI(this);
+		}
 
-        public override IJSContext GetContext()
-        {
-            return _apiObj;
-        }
+		public override void Notify() {
+			JSEngineManager.Engine.SynchronizeContext("$__belongExtra__", _belong);
+			base.Notify();
+			JSEngineManager.Engine.RemoveContext("$__belongExtra__");
+		}
 
-    }
+		public Extra Belong { get => _belong; set => _belong = value; }
+
+		public override IJSContext GetContext() {
+			return _apiObj;
+		}
+
+	}
 }

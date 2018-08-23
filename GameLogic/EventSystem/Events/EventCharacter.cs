@@ -4,45 +4,39 @@ using System.Text;
 using GameLogic.CharacterSystem;
 using GameLogic.Core.ScriptSystem;
 
-namespace GameLogic.EventSystem.Events
-{
-    public class EventCharacter : Event
-    {
-        private static readonly string[] _idList = {
-            "event.character"
-        };
-        
-        public override string[] NotifyList => _idList;
+namespace GameLogic.EventSystem.Events {
+	public class EventCharacter : Event {
+		private static readonly string[] _idList = {
+			"event.character"
+		};
 
-        public override IJSContext GetContext()
-        {
-            throw new NotImplementedException();
-        }
-        
-        public override void SetContext(IJSContext context)
-        {
-            throw new NotImplementedException();
-        }
-    }
+		public override string[] NotifyList => _idList;
 
-    public class EventGetSkillLevel : EventCharacter
-    {
-        private static readonly string[] _idList = {
-            "event.character",
-            "event.character.get_skill_level"
-        };
+		public override IJSContext GetContext() {
+			throw new NotImplementedException();
+		}
 
-        public override string[] NotifyList => _idList;
+		public override void SetContext(IJSContext context) {
+			throw new NotImplementedException();
+		}
+	}
 
-        private TemporaryCharacter _character;
-        private SkillType _skillType;
+	public class EventGetSkillLevel : EventCharacter {
+		private static readonly string[] _idList = {
+			"event.character",
+			"event.character.get_skill_level"
+		};
 
-        public TemporaryCharacter Character => _character;
-        public SkillType SkillType => _skillType;
+		public override string[] NotifyList => _idList;
 
-        private EventGetSkillLevel()
-        {
-        }
-        
-    }
+		private TemporaryCharacter _character;
+		private SkillType _skillType;
+
+		public TemporaryCharacter Character => _character;
+		public SkillType SkillType => _skillType;
+
+		private EventGetSkillLevel() {
+		}
+
+	}
 }

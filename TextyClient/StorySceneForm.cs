@@ -8,18 +8,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace TextyClient
-{
-    public partial class StorySceneForm : Form
-    {
-        public StorySceneForm()
-        {
-            InitializeComponent();
-        }
-        
-        private void Form1_Load(object sender, EventArgs e)
-        {
+namespace TextyClient {
+	public partial class StorySceneForm : Form {
+		public StorySceneForm() {
+			InitializeComponent();
+		}
 
-        }
-    }
+		private void Form1_Load(object sender, EventArgs e) {
+
+		}
+	}
 }

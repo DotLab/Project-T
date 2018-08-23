@@ -8,15 +8,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace TextyClient
-{
-    public partial class AdvancedConsole : UserControl
-    {
-        public AdvancedConsole()
-        {
-            InitializeComponent();
-        }
+namespace TextyClient {
+	public partial class AdvancedConsole : UserControl {
+		public AdvancedConsole() {
+			InitializeComponent();
+		}
 
 
-    }
+	}
 }

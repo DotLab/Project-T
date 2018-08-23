@@ -3,72 +3,60 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace GameLogic.Core
-{
-    public sealed class CharacterView
-    {
-        public string id;
-        public string battle;
-        public string story;
-    }
-    
-    public struct CameraEffect
-    {
-        public enum AnimateType
-        {
-            None, Shake
-        }
+namespace GameLogic.Core {
+	public sealed class CharacterView {
+		public string id;
+		public string battle;
+		public string story;
+	}
 
-        public static readonly CameraEffect INIT = new CameraEffect(AnimateType.None);
+	public struct CameraEffect {
+		public enum AnimateType {
+			None, Shake
+		}
 
-        public AnimateType animation;
+		public static readonly CameraEffect INIT = new CameraEffect(AnimateType.None);
 
-        public CameraEffect(AnimateType animation)
-        {
-            this.animation = animation;
-        }
-    }
+		public AnimateType animation;
 
-    public struct CharacterViewEffect
-    {
-        public enum AnimateType
-        {
-            None, Shake
-        }
+		public CameraEffect(AnimateType animation) {
+			this.animation = animation;
+		}
+	}
 
-        public static readonly CharacterViewEffect INIT = new CharacterViewEffect(new Vector4(1, 1, 1, 1), AnimateType.None);
+	public struct CharacterViewEffect {
+		public enum AnimateType {
+			None, Shake
+		}
 
-        public Vector4 tint;
-        public AnimateType animation;
+		public static readonly CharacterViewEffect INIT = new CharacterViewEffect(new Vector4(1, 1, 1, 1), AnimateType.None);
 
-        public CharacterViewEffect(Vector4 tint, AnimateType animation)
-        {
-            this.tint = tint;
-            this.animation = animation;
-        }
-    }
+		public Vector4 tint;
+		public AnimateType animation;
 
-    public struct Vector4
-    {
-        public float X, Y, Z, W;
+		public CharacterViewEffect(Vector4 tint, AnimateType animation) {
+			this.tint = tint;
+			this.animation = animation;
+		}
+	}
 
-        public Vector4(float x, float y, float z, float w)
-        {
-            X = x; Y = y; Z = z; W = w;
-        }
-    }
+	public struct Vector4 {
+		public float X, Y, Z, W;
 
-    public struct PortraitStyle
-    {
-        public static readonly PortraitStyle INIT = new PortraitStyle(0, 0);
+		public Vector4(float x, float y, float z, float w) {
+			X = x; Y = y; Z = z; W = w;
+		}
+	}
 
-        public int action;
-        public int emotion;
+	public struct PortraitStyle {
+		public static readonly PortraitStyle INIT = new PortraitStyle(0, 0);
 
-        public PortraitStyle(int action, int emotion)
-        {
-            this.action = action;
-            this.emotion = emotion;
-        }
-    }
+		public int action;
+		public int emotion;
+
+		public PortraitStyle(int action, int emotion) {
+			this.action = action;
+			this.emotion = emotion;
+		}
+	}
 }
