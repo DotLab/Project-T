@@ -4,14 +4,14 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Dynamic;
 using System.Text;
-using GameLogic.Core;
-using GameLogic.Core.Network;
-using GameLogic.CharacterSystem;
+using GameLib.Core;
+using GameLib.Utilities.Network;
+using GameLib.CharacterSystem;
 using NetworkHelper = Networkf.NetworkHelper;
 using NetworkService = Networkf.NetworkService;
 using System.Threading;
 using System.Linq;
-using GameLogic.Utilities;
+using GameLib.Utilities;
 
 namespace TestConsoleApp {
 	class Program {

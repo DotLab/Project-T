@@ -110,9 +110,9 @@
       <Project>{cbdc55e6-4342-499e-9005-a9feb17ac397}</Project>
       <Name>Networkf</Name>
     </ProjectReference>
-    <ProjectReference Include="..\GameLogic\GameLogic.csproj">
-      <Project>{eb01b5ab-a1e5-48e6-b134-e02e1d4ccd50}</Project>
-      <Name>GameLogic</Name>
+    <ProjectReference Include="..\GameUtil\GameUtil.csproj">
+      <Project>{3b5e8ccf-bcde-4275-b0c1-7b178c52baea}</Project>
+      <Name>GameUtil</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

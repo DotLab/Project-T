@@ -1,6 +1,6 @@
-﻿using GameLogic.Core.Network;
-using GameLogic.Core.Network.ClientMessages;
-using GameLogic.Core.Network.ServerMessages;
+﻿using GameLib.Utilities.Network;
+using GameLib.Utilities.Network.ClientMessages;
+using GameLib.Utilities.Network.ServerMessages;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;

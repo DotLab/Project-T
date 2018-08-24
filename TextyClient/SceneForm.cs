@@ -1,7 +1,7 @@
-﻿using GameLogic.Core;
-using GameLogic.Core.Network;
-using GameLogic.Core.Network.ClientMessages;
-using GameLogic.Core.Network.ServerMessages;
+﻿using GameLib.Utilities;
+using GameLib.Utilities.Network;
+using GameLib.Utilities.Network.ClientMessages;
+using GameLib.Utilities.Network.ServerMessages;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -121,7 +121,7 @@ namespace TextyClient {
 		private ReachablePlace[] _movePathInfo = null;
 		private ReachablePlace _selectedMoveDst = null;
 
-		public void MessageReceived(GameLogic.Core.Network.Message message) {
+		public void MessageReceived(GameLib.Utilities.Network.Message message) {
 			switch (message.MessageType) {
 				case BattleSceneResetMessage.MESSAGE_TYPE: {
 						BattleSceneResetMessage resetMessage = (BattleSceneResetMessage)message;
