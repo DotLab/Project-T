@@ -1,8 +1,7 @@
-﻿using GameLogic.Core;
-using GameLogic.Container.StoryComponent;
-using System;
+﻿using GameLogic.Container.StoryComponent;
+using GameLogic.Core;
+using GameLogic.Utilities;
 using System.Collections.Generic;
-using System.Text;
 
 namespace GameLogic.Campaign {
 	public sealed class FreedomShot : Shot {

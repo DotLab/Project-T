@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using GameLogic.Campaign;
+﻿using GameLogic.Campaign;
 using GameLogic.Container;
 using GameLogic.Container.StoryComponent;
 using GameLogic.Core;
-using GameLogic.Core.ScriptSystem;
+using GameLogic.Utilities;
+using GameLogic.Utilities.ScriptSystem;
+using System;
+using System.Collections.Generic;
 
 namespace GameLogic.CharacterSystem {
 	public interface ICharacterProperty : IIdentifiable, IAttachable<Character> { }
@@ -275,7 +275,7 @@ namespace GameLogic.CharacterSystem {
 		public Extra Belong { get => _belong; set => _belong = value; }
 		public CharacterView View => _view;
 		public Player ControlPlayer { get => _controlPlayer; set => _controlPlayer = value; }
-		public User Controller => _controlPlayer ?? (User)MainLogic.DM;
+		public User Controller => _controlPlayer ?? (User)Game.DM;
 
 		protected Character(string id, CharacterView view) {
 			_id = id ?? throw new ArgumentNullException(nameof(id));

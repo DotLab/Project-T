@@ -1,14 +1,13 @@
-﻿using GameLogic.Core;
+﻿using GameLogic.CharacterSystem;
+using GameLogic.Container;
 using GameLogic.Container.StoryComponent;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using GameLogic.Core;
 using GameLogic.Core.Network;
 using GameLogic.Core.Network.ClientMessages;
 using GameLogic.Core.Network.ServerMessages;
-using GameLogic.CharacterSystem;
-using GameLogic.Container;
-using GameLogic.Core.DataSystem;
+using GameLogic.Utilities;
+using GameLogic.Utilities.DataSystem;
+using System;
 
 namespace GameLogic.ClientComponents {
 	public sealed class SkillCheckPanel : ClientComponent {
@@ -30,7 +29,7 @@ namespace GameLogic.ClientComponents {
 
 		public override void MessageReceived(Message message) {
 			try {
-				if (!_isUsing || _position == ClientPosition.OBSERVER || MainLogic.DM.DMClient.DMCheckDialog.IsChecking) return;
+				if (!_isUsing || _position == ClientPosition.OBSERVER || Game.DM.DMClient.DMCheckDialog.IsChecking) return;
 				if (message.MessageType == CheckerSkillSelectedMessage.MESSAGE_TYPE) {
 					CheckerSkillSelectedMessage skillSelectedMessage = (CheckerSkillSelectedMessage)message;
 					if (SkillType.SkillTypes.TryGetValue(skillSelectedMessage.skillTypeID, out SkillType skillType)) {
@@ -126,7 +125,7 @@ namespace GameLogic.ClientComponents {
 			var message = new StorySceneCheckerNotifyPassiveSelectSkillOrStuntMessage();
 			message.passiveCharacterID = passive.ID;
 			message.initiativeCharacterID = initiative.ID;
-			message.initiativeSkillType = new SkillTypeDescription(initiativeSkillType);
+			message.initiativeSkillType = StreamableFactory.CreateSkillTypeDescription(initiativeSkillType);
 			message.action = (int)action;
 			_connection.SendMessage(message);
 		}

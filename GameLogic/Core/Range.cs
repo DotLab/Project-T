@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace GameLogic.Core {
+﻿namespace GameLogic.Core {
 	public struct Range {
 		public bool lowOpen;
 		public float low;

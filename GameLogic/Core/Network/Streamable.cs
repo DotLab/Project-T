@@ -1,10 +1,6 @@
-﻿using GameLogic.CharacterSystem;
-using GameLogic.Container.BattleComponent;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
 
-namespace GameLogic.Core.DataSystem {
+namespace GameLogic.Core.Network {
 	public interface IDataOutputStream {
 		void WriteBoolean(Boolean val);
 		void WriteString(String val);
@@ -167,11 +163,6 @@ namespace GameLogic.Core.DataSystem {
 		public string id;
 		public string name;
 
-		public SkillTypeDescription(SkillType skillType) {
-			id = skillType.ID;
-			name = skillType.Name;
-		}
-
 		public void ReadFrom(IDataInputStream stream) {
 			id = stream.ReadString();
 			name = stream.ReadString();
@@ -196,46 +187,96 @@ namespace GameLogic.Core.DataSystem {
 			stream.WriteString(propertyID);
 			describable.WriteTo(stream);
 		}
-
-		public CharacterPropertyDescription(ICharacterProperty characterProperty) {
-			propertyID = characterProperty.ID;
-			describable = new Describable(characterProperty);
-		}
-
-		public CharacterPropertyDescription(Skill skill) {
-			propertyID = skill.SkillType.ID;
-			describable = new Describable(skill);
-		}
 	}
 
 	public struct BattleSceneObj : IStreamable {
-		public string objID;
+		public string id;
 		public int row;
 		public int col;
 
 		public void ReadFrom(IDataInputStream stream) {
-			objID = stream.ReadString();
+			id = stream.ReadString();
 			row = stream.ReadInt32();
 			col = stream.ReadInt32();
 		}
 
 		public void WriteTo(IDataOutputStream stream) {
-			stream.WriteString(objID);
+			stream.WriteString(id);
 			stream.WriteInt32(row);
 			stream.WriteInt32(col);
 		}
-
-		public BattleSceneObj(GridObject gridObject) {
-			row = gridObject.GridRef.PosRow;
-			col = gridObject.GridRef.PosCol;
-			objID = gridObject.ID;
-		}
-
-		public BattleSceneObj(LadderObject ladderObject) {
-			row = ladderObject.GridRef.PosRow;
-			col = ladderObject.GridRef.PosCol;
-			objID = ladderObject.ID;
-		}
 	}
 
+	public struct BattleSceneGridObjData : IStreamable {
+		public struct ActableObjData : IStreamable {
+			public int actionPoint;
+			public bool movable;
+			public int movePoint;
+
+			public void ReadFrom(IDataInputStream stream) {
+				actionPoint = stream.ReadInt32();
+				movable = stream.ReadBoolean();
+				movePoint = stream.ReadInt32();
+			}
+
+			public void WriteTo(IDataOutputStream stream) {
+				stream.WriteInt32(actionPoint);
+				stream.WriteBoolean(movable);
+				stream.WriteInt32(movePoint);
+			}
+		}
+
+		public BattleSceneObj obj;
+		public bool obstacle;
+		public bool highland;
+		public int stagnate;
+		public bool terrain;
+		public int direction;
+		public bool actable;
+		public ActableObjData actableObjData;
+		
+		public void ReadFrom(IDataInputStream stream) {
+			obj.ReadFrom(stream);
+			obstacle = stream.ReadBoolean();
+			highland = stream.ReadBoolean();
+			stagnate = stream.ReadInt32();
+			terrain = stream.ReadBoolean();
+			direction = stream.ReadInt32();
+			actable = stream.ReadBoolean();
+			if (actable) {
+				actableObjData.ReadFrom(stream);
+			}
+		}
+
+		public void WriteTo(IDataOutputStream stream) {
+			obj.WriteTo(stream);
+			stream.WriteBoolean(obstacle);
+			stream.WriteBoolean(highland);
+			stream.WriteInt32(stagnate);
+			stream.WriteBoolean(terrain);
+			stream.WriteInt32(direction);
+			stream.WriteBoolean(actable);
+			if (actable) {
+				actableObjData.WriteTo(stream);
+			}
+		}
+	}
+	
+	public struct BattleSceneLadderObjData : IStreamable {
+		public BattleSceneObj obj;
+		public int stagnate;
+		public int direction;
+
+		public void ReadFrom(IDataInputStream stream) {
+			obj.ReadFrom(stream);
+			stagnate = stream.ReadInt32();
+			direction = stream.ReadInt32();
+		}
+
+		public void WriteTo(IDataOutputStream stream) {
+			obj.WriteTo(stream);
+			stream.WriteInt32(stagnate);
+			stream.WriteInt32(direction);
+		}
+	}
 }

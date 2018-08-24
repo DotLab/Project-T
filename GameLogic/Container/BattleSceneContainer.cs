@@ -1,11 +1,11 @@
 ﻿using GameLogic.CharacterSystem;
 using GameLogic.Container.BattleComponent;
 using GameLogic.Core;
-using GameLogic.Core.ScriptSystem;
+using GameLogic.Utilities;
+using GameLogic.Utilities.ScriptSystem;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace GameLogic.Container {
 	public class BattleSceneContainer : IJSContextProvider {
@@ -77,10 +77,10 @@ namespace GameLogic.Container {
 			_actableObjList.Clear();
 			_currentActable = null;
 			_roundCount = 0;
-			foreach (Player player in MainLogic.Players) {
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.Reset(rows, cols);
 			}
-			MainLogic.DM.Client.BattleScene.Reset(rows, cols);
+			Game.DM.Client.BattleScene.Reset(rows, cols);
 			this.Update();
 		}
 
@@ -109,15 +109,15 @@ namespace GameLogic.Container {
 			_gridObjList.Add(gridObject);
 			if (gridObject is ActableGridObject) {
 				_actableObjList.Add((ActableGridObject)gridObject);
-				foreach (Player player in MainLogic.Players) {
+				foreach (Player player in Game.Players) {
 					player.Client.BattleScene.SetActingOrder(_actableObjList);
 				}
-				MainLogic.DM.Client.BattleScene.SetActingOrder(_actableObjList);
+				Game.DM.Client.BattleScene.SetActingOrder(_actableObjList);
 			}
-			foreach (Player player in MainLogic.Players) {
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.PushGridObject(row, col, highland, gridObject);
 			}
-			MainLogic.DM.Client.BattleScene.PushGridObject(row, col, highland, gridObject);
+			Game.DM.Client.BattleScene.PushGridObject(row, col, highland, gridObject);
 		}
 
 		public GridObject PopGridObject(int row, int col, bool highland) {
@@ -132,17 +132,17 @@ namespace GameLogic.Container {
 				_gridObjList.Remove(ret);
 				if (ret is ActableGridObject) {
 					_actableObjList.Remove((ActableGridObject)ret);
-					foreach (Player player in MainLogic.Players) {
+					foreach (Player player in Game.Players) {
 						player.Client.BattleScene.SetActingOrder(_actableObjList);
 					}
-					MainLogic.DM.Client.BattleScene.SetActingOrder(_actableObjList);
+					Game.DM.Client.BattleScene.SetActingOrder(_actableObjList);
 				}
 			}
 			if (ret != null) {
-				foreach (Player player in MainLogic.Players) {
+				foreach (Player player in Game.Players) {
 					player.Client.BattleScene.RemoveGridObject(ret);
 				}
-				MainLogic.DM.Client.BattleScene.RemoveGridObject(ret);
+				Game.DM.Client.BattleScene.RemoveGridObject(ret);
 			}
 			return ret;
 		}
@@ -155,15 +155,15 @@ namespace GameLogic.Container {
 			_gridObjList.Remove(gridObject);
 			if (gridObject is ActableGridObject) {
 				_actableObjList.Remove((ActableGridObject)gridObject);
-				foreach (Player player in MainLogic.Players) {
+				foreach (Player player in Game.Players) {
 					player.Client.BattleScene.SetActingOrder(_actableObjList);
 				}
-				MainLogic.DM.Client.BattleScene.SetActingOrder(_actableObjList);
+				Game.DM.Client.BattleScene.SetActingOrder(_actableObjList);
 			}
-			foreach (Player player in MainLogic.Players) {
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.RemoveGridObject(gridObject);
 			}
-			MainLogic.DM.Client.BattleScene.RemoveGridObject(gridObject);
+			Game.DM.Client.BattleScene.RemoveGridObject(gridObject);
 			return true;
 		}
 
@@ -212,10 +212,10 @@ namespace GameLogic.Container {
 					throw new ArgumentOutOfRangeException(nameof(direction));
 			}
 			_ladderObjList.Add(ladderObject);
-			foreach (Player player in MainLogic.Players) {
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.AddLadderObject(row, col, direction, ladderObject);
 			}
-			MainLogic.DM.Client.BattleScene.AddLadderObject(row, col, direction, ladderObject);
+			Game.DM.Client.BattleScene.AddLadderObject(row, col, direction, ladderObject);
 		}
 
 		public LadderObject RemoveLadderObject(int row, int col, BattleMapDirection direction) {
@@ -267,10 +267,10 @@ namespace GameLogic.Container {
 					throw new ArgumentOutOfRangeException(nameof(direction));
 			}
 			_ladderObjList.Remove(ladderObject);
-			foreach (Player player in MainLogic.Players) {
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.RemoveLadderObject(ladderObject);
 			}
-			MainLogic.DM.Client.BattleScene.RemoveLadderObject(ladderObject);
+			Game.DM.Client.BattleScene.RemoveLadderObject(ladderObject);
 			return ladderObject;
 		}
 
@@ -290,10 +290,10 @@ namespace GameLogic.Container {
 			ladderObject.GridRef = null;
 			ladderObject.AnotherGridRef = null;
 			_ladderObjList.Remove(ladderObject);
-			foreach (Player player in MainLogic.Players) {
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.RemoveLadderObject(ladderObject);
 			}
-			MainLogic.DM.Client.BattleScene.RemoveLadderObject(ladderObject);
+			Game.DM.Client.BattleScene.RemoveLadderObject(ladderObject);
 			return true;
 		}
 
@@ -307,21 +307,21 @@ namespace GameLogic.Container {
 				}
 				int sumPoint = 0;
 				foreach (int point in dicePoints) sumPoint += point;
-				actableObject.ActionTurn = noticeProperty.level + sumPoint;
+				actableObject.ActionPriority = noticeProperty.level + sumPoint;
 				actableObject.ActionPoint = 1 + athleticsProperty.level >= 1 ? (athleticsProperty.level - 1) / 2 : 0;
 				actableObject.MovePoint = 0;
 			}
-			_actableObjList.Sort((ActableGridObject a, ActableGridObject b) => { return b.ActionTurn - a.ActionTurn; });
-			foreach (Player player in MainLogic.Players) {
+			_actableObjList.Sort((ActableGridObject a, ActableGridObject b) => { return b.ActionPriority - a.ActionPriority; });
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.SetActingOrder(_actableObjList);
 			}
-			MainLogic.DM.Client.BattleScene.SetActingOrder(_actableObjList);
+			Game.DM.Client.BattleScene.SetActingOrder(_actableObjList);
 			if (_actableObjList.Count > 0) {
 				_currentActable = _actableObjList[0];
-				foreach (Player player in MainLogic.Players) {
+				foreach (Player player in Game.Players) {
 					player.Client.BattleScene.ChangeTurn(_currentActable);
 				}
-				MainLogic.DM.Client.BattleScene.ChangeTurn(_currentActable);
+				Game.DM.Client.BattleScene.ChangeTurn(_currentActable);
 			} else _currentActable = null;
 			++_roundCount;
 		}
@@ -334,10 +334,10 @@ namespace GameLogic.Container {
 				this.NewRound();
 			} else {
 				_currentActable = _actableObjList[next];
-				foreach (Player player in MainLogic.Players) {
+				foreach (Player player in Game.Players) {
 					player.Client.BattleScene.ChangeTurn(_currentActable);
 				}
-				MainLogic.DM.Client.BattleScene.ChangeTurn(_currentActable);
+				Game.DM.Client.BattleScene.ChangeTurn(_currentActable);
 			}
 			_currentActable.AddMovePoint();
 			this.Update();
@@ -364,10 +364,10 @@ namespace GameLogic.Container {
 			int[] dicePoints = FateDice.Roll();
 			_initiativeRollPoint = 0;
 			foreach (int point in dicePoints) _initiativeRollPoint += point;
-			foreach (Player player in MainLogic.Players) {
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.DisplayDicePoints(initiative.CharacterRef.Controller, dicePoints);
 			}
-			MainLogic.DM.Client.BattleScene.DisplayDicePoints(initiative.CharacterRef.Controller, dicePoints);
+			Game.DM.Client.BattleScene.DisplayDicePoints(initiative.CharacterRef.Controller, dicePoints);
 			_isChecking = true;
 			this.NextPassiveCheck();
 		}
@@ -403,14 +403,14 @@ namespace GameLogic.Container {
 		private void CurrentPassiveApplySkill(SkillType skillType, bool bigone, int[] fixedDicePoints) {
 			SkillChecker.Instance.PassiveSelectSkill(skillType);
 			int[] dicePoints = SkillChecker.Instance.PassiveRollDice(fixedDicePoints);
-			foreach (Player player in MainLogic.Players) {
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.DisplayDicePoints(_currentPassive.CharacterRef.Controller, dicePoints);
 				player.Client.BattleScene.DisplaySkillReady(_currentPassive, skillType, bigone);
 				player.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.PassivePoint);
 			}
-			MainLogic.DM.Client.BattleScene.DisplayDicePoints(_currentPassive.CharacterRef.Controller, dicePoints);
-			MainLogic.DM.Client.BattleScene.DisplaySkillReady(_currentPassive, skillType, bigone);
-			MainLogic.DM.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.PassivePoint);
+			Game.DM.Client.BattleScene.DisplayDicePoints(_currentPassive.CharacterRef.Controller, dicePoints);
+			Game.DM.Client.BattleScene.DisplaySkillReady(_currentPassive, skillType, bigone);
+			Game.DM.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.PassivePoint);
 		}
 
 		public void CurrentPassiveUseSkill(SkillType skillType, bool force, bool bigone, int[] fixedDicePoints = null) {
@@ -427,7 +427,7 @@ namespace GameLogic.Container {
 					SkillChecker.Instance.PassiveSkillSelectionOver();
 					_initiative.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectAspect(_initiative);
 				} else {
-					MainLogic.DM.DMClient.DMCheckDialog.RequestCheck(_currentPassive.CharacterRef.Controller,
+					Game.DM.DMClient.DMCheckDialog.RequestCheck(_currentPassive.CharacterRef.Controller,
 						SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
 						result => {
 							if (result) {
@@ -447,7 +447,7 @@ namespace GameLogic.Container {
 			if (stunt == null) throw new ArgumentNullException(nameof(stunt));
 			if (stunt.Belong != SkillChecker.Instance.Passive) throw new ArgumentException("This stunt is not belong to passive character.", nameof(stunt));
 			if (stunt.NeedDMCheck)
-				MainLogic.DM.DMClient.DMCheckDialog.RequestCheck(_currentPassive.CharacterRef.Controller,
+				Game.DM.DMClient.DMCheckDialog.RequestCheck(_currentPassive.CharacterRef.Controller,
 					SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + stunt.Name + ",可以吗？",
 					result => {
 						if (result) {
@@ -470,19 +470,19 @@ namespace GameLogic.Container {
 				return;
 			}
 			var ownerGridObject = FindGridObject(aspect.Belong.ID);
-			foreach (Player player in MainLogic.Players) {
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.DisplayUsingAspect(_initiative, ownerGridObject, aspect);
 			}
-			MainLogic.DM.Client.BattleScene.DisplayUsingAspect(_initiative, ownerGridObject, aspect);
-			MainLogic.DM.DMClient.DMCheckDialog.RequestCheck(_initiative.CharacterRef.Controller,
+			Game.DM.Client.BattleScene.DisplayUsingAspect(_initiative, ownerGridObject, aspect);
+			Game.DM.DMClient.DMCheckDialog.RequestCheck(_initiative.CharacterRef.Controller,
 				SkillChecker.Instance.Initiative.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
 				result => {
 					if (result) {
 						SkillChecker.Instance.InitiativeUseAspect(aspect, reroll);
-						foreach (Player player in MainLogic.Players) {
+						foreach (Player player in Game.Players) {
 							player.Client.BattleScene.UpdateSumPoint(_initiative, SkillChecker.Instance.InitiativePoint);
 						}
-						MainLogic.DM.Client.BattleScene.UpdateSumPoint(_initiative, SkillChecker.Instance.InitiativePoint);
+						Game.DM.Client.BattleScene.UpdateSumPoint(_initiative, SkillChecker.Instance.InitiativePoint);
 						_initiative.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectAspectComplete();
 					} else {
 						_initiative.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectAspectFailure("DM拒绝了你选择的特征");
@@ -504,19 +504,19 @@ namespace GameLogic.Container {
 				return;
 			}
 			var ownerGridObject = FindGridObject(aspect.Belong.ID);
-			foreach (Player player in MainLogic.Players) {
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.DisplayUsingAspect(_currentPassive, ownerGridObject, aspect);
 			}
-			MainLogic.DM.Client.BattleScene.DisplayUsingAspect(_currentPassive, ownerGridObject, aspect);
-			MainLogic.DM.DMClient.DMCheckDialog.RequestCheck(_currentPassive.CharacterRef.Controller,
+			Game.DM.Client.BattleScene.DisplayUsingAspect(_currentPassive, ownerGridObject, aspect);
+			Game.DM.DMClient.DMCheckDialog.RequestCheck(_currentPassive.CharacterRef.Controller,
 				SkillChecker.Instance.Passive.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
 				result => {
 					if (result) {
 						SkillChecker.Instance.PassiveUseAspect(aspect, reroll);
-						foreach (Player player in MainLogic.Players) {
+						foreach (Player player in Game.Players) {
 							player.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.PassivePoint);
 						}
-						MainLogic.DM.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.PassivePoint);
+						Game.DM.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.PassivePoint);
 						_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectAspectComplete();
 					} else {
 						_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectAspectFailure("DM拒绝了你选择的特征");
@@ -883,14 +883,14 @@ namespace GameLogic.Container.BattleComponent {
 			return null;
 		}
 
-		private int _actionTurn = 0;
+		private int _actionPriority = 0;
 		private int _actionPoint = 0;
 		private bool _movable = false;
 		private int _movePoint = 0;
 
 		private List<ReachablePlace> _movepathCache = null;
 
-		public int ActionTurn { get => _actionTurn; set => _actionTurn = value; }
+		public int ActionPriority { get => _actionPriority; set => _actionPriority = value; }
 		public int ActionPoint { get => _actionPoint; set => _actionPoint = value; }
 		public bool Movable { get => _movable; set => _movable = value; }
 		public int MovePoint { get => _movePoint; set => _movePoint = value; }
@@ -902,10 +902,10 @@ namespace GameLogic.Container.BattleComponent {
 
 		public void AddMovePoint() {
 			int[] dicePoints = FateDice.Roll();
-			foreach (Player player in MainLogic.Players) {
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.DisplayDicePoints(this.CharacterRef.Controller, dicePoints);
 			}
-			MainLogic.DM.Client.BattleScene.DisplayDicePoints(this.CharacterRef.Controller, dicePoints);
+			Game.DM.Client.BattleScene.DisplayDicePoints(this.CharacterRef.Controller, dicePoints);
 			int sumPoint = 0;
 			foreach (int point in dicePoints) sumPoint += point;
 			SkillProperty athleticsProperty = this.CharacterRef.GetSkillProperty(SkillType.Athletics);
@@ -978,10 +978,10 @@ namespace GameLogic.Container.BattleComponent {
 			this.MovePoint = leftMovePoint;
 			BattleSceneContainer.Instance.BattleMap.MoveStack(srcRow, srcCol, this.IsHighland, dstRow, dstCol, dstHighland);
 			_movepathCache = null;
-			foreach (Player player in MainLogic.Players) {
+			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.DisplayActableObjectMove(this, direction, stairway);
 			}
-			MainLogic.DM.Client.BattleScene.DisplayActableObjectMove(this, direction, stairway);
+			Game.DM.Client.BattleScene.DisplayActableObjectMove(this, direction, stairway);
 		}
 
 		public void MoveTo(int dstRow, int dstCol, bool dstHighland) {
@@ -1105,7 +1105,7 @@ namespace GameLogic.Container.BattleComponent {
 			if (stunt == null) throw new ArgumentNullException(nameof(stunt));
 			if (stunt.Belong != this.CharacterRef) throw new ArgumentException("This stunt is not belong to the character.", nameof(stunt));
 			if (stunt.NeedDMCheck)
-				MainLogic.DM.DMClient.DMCheckDialog.RequestCheck(this.CharacterRef.Controller,
+				Game.DM.DMClient.DMCheckDialog.RequestCheck(this.CharacterRef.Controller,
 					SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + stunt.Name + ",可以吗？",
 					result => {
 						if (result) {

@@ -1,11 +1,8 @@
 ﻿using GameLogic.Campaign;
-using GameLogic.Core;
 using GameLogic.Core.Network;
 using GameLogic.Core.Network.ClientMessages;
 using GameLogic.Core.Network.ServerMessages;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using GameLogic.Utilities;
 
 namespace GameLogic.ClientComponents {
 	public abstract class ClientComponent : IMessageReceiver {

@@ -1,9 +1,4 @@
-﻿using GameLogic.Core.DataSystem;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace GameLogic.Core.Network.ClientMessages {
+﻿namespace GameLogic.Core.Network.ClientMessages {
 	public sealed class ClientInitMessage : Message {
 		public const int MESSAGE_TYPE = 1;
 		public override int MessageType => MESSAGE_TYPE;
@@ -393,5 +388,14 @@ namespace GameLogic.Core.Network.ClientMessages {
 			}
 		}
 	}
+
+	public sealed class BattleSceneMakeExtraMovePointMessage : Message {
+		public const int MESSAGE_TYPE = 23;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public override void ReadFrom(IDataInputStream stream) { }
+		public override void WriteTo(IDataOutputStream stream) { }
+	}
+
 
 }

@@ -7,14 +7,11 @@ using System.Text;
 using GameLogic.Core;
 using GameLogic.Core.Network;
 using GameLogic.CharacterSystem;
-using Message = Networkf.Message;
 using NetworkHelper = Networkf.NetworkHelper;
 using NetworkService = Networkf.NetworkService;
-using BitHelper = Networkf.BitHelper;
 using System.Threading;
 using System.Linq;
-using GameLogic.Core.Network.ServerMessages;
-using GameLogic.Core.Network.Initializer;
+using GameLogic.Utilities;
 
 namespace TestConsoleApp {
 	class Program {
@@ -41,13 +38,16 @@ namespace TestConsoleApp {
 
 			NetworkHelper.StartServer(OnConnectionEstablished);
 
-			MainLogic.Init(dm, players);
+			Game.Init(dm, players);
 
-			while (!MainLogic.GameOver) {
-				MainLogic.Update();
+			TestInit();
+
+			while (!Game.GameOver) {
+				Game.Update();
+				Thread.Sleep(100);
 			}
 
-			MainLogic.Cleanup();
+			Game.Cleanup();
 
 			Console.WriteLine("Press any key to continue...");
 			Console.ReadKey();
@@ -58,17 +58,31 @@ namespace TestConsoleApp {
 			byte[] code = initializer.ServerRequireClientVerify();
 			if (code != null) {
 				if (code.SequenceEqual(dmVerificationCode)) {
-					initializer.ServerApplyConnection(dmConnection);
+					if (dmConnection.HasAppliedService()) {
+						initializer.ServerApplyConnection(null);
+					} else {
+						initializer.ServerApplyConnection(dmConnection);
+					}
 				} else if (code.SequenceEqual(player1VerificationCode)) {
-					initializer.ServerApplyConnection(player1Connection);
+					if (player1Connection.HasAppliedService()) {
+						initializer.ServerApplyConnection(null);
+					} else {
+						initializer.ServerApplyConnection(player1Connection);
+					}
 				} else if (code.SequenceEqual(player2VerificationCode)) {
-					initializer.ServerApplyConnection(player2Connection);
+					if (player2Connection.HasAppliedService()) {
+						initializer.ServerApplyConnection(null);
+					} else {
+						initializer.ServerApplyConnection(player2Connection);
+					}
 				} else {
 					initializer.ServerApplyConnection(null);
 				}
 			}
 		}
 
-
+		static void TestInit() {
+			
+		}
 	}
 }

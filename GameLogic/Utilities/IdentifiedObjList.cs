@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 
-namespace GameLogic.Core {
+namespace GameLogic.Utilities {
 	public interface IReadonlyIdentifiedObjList<T> : IEnumerable<T>, IEnumerable, IReadOnlyCollection<T> {
 		T this[string id] { get; }
 		bool Contains(string id);

@@ -1,9 +1,9 @@
-﻿using GameLogic.Core.ScriptSystem;
+﻿using GameLogic.Utilities.ScriptSystem;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace GameLogic.Core {
+namespace GameLogic.Utilities {
 	public interface IAttachable<T> : IJSContextProvider where T : class, IJSContextProvider {
 		T Belong { get; set; }
 	}

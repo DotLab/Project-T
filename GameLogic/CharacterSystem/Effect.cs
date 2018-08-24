@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using GameLogic.Core;
-using GameLogic.Core.ScriptSystem;
-using GameLogic.EventSystem;
+﻿using GameLogic.EventSystem;
+using GameLogic.Utilities;
+using GameLogic.Utilities.ScriptSystem;
+using System;
 
 namespace GameLogic.CharacterSystem {
 	public sealed class InitiativeEffect : Command, IStuntProperty {

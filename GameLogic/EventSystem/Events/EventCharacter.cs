@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using GameLogic.CharacterSystem;
-using GameLogic.Core.ScriptSystem;
+﻿using GameLogic.CharacterSystem;
+using GameLogic.Utilities.ScriptSystem;
+using System;
 
 namespace GameLogic.EventSystem.Events {
 	public class EventCharacter : Event {

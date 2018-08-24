@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace GameLogic.Core {
+﻿namespace GameLogic.Core {
 	public enum BattleMapDirection {
 		POSITIVE_ROW = 0b0001,
 		POSITIVE_COL = 0b0010,

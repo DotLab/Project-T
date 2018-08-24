@@ -1,9 +1,8 @@
-﻿using System;
+﻿using GameLogic.EventSystem.Events;
+using GameLogic.Utilities;
+using GameLogic.Utilities.ScriptSystem;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using GameLogic.Core;
-using GameLogic.Core.ScriptSystem;
-using GameLogic.EventSystem.Events;
 
 namespace GameLogic.EventSystem {
 	public sealed class GameEventBus : IJSContextProvider {

@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using Xunit;
 using System.Text;
-using GameLogic.Core.ScriptSystem;
+using GameLogic.Utilities.ScriptSystem;
 using GameLogic.CharacterSystem;
 using Xunit.Abstractions;
-using GameLogic.Core.ScriptSystem.EngineWrapper;
+using GameLogic.Utilities.ScriptSystem.EngineWrapper;
 
 namespace XUnitTest {
 	public class TestElement : ICharacterProperty {

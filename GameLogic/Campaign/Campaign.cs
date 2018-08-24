@@ -1,9 +1,7 @@
-﻿using System;
+﻿using GameLogic.Core;
+using GameLogic.Utilities.ScriptSystem;
+using System;
 using System.Collections.Generic;
-using GameLogic.CharacterSystem;
-using GameLogic.Container;
-using GameLogic.Core;
-using GameLogic.Core.ScriptSystem;
 
 namespace GameLogic.Campaign {
 	public enum ShotType {

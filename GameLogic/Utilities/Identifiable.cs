@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using GameLogic.Core.ScriptSystem;
+﻿using GameLogic.Core;
+using GameLogic.Utilities.ScriptSystem;
 
-namespace GameLogic.Core {
+namespace GameLogic.Utilities {
 	public interface IIdentifiable : IDescribable, IJSContextProvider {
 		string ID { get; }
 	}
@@ -26,10 +24,5 @@ namespace GameLogic.Core {
 
 		public abstract IJSContext GetContext();
 		public abstract void SetContext(IJSContext context);
-	}
-
-	public interface IDescribable {
-		string Name { get; set; }
-		string Description { get; set; }
 	}
 }

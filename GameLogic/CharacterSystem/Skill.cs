@@ -1,7 +1,6 @@
-﻿using System;
+﻿using GameLogic.Core;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using GameLogic.Core;
 
 namespace GameLogic.CharacterSystem {
 	public sealed class SkillType : IEquatable<SkillType> {

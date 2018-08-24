@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using GameLogic.Core;
-using GameLogic.Core.Network;
+﻿using GameLogic.Core.Network;
+using GameLogic.Utilities;
 
 namespace GameLogic.ClientComponents {
 	public class MessageDialog : ClientComponent {

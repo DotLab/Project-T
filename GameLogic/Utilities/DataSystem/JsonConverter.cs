@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace GameLogic.Core.DataSystem {
+namespace GameLogic.Utilities.DataSystem {
 	public interface IJsonConverterRaw {
 		string Serialize(object obj);
 		T Deserialize<T>(string json);

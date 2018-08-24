@@ -1,5 +1,4 @@
 ﻿using GameLogic.Core;
-using GameLogic.Core.DataSystem;
 using GameLogic.Core.Network;
 using GameLogic.Core.Network.ClientMessages;
 using GameLogic.Core.Network.ServerMessages;
@@ -14,7 +13,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace TextyClient {
-	public partial class BattleSceneForm : Form, IMessageReceiver {
+	public partial class SceneForm : Form, IMessageReceiver {
 		public enum Direction {
 			POSITIVE_ROW = 1,
 			POSITIVE_COL = 2,
@@ -75,7 +74,6 @@ namespace TextyClient {
 
 		private struct ActableObjWithAP {
 			public GridObject actable;
-			public int actionPoint;
 			public bool currentActing;
 
 			public override string ToString() {
@@ -121,7 +119,7 @@ namespace TextyClient {
 		private List<CharacterPropertyInfo> _selectionList2 = new List<CharacterPropertyInfo>();
 
 		private ReachablePlace[] _movePathInfo = null;
-		private ReachablePlace _selectedPlace = null;
+		private ReachablePlace _selectedMoveDst = null;
 
 		public void MessageReceived(GameLogic.Core.Network.Message message) {
 			switch (message.MessageType) {
@@ -135,12 +133,16 @@ namespace TextyClient {
 					break;
 				case BattleScenePushGridObjectMessage.MESSAGE_TYPE: {
 						BattleScenePushGridObjectMessage pushGridObjMessage = (BattleScenePushGridObjectMessage)message;
-						Grid grid = _grids[pushGridObjMessage.gridObj.row, pushGridObjMessage.gridObj.col];
-						GridObject gridObject = new GridObject(pushGridObjMessage.gridObj.objID, pushGridObjMessage.view);
-						gridObject.direction = (Direction)pushGridObjMessage.direction;
-						gridObject.actable = pushGridObjMessage.actable;
-						gridObject.movable = pushGridObjMessage.movable;
-						if (pushGridObjMessage.highland) {
+						Grid grid = _grids[pushGridObjMessage.objData.obj.row, pushGridObjMessage.objData.obj.col];
+						GridObject gridObject = new GridObject(pushGridObjMessage.objData.obj.id, pushGridObjMessage.view);
+						gridObject.direction = (Direction)pushGridObjMessage.objData.direction;
+						bool actable = gridObject.actable = pushGridObjMessage.objData.actable;
+						if (actable) {
+							gridObject.movable = pushGridObjMessage.objData.actableObjData.movable;
+						} else {
+							gridObject.movable = false;
+						}
+						if (pushGridObjMessage.objData.highland) {
 							grid.highland.Add(gridObject);
 						} else {
 							grid.lowland.Add(gridObject);
@@ -151,13 +153,13 @@ namespace TextyClient {
 						BattleSceneRemoveGridObjectMessage removeGridObjMessage = (BattleSceneRemoveGridObjectMessage)message;
 						Grid grid = _grids[removeGridObjMessage.gridObj.row, removeGridObjMessage.gridObj.col];
 						for (int i = grid.lowland.Count - 1; i >= 0; --i) {
-							if (grid.lowland[i].id == removeGridObjMessage.gridObj.objID) {
+							if (grid.lowland[i].id == removeGridObjMessage.gridObj.id) {
 								grid.lowland.RemoveAt(i);
 								return;
 							}
 						}
 						for (int i = grid.highland.Count - 1; i >= 0; --i) {
-							if (grid.highland[i].id == removeGridObjMessage.gridObj.objID) {
+							if (grid.highland[i].id == removeGridObjMessage.gridObj.id) {
 								grid.highland.RemoveAt(i);
 								return;
 							}
@@ -166,24 +168,26 @@ namespace TextyClient {
 					break;
 				case BattleSceneAddLadderObjectMessage.MESSAGE_TYPE: {
 						BattleSceneAddLadderObjectMessage addLadderObjMessage = (BattleSceneAddLadderObjectMessage)message;
-						Grid grid = _grids[addLadderObjMessage.ladderObj.row, addLadderObjMessage.ladderObj.col];
-						SideObject sideObject = new SideObject(addLadderObjMessage.ladderObj.objID, addLadderObjMessage.view);
-						switch (addLadderObjMessage.direction) {
+						int row = addLadderObjMessage.objData.obj.row;
+						int col = addLadderObjMessage.objData.obj.col;
+						Grid grid = _grids[row, col];
+						SideObject sideObject = new SideObject(addLadderObjMessage.objData.obj.id, addLadderObjMessage.view);
+						switch (addLadderObjMessage.objData.direction) {
 							case (int)Direction.POSITIVE_ROW:
 								grid.positiveRowLadder = sideObject;
-								_grids[addLadderObjMessage.ladderObj.row + 1, addLadderObjMessage.ladderObj.col].negativeRowLadder = sideObject;
+								_grids[row + 1, col].negativeRowLadder = sideObject;
 								break;
 							case (int)Direction.POSITIVE_COL:
 								grid.positiveRowLadder = sideObject;
-								_grids[addLadderObjMessage.ladderObj.row, addLadderObjMessage.ladderObj.col + 1].negativeColLadder = sideObject;
+								_grids[row, col + 1].negativeColLadder = sideObject;
 								break;
 							case (int)Direction.NEGATIVE_ROW:
 								grid.positiveRowLadder = sideObject;
-								_grids[addLadderObjMessage.ladderObj.row - 1, addLadderObjMessage.ladderObj.col].positiveRowLadder = sideObject;
+								_grids[row - 1, col].positiveRowLadder = sideObject;
 								break;
 							case (int)Direction.NEGATIVE_COL:
 								grid.positiveRowLadder = sideObject;
-								_grids[addLadderObjMessage.ladderObj.row, addLadderObjMessage.ladderObj.col - 1].positiveColLadder = sideObject;
+								_grids[row, col - 1].positiveColLadder = sideObject;
 								break;
 							default:
 								return;
@@ -193,16 +197,16 @@ namespace TextyClient {
 				case BattleSceneRemoveLadderObjectMessage.MESSAGE_TYPE: {
 						BattleSceneRemoveLadderObjectMessage removeLadderObjMessage = (BattleSceneRemoveLadderObjectMessage)message;
 						Grid grid = _grids[removeLadderObjMessage.ladderObj.row, removeLadderObjMessage.ladderObj.col];
-						if (grid.positiveRowLadder != null && grid.positiveRowLadder.id == removeLadderObjMessage.ladderObj.objID) {
+						if (grid.positiveRowLadder != null && grid.positiveRowLadder.id == removeLadderObjMessage.ladderObj.id) {
 							grid.positiveRowLadder = null;
 							_grids[removeLadderObjMessage.ladderObj.row + 1, removeLadderObjMessage.ladderObj.col].negativeRowLadder = null;
-						} else if (grid.positiveColLadder != null && grid.positiveColLadder.id == removeLadderObjMessage.ladderObj.objID) {
+						} else if (grid.positiveColLadder != null && grid.positiveColLadder.id == removeLadderObjMessage.ladderObj.id) {
 							grid.positiveColLadder = null;
 							_grids[removeLadderObjMessage.ladderObj.row, removeLadderObjMessage.ladderObj.col + 1].negativeColLadder = null;
-						} else if (grid.negativeRowLadder != null && grid.negativeRowLadder.id == removeLadderObjMessage.ladderObj.objID) {
+						} else if (grid.negativeRowLadder != null && grid.negativeRowLadder.id == removeLadderObjMessage.ladderObj.id) {
 							grid.negativeRowLadder = null;
 							_grids[removeLadderObjMessage.ladderObj.row - 1, removeLadderObjMessage.ladderObj.col].positiveRowLadder = null;
-						} else if (grid.negativeColLadder != null && grid.negativeColLadder.id == removeLadderObjMessage.ladderObj.objID) {
+						} else if (grid.negativeColLadder != null && grid.negativeColLadder.id == removeLadderObjMessage.ladderObj.id) {
 							grid.negativeColLadder = null;
 							_grids[removeLadderObjMessage.ladderObj.row, removeLadderObjMessage.ladderObj.col - 1].positiveColLadder = null;
 						}
@@ -211,12 +215,9 @@ namespace TextyClient {
 				case BattleSceneSetActingOrderMessage.MESSAGE_TYPE: {
 						var orderMessage = (BattleSceneSetActingOrderMessage)message;
 						_actingOrder.Clear();
-						foreach (var objOrder in orderMessage.objsOrder) {
-							var gridObject = this.GetGridObject(objOrder.actableObj.row, objOrder.actableObj.col, objOrder.actableObj.objID);
-							var objWithAP = new ActableObjWithAP {
-								actable = gridObject,
-								actionPoint = objOrder.actionPoint
-							};
+						foreach (var obj in orderMessage.objOrder) {
+							var gridObject = this.GetGridObject(obj.row, obj.col, obj.id);
+							var objWithAP = new ActableObjWithAP { actable = gridObject };
 							_actingOrder.Add(objWithAP);
 						}
 					}
@@ -224,14 +225,14 @@ namespace TextyClient {
 				case BattleSceneChangeTurnMessage.MESSAGE_TYPE: {
 						var orderMessage = (BattleSceneChangeTurnMessage)message;
 						_canActing = orderMessage.canOperate;
-						_actingObjID = orderMessage.gridObj.objID;
+						_actingObjID = orderMessage.gridObj.id;
 						if (orderMessage.canOperate) {
 							roundInfoLbl.Text = "你的回合";
 						} else {
 							roundInfoLbl.Text = this.GetGridObject(orderMessage.gridObj) + " 的回合";
 						}
 						for (int i = 0; i < _actingOrder.Count; ++i) {
-							if (_actingOrder[i].actable.id == orderMessage.gridObj.objID) {
+							if (_actingOrder[i].actable.id == orderMessage.gridObj.id) {
 								var val = _actingOrder[i];
 								val.currentActing = true;
 								_actingOrder[i] = val;
@@ -250,14 +251,14 @@ namespace TextyClient {
 						GridObject gridObject = null;
 						bool highland = false;
 						foreach (var lowObj in grid.lowland) {
-							if (lowObj.id == moveMsg.obj.objID) {
+							if (lowObj.id == moveMsg.obj.id) {
 								gridObject = lowObj;
 								break;
 							}
 						}
 						if (gridObject == null) {
 							foreach (var highObj in grid.highland) {
-								if (highObj.id == moveMsg.obj.objID) {
+								if (highObj.id == moveMsg.obj.id) {
 									gridObject = highObj;
 									highland = true;
 									break;
@@ -293,7 +294,7 @@ namespace TextyClient {
 						};
 						var stuntsIDRequest = new GetCharacterDataMessage {
 							dataType = GetCharacterDataMessage.DataType.STUNTS,
-							characterID = selectSkillMsg.passiveObj.objID
+							characterID = selectSkillMsg.passiveObj.id
 						};
 						_selectionList.Clear();
 						_selectionList2.Clear();
@@ -416,7 +417,7 @@ namespace TextyClient {
 			}
 		}
 
-		public BattleSceneForm() {
+		public SceneForm() {
 			InitializeComponent();
 
 			Timer connectionUpdater = new Timer();
@@ -453,7 +454,7 @@ namespace TextyClient {
 		}
 
 		private GridObject GetGridObject(BattleSceneObj messageObj) {
-			return this.GetGridObject(messageObj.row, messageObj.col, messageObj.objID);
+			return this.GetGridObject(messageObj.row, messageObj.col, messageObj.id);
 		}
 
 		private GridObject GetGridObject(int row, int col, string id) {
@@ -534,10 +535,10 @@ namespace TextyClient {
 			mouseGridPosLbl.Text = "Row:" + newRow.ToString() + ", Col:" + newCol.ToString() + ", Highland:" + newHighland.ToString();
 
 			if (_movePathInfo != null) {
-				_selectedPlace = null;
+				_selectedMoveDst = null;
 				foreach (var place in _movePathInfo) {
 					if (place.row == newRow && place.col == newCol && place.highland == newHighland) {
-						_selectedPlace = place;
+						_selectedMoveDst = place;
 						break;
 					}
 				}
@@ -729,8 +730,8 @@ namespace TextyClient {
 						g.FillPolygon(Brushes.Blue, gridPoints);
 					}
 				}
-				ReachablePlace pathEnd = _selectedPlace;
-				if (_selectedPlace != null) {
+				ReachablePlace pathEnd = _selectedMoveDst;
+				if (_selectedMoveDst != null) {
 					do {
 						int row = pathEnd.row;
 						int col = pathEnd.col;
@@ -890,12 +891,11 @@ namespace TextyClient {
 			}
 			menuItemConfirmGrid.Enabled = false;
 			menuItemMove.Enabled = menuItemExtraMovePoint.Enabled = menuItemCreateAspect.Enabled = menuItemAttack.Enabled = menuItemSpecialAction.Enabled = menuItemRoundOver.Enabled = false;
-			if (_canActing && gridObject.id == _actingObjID && gridObject.actable) {
+			if (_movePathInfo != null && _selectedMoveDst != null) {
+				menuItemMove.Enabled = menuItemConfirmGrid.Enabled = true;
+			} else if (_canActing && gridObject.id == _actingObjID && gridObject.actable) {
 				menuItemCreateAspect.Enabled = menuItemAttack.Enabled = menuItemSpecialAction.Enabled = menuItemRoundOver.Enabled = true;
 				if (gridObject.movable) menuItemMove.Enabled = menuItemExtraMovePoint.Enabled = true;
-			}
-			if (_movePathInfo != null && _selectedPlace != null) {
-				menuItemConfirmGrid.Enabled = true;
 			}
 		}
 
@@ -923,7 +923,7 @@ namespace TextyClient {
 		private void menuItemMove_Click(object sender, EventArgs e) {
 			if (_movePathInfo != null) {
 				_movePathInfo = null;
-				_selectedPlace = null;
+				_selectedMoveDst = null;
 				menuItemMove.Text = "移动";
 			} else {
 				var message = new BattleSceneGetActableObjectMovePathInfoMessage();
@@ -948,7 +948,7 @@ namespace TextyClient {
 		}
 
 		private void menuItemExtraMovePoint_Click(object sender, EventArgs e) {
-
+			
 		}
 
 		private void menuItemCreateAspect_Click(object sender, EventArgs e) {
@@ -968,14 +968,14 @@ namespace TextyClient {
 		}
 
 		private void menuItemConfirmGrid_Click(object sender, EventArgs e) {
-			if (_movePathInfo != null && _selectedPlace != null) {
+			if (_movePathInfo != null && _selectedMoveDst != null) {
 				var message = new BattleSceneActableObjectMoveMessage();
-				message.dstRow = _selectedPlace.row;
-				message.dstCol = _selectedPlace.col;
-				message.dstHighland = _selectedPlace.highland;
+				message.dstRow = _selectedMoveDst.row;
+				message.dstCol = _selectedMoveDst.col;
+				message.dstHighland = _selectedMoveDst.highland;
 				Program.connection.SendMessage(message);
 				_movePathInfo = null;
-				_selectedPlace = null;
+				_selectedMoveDst = null;
 				menuItemMove.Text = "移动";
 			}
 

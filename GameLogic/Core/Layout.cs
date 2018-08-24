@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
-
-namespace GameLogic.Core {
+﻿namespace GameLogic.Core {
 	public struct Layout {
 		public static readonly Layout INIT = new Layout(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 1), new Vector3(1, 1, 1));
 

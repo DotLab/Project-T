@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Numerics;
-
-namespace GameLogic.Core {
+﻿namespace GameLogic.Core {
 	public sealed class CharacterView {
 		public string id;
 		public string battle;

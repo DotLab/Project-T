@@ -1,7 +1,7 @@
-﻿using GameLogic.Core;
-using GameLogic.Core.Network;
+﻿using GameLogic.Core.Network;
 using GameLogic.Core.Network.ClientMessages;
 using GameLogic.Core.Network.ServerMessages;
+using GameLogic.Utilities;
 using System;
 
 namespace GameLogic.ClientComponents {

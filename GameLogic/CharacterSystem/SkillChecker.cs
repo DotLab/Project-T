@@ -1,8 +1,7 @@
 ﻿using GameLogic.Core;
-using GameLogic.Core.ScriptSystem;
+using GameLogic.Utilities;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace GameLogic.CharacterSystem {
 	public sealed class SkillChecker {

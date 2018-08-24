@@ -1,9 +1,7 @@
-﻿using GameLogic.Core.ScriptSystem;
+﻿using GameLogic.Utilities.ScriptSystem;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace GameLogic.Core {
+namespace GameLogic.Utilities {
 	public class Command {
 		protected readonly bool _javascript;
 		protected readonly string _actionJS;

@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Jint;
-using Jint.Parser;
+﻿using Jint;
 using Jint.Native;
+using Jint.Parser;
 using Jint.Runtime;
 using Jint.Runtime.Interop;
+using System;
 
-namespace GameLogic.Core.ScriptSystem.EngineWrapper {
+namespace GameLogic.Utilities.ScriptSystem.EngineWrapper {
 	public sealed class JintEngine : IJSEngineRaw {
 		private readonly Engine _jsEngine;
 

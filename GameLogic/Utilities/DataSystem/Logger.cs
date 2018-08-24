@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace GameLogic.Core.DataSystem {
+namespace GameLogic.Utilities.DataSystem {
 	public interface ILogger {
 		void Write(string str);
 		void WriteLine(string str);

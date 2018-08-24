@@ -1,13 +1,10 @@
 ﻿using GameLogic.CharacterSystem;
 using GameLogic.ClientComponents;
 using GameLogic.Core.Network;
-using GameLogic.Core.ScriptSystem;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
-namespace GameLogic.Core {
+namespace GameLogic.Utilities {
 	public sealed class Player : User {
 		private readonly PlayerClient _playerClient;
 		private readonly List<Character> _characters;

@@ -1,9 +1,6 @@
-﻿using System;
+﻿using GameLogic.Utilities;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using GameLogic.CharacterSystem;
-using GameLogic.Core;
-using GameLogic.Container;
 
 namespace GameLogic.Campaign {
 	public sealed class StoryShot : Shot {

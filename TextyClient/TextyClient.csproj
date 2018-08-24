@@ -63,31 +63,22 @@
     <Compile Include="GameScene.Designer.cs">
       <DependentUpon>GameScene.cs</DependentUpon>
     </Compile>
-    <Compile Include="BattleSceneForm.cs">
+    <Compile Include="SceneForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="BattleSceneForm.Designer.cs">
-      <DependentUpon>BattleSceneForm.cs</DependentUpon>
-    </Compile>
-    <Compile Include="StorySceneForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="StorySceneForm.Designer.cs">
-      <DependentUpon>StorySceneForm.cs</DependentUpon>
+    <Compile Include="SceneForm.Designer.cs">
+      <DependentUpon>SceneForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="AdvancedConsole.resx">
       <DependentUpon>AdvancedConsole.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="BattleSceneForm.resx">
-      <DependentUpon>BattleSceneForm.cs</DependentUpon>
+    <EmbeddedResource Include="SceneForm.resx">
+      <DependentUpon>SceneForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="CharacterInfo.resx">
       <DependentUpon>CharacterInfo.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="StorySceneForm.resx">
-      <DependentUpon>StorySceneForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="GameScene.resx">
       <DependentUpon>GameScene.cs</DependentUpon>

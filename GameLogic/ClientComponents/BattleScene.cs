@@ -1,15 +1,14 @@
-﻿using GameLogic.Campaign;
-using GameLogic.CharacterSystem;
+﻿using GameLogic.CharacterSystem;
 using GameLogic.Container;
 using GameLogic.Container.BattleComponent;
 using GameLogic.Core;
-using GameLogic.Core.DataSystem;
 using GameLogic.Core.Network;
 using GameLogic.Core.Network.ClientMessages;
 using GameLogic.Core.Network.ServerMessages;
+using GameLogic.Utilities;
+using GameLogic.Utilities.DataSystem;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace GameLogic.ClientComponents {
 	public class BattleScene : ClientComponent, IRequestHandler {
@@ -161,11 +160,20 @@ namespace GameLogic.ClientComponents {
 
 		public void PushGridObject(int row, int col, bool highland, GridObject gridObject) {
 			BattleScenePushGridObjectMessage message = new BattleScenePushGridObjectMessage();
-			message.gridObj.row = row;
-			message.gridObj.col = col;
-			message.highland = highland;
-			message.gridObj.objID = gridObject.ID;
 			message.view = gridObject.CharacterRef.View;
+			message.objData.obj.row = row;
+			message.objData.obj.col = col;
+			message.objData.highland = highland;
+			message.objData.obj.id = gridObject.ID;
+			message.objData.direction = (int)gridObject.Direction;
+			message.objData.obstacle = gridObject.IsObstacle;
+			message.objData.stagnate = gridObject.Stagnate;
+			message.objData.terrain = gridObject.IsTerrain;
+			bool actable = message.objData.actable = gridObject is ActableGridObject;
+			if (actable) {
+				var actableObject = (ActableGridObject)gridObject;
+				//message.objData.actableObjData.actionPoint = gridObject.act
+			}
 			_connection.SendMessage(message);
 		}
 
@@ -173,16 +181,16 @@ namespace GameLogic.ClientComponents {
 			BattleSceneRemoveGridObjectMessage message = new BattleSceneRemoveGridObjectMessage();
 			message.gridObj.row = gridObject.GridRef.PosRow;
 			message.gridObj.col = gridObject.GridRef.PosCol;
-			message.gridObj.objID = gridObject.ID;
+			message.gridObj.id = gridObject.ID;
 			_connection.SendMessage(message);
 		}
 
 		public void AddLadderObject(int row, int col, BattleMapDirection direction, LadderObject ladderObject) {
 			BattleSceneAddLadderObjectMessage message = new BattleSceneAddLadderObjectMessage();
-			message.ladderObj.row = row;
-			message.ladderObj.col = col;
-			message.direction = (int)direction;
-			message.ladderObj.objID = ladderObject.ID;
+			message.objData.obj.row = row;
+			message.objData.obj.col = col;
+			message.objData.direction = (int)direction;
+			message.objData.obj.id = ladderObject.ID;
 			message.view = ladderObject.CharacterRef.View;
 			_connection.SendMessage(message);
 		}
@@ -191,7 +199,7 @@ namespace GameLogic.ClientComponents {
 			BattleSceneRemoveLadderObjectMessage message = new BattleSceneRemoveLadderObjectMessage();
 			message.ladderObj.row = ladderObject.GridRef.PosRow;
 			message.ladderObj.col = ladderObject.GridRef.PosCol;
-			message.ladderObj.objID = ladderObject.ID;
+			message.ladderObj.id = ladderObject.ID;
 			_connection.SendMessage(message);
 		}
 
@@ -203,15 +211,12 @@ namespace GameLogic.ClientComponents {
 			_connection.SendMessage(message);
 		}
 
-		public void SetActingOrder(List<ActableGridObject> objects) {
+		public void SetActingOrder(List<ActableGridObject> actableObjects) {
 			if (!_isUsing) return;
 			var message = new BattleSceneSetActingOrderMessage();
-			message.objsOrder = new BattleSceneSetActingOrderMessage.ObjOrder[objects.Count];
-			int i = 0;
-			foreach (ActableGridObject actableGridObject in objects) {
-				var objOrder = message.objsOrder[i++];
-				objOrder.actableObj = new BattleSceneObj(actableGridObject);
-				objOrder.actionPoint = actableGridObject.ActionPoint;
+			message.objOrder = new BattleSceneObj[actableObjects.Count];
+			for (int i = 0; i < actableObjects.Count; ++i) {
+				message.objOrder[i] = StreamableFactory.CreateBattleSceneObj(actableObjects[i]);
 			}
 			_connection.SendMessage(message);
 		}
@@ -221,14 +226,14 @@ namespace GameLogic.ClientComponents {
 			_canOperate = actable.CharacterRef.Controller == _owner;
 			var message = new BattleSceneChangeTurnMessage();
 			message.canOperate = _canOperate;
-			message.gridObj = new BattleSceneObj(actable);
+			message.gridObj = StreamableFactory.CreateBattleSceneObj(actable);
 			_connection.SendMessage(message);
 		}
 
 		public void DisplayActableObjectMove(ActableGridObject actable, BattleMapDirection direction, bool stairway) {
 			if (!_isUsing) return;
 			var message = new BattleSceneDisplayActableObjectMovingMessage();
-			message.obj = new BattleSceneObj(actable);
+			message.obj = StreamableFactory.CreateBattleSceneObj(actable);
 			message.direction = (int)direction;
 			message.stairway = stairway;
 			_connection.SendMessage(message);
@@ -237,9 +242,9 @@ namespace GameLogic.ClientComponents {
 		public void NotifyPassiveSelectSkillOrStunt(SkillChecker.CharacterAction action, GridObject passive, GridObject initiative, SkillType initiativeSkillType) {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_SKILL_OR_STUNT) return;
 			var message = new BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage();
-			message.passiveObj = new BattleSceneObj(passive);
-			message.initiativeObj = new BattleSceneObj(initiative);
-			message.initiativeSkillType = new SkillTypeDescription(initiativeSkillType);
+			message.passiveObj = StreamableFactory.CreateBattleSceneObj(passive);
+			message.initiativeObj = StreamableFactory.CreateBattleSceneObj(initiative);
+			message.initiativeSkillType = StreamableFactory.CreateSkillTypeDescription(initiativeSkillType);
 			message.action = (int)action;
 			_connection.SendMessage(message);
 		}
@@ -266,7 +271,7 @@ namespace GameLogic.ClientComponents {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.INITIATIVE_ASPECT) return;
 			var message = new BattleSceneCheckerNotifySelectAspectMessage();
 			message.isInitiative = true;
-			message.obj = new BattleSceneObj(initiative);
+			message.obj = StreamableFactory.CreateBattleSceneObj(initiative);
 			_connection.SendMessage(message);
 		}
 
@@ -304,7 +309,7 @@ namespace GameLogic.ClientComponents {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_ASPECT) return;
 			var message = new BattleSceneCheckerNotifySelectAspectMessage();
 			message.isInitiative = false;
-			message.obj = new BattleSceneObj(passive);
+			message.obj = StreamableFactory.CreateBattleSceneObj(passive);
 			_connection.SendMessage(message);
 		}
 
@@ -341,7 +346,7 @@ namespace GameLogic.ClientComponents {
 		public void UpdateSumPoint(GridObject gridObject, int point) {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new BattleSceneCheckerUpdateSumPointMessage();
-			message.obj = new BattleSceneObj(gridObject);
+			message.obj = StreamableFactory.CreateBattleSceneObj(gridObject);
 			message.point = point;
 			_connection.SendMessage(message);
 		}
@@ -349,7 +354,7 @@ namespace GameLogic.ClientComponents {
 		public void DisplaySkillReady(GridObject gridObject, SkillType skillType, bool bigone) {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new BattleSceneCheckerDisplaySkillReadyMessage();
-			message.obj = new BattleSceneObj(gridObject);
+			message.obj = StreamableFactory.CreateBattleSceneObj(gridObject);
 			message.skillTypeID = skillType.ID;
 			message.bigone = bigone;
 			_connection.SendMessage(message);
@@ -358,8 +363,8 @@ namespace GameLogic.ClientComponents {
 		public void DisplayUsingAspect(GridObject userGridObject, GridObject ownerGridObject, Aspect aspect) {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new BattleSceneCheckerDisplayUsingAspectMessage();
-			message.userObj = new BattleSceneObj(userGridObject);
-			message.aspectOwnerObj = new BattleSceneObj(ownerGridObject);
+			message.userObj = StreamableFactory.CreateBattleSceneObj(userGridObject);
+			message.aspectOwnerObj = StreamableFactory.CreateBattleSceneObj(ownerGridObject);
 			message.aspectID = aspect.ID;
 			_connection.SendMessage(message);
 		}

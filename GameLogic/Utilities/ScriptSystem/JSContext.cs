@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace GameLogic.Core.ScriptSystem {
+﻿namespace GameLogic.Utilities.ScriptSystem {
 	public interface IJSContext { }
 
 	public interface IJSContextProvider {

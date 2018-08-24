@@ -1,16 +1,12 @@
 ﻿using GameLogic.Campaign;
 using GameLogic.CharacterSystem;
-using GameLogic.Core.ScriptSystem;
-using GameLogic.EventSystem;
 using GameLogic.Container;
-using System;
+using GameLogic.Core;
+using GameLogic.EventSystem;
+using GameLogic.Utilities.ScriptSystem;
 using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
-using GameLogic.Core.DataSystem;
-using System.Threading;
 
-namespace GameLogic.Core {
+namespace GameLogic.Utilities {
 	public class JavascriptGlobalObject {
 		public IJSAPI<CharacterManager> characterManager = (IJSAPI<CharacterManager>)CharacterManager.Instance.GetContext();
 		public IJSAPI<CampaignManager> campaignManager = (IJSAPI<CampaignManager>)CampaignManager.Instance.GetContext();
@@ -20,7 +16,7 @@ namespace GameLogic.Core {
 
 	}
 
-	public static class MainLogic {
+	public static class Game {
 		private static readonly JavascriptGlobalObject _globalObject = new JavascriptGlobalObject();
 
 		private static bool _gameOver = true;
@@ -64,7 +60,6 @@ namespace GameLogic.Core {
 				player.UpdateClient();
 			}
 			_dm.UpdateClient();
-			Thread.Sleep(100);
 		}
 
 		public static void Cleanup() {

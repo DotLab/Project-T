@@ -1,9 +1,9 @@
 ﻿using GameLogic.CharacterSystem;
-using GameLogic.Core;
-using GameLogic.Core.DataSystem;
 using GameLogic.Core.Network;
 using GameLogic.Core.Network.ClientMessages;
 using GameLogic.Core.Network.ServerMessages;
+using GameLogic.Utilities;
+using GameLogic.Utilities.DataSystem;
 using System;
 using System.Collections.Generic;
 
@@ -159,31 +159,31 @@ namespace GameLogic.ClientComponents {
 					message = new CharacterAspectsDescriptionMessage();
 					message.properties = new CharacterPropertyDescription[character.Aspects.Count];
 					for (int i = 0; i < character.Aspects.Count; ++i)
-						message.properties[i] = new CharacterPropertyDescription(character.Aspects[i]);
+						message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.Aspects[i]);
 					break;
 				case GetCharacterDataMessage.DataType.CONSEQUENCES:
 					message = new CharacterConsequencesDescriptionMessage();
 					message.properties = new CharacterPropertyDescription[character.Consequences.Count];
 					for (int i = 0; i < character.Consequences.Count; ++i)
-						message.properties[i] = new CharacterPropertyDescription(character.Consequences[i]);
+						message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.Consequences[i]);
 					break;
 				case GetCharacterDataMessage.DataType.EXTRAS:
 					message = new CharacterExtrasDescriptionMessage();
 					message.properties = new CharacterPropertyDescription[character.Extras.Count];
 					for (int i = 0; i < character.Extras.Count; ++i)
-						message.properties[i] = new CharacterPropertyDescription(character.Extras[i]);
+						message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.Extras[i]);
 					break;
 				case GetCharacterDataMessage.DataType.SKILLS:
 					message = new CharacterSkillsDescriptionMessage();
 					message.properties = new CharacterPropertyDescription[character.ReadonlySkillList.Count];
 					for (int i = 0; i < character.ReadonlySkillList.Count; ++i)
-						message.properties[i] = new CharacterPropertyDescription(character.ReadonlySkillList[i]);
+						message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.ReadonlySkillList[i]);
 					break;
 				case GetCharacterDataMessage.DataType.STUNTS:
 					message = new CharacterStuntsDescriptionMessage();
 					message.properties = new CharacterPropertyDescription[character.Stunts.Count];
 					for (int i = 0; i < character.Stunts.Count; ++i)
-						message.properties[i] = new CharacterPropertyDescription(character.Stunts[i]);
+						message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.Stunts[i]);
 					break;
 				default:
 					return null;
@@ -251,7 +251,7 @@ namespace GameLogic.ClientComponents {
 			}
 			message.skillTypes = new SkillTypeDescription[resistables.Count];
 			for (int i = 0; i < resistables.Count; ++i) {
-				message.skillTypes[i] = new SkillTypeDescription(resistables[i]);
+				message.skillTypes[i] = StreamableFactory.CreateSkillTypeDescription(resistables[i]);
 			}
 			return message;
 		}
@@ -261,7 +261,7 @@ namespace GameLogic.ClientComponents {
 			message.skillTypes = new SkillTypeDescription[SkillType.SkillTypes.Count];
 			int i = 0;
 			foreach (var skillType in SkillType.SkillTypes) {
-				message.skillTypes[i++] = new SkillTypeDescription(skillType.Value);
+				message.skillTypes[i++] = StreamableFactory.CreateSkillTypeDescription(skillType.Value);
 			}
 			return message;
 		}

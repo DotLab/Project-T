@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using GameLogic.Core.DataSystem;
-using GameLogic.Core.ScriptSystem.EngineWrapper;
+﻿using GameLogic.Utilities.DataSystem;
+using GameLogic.Utilities.ScriptSystem.EngineWrapper;
+using System;
 
-namespace GameLogic.Core.ScriptSystem {
+namespace GameLogic.Utilities.ScriptSystem {
 	public interface IJSEngineRaw {
 		void BindType(string typeName, Type type);
 		object GetVar(string name);

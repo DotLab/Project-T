@@ -1,8 +1,4 @@
-﻿using GameLogic.Core.DataSystem;
-using System;
-using System.Collections.Generic;
-
-namespace GameLogic.Core.Network.ServerMessages {
+﻿namespace GameLogic.Core.Network.ServerMessages {
 	public sealed class ServerReadyMessage : Message {
 		public const int MESSAGE_TYPE = -1;
 		public override int MessageType => MESSAGE_TYPE;
@@ -859,29 +855,17 @@ namespace GameLogic.Core.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -50;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj gridObj;
+		public BattleSceneGridObjData objData;
 		public CharacterView view;
-		public bool highland;
-		public int direction;
-		public bool actable;
-		public bool movable;
 
 		public override void WriteTo(IDataOutputStream stream) {
-			gridObj.WriteTo(stream);
+			objData.WriteTo(stream);
 			OutputStreamHelper.WriteCharacterView(stream, view);
-			stream.WriteBoolean(highland);
-			stream.WriteInt32(direction);
-			stream.WriteBoolean(actable);
-			stream.WriteBoolean(movable);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
-			gridObj.ReadFrom(stream);
+			objData.ReadFrom(stream);
 			view = InputStreamHelper.ReadCharacterView(stream);
-			highland = stream.ReadBoolean();
-			direction = stream.ReadInt32();
-			actable = stream.ReadBoolean();
-			movable = stream.ReadBoolean();
 		}
 	}
 
@@ -904,20 +888,17 @@ namespace GameLogic.Core.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -52;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj ladderObj;
+		public BattleSceneLadderObjData objData;
 		public CharacterView view;
-		public int direction;
 
 		public override void WriteTo(IDataOutputStream stream) {
-			ladderObj.WriteTo(stream);
+			objData.WriteTo(stream);
 			OutputStreamHelper.WriteCharacterView(stream, view);
-			stream.WriteInt32(direction);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
-			ladderObj.ReadFrom(stream);
+			objData.ReadFrom(stream);
 			view = InputStreamHelper.ReadCharacterView(stream);
-			direction = stream.ReadInt32();
 		}
 	}
 
@@ -957,39 +938,23 @@ namespace GameLogic.Core.Network.ServerMessages {
 	public sealed class BattleSceneSetActingOrderMessage : Message {
 		public const int MESSAGE_TYPE = -55;
 		public override int MessageType => MESSAGE_TYPE;
-
-		public struct ObjOrder : IStreamable {
-			public BattleSceneObj actableObj;
-			public int actionPoint;
-
-			public void ReadFrom(IDataInputStream stream) {
-				actableObj.ReadFrom(stream);
-				actionPoint = stream.ReadInt32();
-			}
-
-			public void WriteTo(IDataOutputStream stream) {
-				actableObj.WriteTo(stream);
-				stream.WriteInt32(actionPoint);
-			}
-		}
-
-		public ObjOrder[] objsOrder;
+		
+		public BattleSceneObj[] objOrder;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			int length = stream.ReadInt32();
-			objsOrder = new ObjOrder[length];
+			objOrder = new BattleSceneObj[length];
 			for (int i = 0; i < length; ++i) {
-				objsOrder[i].ReadFrom(stream);
+				objOrder[i].ReadFrom(stream);
 			}
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
-			stream.WriteInt32(objsOrder.Length);
-			foreach (ObjOrder objOrder in objsOrder) {
-				objOrder.WriteTo(stream);
+			stream.WriteInt32(objOrder.Length);
+			foreach (var obj in objOrder) {
+				obj.WriteTo(stream);
 			}
 		}
-
 	}
 
 	public sealed class BattleSceneChangeTurnMessage : Message {
@@ -1179,5 +1144,45 @@ namespace GameLogic.Core.Network.ServerMessages {
 		}
 	}
 
+	public sealed class BattleSceneGridObjectDataMessage : Message {
+		public const int MESSAGE_TYPE = -64;
+		public override int MessageType => MESSAGE_TYPE;
 
+		public BattleSceneObj obj;
+		public int direction;
+		public bool stairway;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			obj.ReadFrom(stream);
+			direction = stream.ReadInt32();
+			stairway = stream.ReadBoolean();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			obj.WriteTo(stream);
+			stream.WriteInt32(direction);
+			stream.WriteBoolean(stairway);
+		}
+	}
+
+	public sealed class BattleSceneLadderObjectDataMessage : Message {
+		public const int MESSAGE_TYPE = -65;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public BattleSceneObj obj;
+		public int direction;
+		public bool stairway;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			obj.ReadFrom(stream);
+			direction = stream.ReadInt32();
+			stairway = stream.ReadBoolean();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			obj.WriteTo(stream);
+			stream.WriteInt32(direction);
+			stream.WriteBoolean(stairway);
+		}
+	}
 }

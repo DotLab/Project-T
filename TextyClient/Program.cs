@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using NetworkHelper = Networkf.NetworkHelper;
-using GameLogic.Core.Network.Initializer;
 
 namespace TextyClient {
 	public struct CharacterPropertyInfo {
@@ -29,6 +28,8 @@ namespace TextyClient {
 		/// </summary>
 		[STAThread]
 		static void Main() {
+			connection.EventCaught += Connection_EventCaught;
+
 			byte[] verificationCode = { };
 			var dialogResult = MessageBox.Show("DM(Yes) or Player(No)?", "Choose", MessageBoxButtons.YesNo);
 			if (dialogResult == DialogResult.Yes) {
@@ -46,10 +47,10 @@ namespace TextyClient {
 			var initializer = new NSInitializer(service);
 			if (!initializer.ClientInit(verificationCode, connection)) {
 				MessageBox.Show("登陆失败", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-				service.socket.Close();
+				service.TeardownService();
 				return;
 			}
-
+			
 			var getAllSkillTypesRequest = new GetSkillTypeListMessage();
 			connection.Request(getAllSkillTypesRequest, result => {
 				var resp = result as SkillTypeListDataMessage;
@@ -65,8 +66,11 @@ namespace TextyClient {
 
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			Application.Run(new BattleSceneForm());
+			Application.Run(new SceneForm());
 		}
 
+		private static void Connection_EventCaught(object sender, NetworkEventCaughtEventArgs e) {
+			MessageBox.Show(e.message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+		}
 	}
 }
