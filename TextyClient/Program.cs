@@ -20,9 +20,10 @@ namespace TextyClient {
 	}
 
 	static class Program {
+		public static bool isDM = false;
 		public static NetworkfConnection connection = new NetworkfConnection();
 		public static List<CharacterPropertyInfo> skillTypes = new List<CharacterPropertyInfo>();
-
+		public static Form1 mainForm;
 		/// <summary>
 		/// 应用程序的主入口点。
 		/// </summary>
@@ -30,16 +31,21 @@ namespace TextyClient {
 		static void Main() {
 			connection.EventCaught += Connection_EventCaught;
 
+			string id;
 			byte[] verificationCode = { };
 			var dialogResult = MessageBox.Show("DM(Yes) or Player(No)?", "Choose", MessageBoxButtons.YesNo);
 			if (dialogResult == DialogResult.Yes) {
 				verificationCode = new byte[] { 0x00, 0x10, 0x20, 0xAB };
+				isDM = true;
+				id = "DM";
 			} else {
 				var dialogResult2 = MessageBox.Show("Player1(Yes) or Player2(No)?", "Choose", MessageBoxButtons.YesNo);
 				if (dialogResult2 == DialogResult.Yes) {
 					verificationCode = new byte[] { 0x00, 0x10, 0x20, 0x3B };
+					id = "Player1";
 				} else {
 					verificationCode = new byte[] { 0x00, 0x10, 0x20, 0xC5 };
+					id = "Player2";
 				}
 			}
 
@@ -66,7 +72,10 @@ namespace TextyClient {
 
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			Application.Run(new SceneForm());
+			mainForm = new Form1();
+			mainForm.storySceneForm.Text += id;
+			mainForm.battleSceneForm.Text += id;
+			Application.Run(mainForm);
 		}
 
 		private static void Connection_EventCaught(object sender, NetworkEventCaughtEventArgs e) {

@@ -57,28 +57,43 @@
     <Compile Include="CharacterInfo.Designer.cs">
       <DependentUpon>CharacterInfo.cs</DependentUpon>
     </Compile>
+    <Compile Include="Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
     <Compile Include="GameScene.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="GameScene.Designer.cs">
       <DependentUpon>GameScene.cs</DependentUpon>
     </Compile>
-    <Compile Include="SceneForm.cs">
+    <Compile Include="BattleSceneForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="SceneForm.Designer.cs">
-      <DependentUpon>SceneForm.cs</DependentUpon>
+    <Compile Include="BattleSceneForm.Designer.cs">
+      <DependentUpon>BattleSceneForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StorySceneForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="StorySceneForm.Designer.cs">
+      <DependentUpon>StorySceneForm.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="AdvancedConsole.resx">
       <DependentUpon>AdvancedConsole.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="SceneForm.resx">
-      <DependentUpon>SceneForm.cs</DependentUpon>
+    <EmbeddedResource Include="BattleSceneForm.resx">
+      <DependentUpon>BattleSceneForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="CharacterInfo.resx">
       <DependentUpon>CharacterInfo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="GameScene.resx">
       <DependentUpon>GameScene.cs</DependentUpon>

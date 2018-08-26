@@ -26,13 +26,17 @@ namespace GameLib.ClientComponents {
 		public BattleScene BattleScene => _battleScene;
 
 		public override void MessageReceived(Message message) {
-			this.SynchronizeData();
+			_battleScene.SynchronizeData();
+
+			if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
+				ShowScene(ContainerType.BATTLE);
+				_battleScene.SynchronizeState();
+			} else if (CampaignManager.Instance.CurrentContainer == ContainerType.STORY) {
+				ShowScene(ContainerType.STORY);
+
+			}
 		}
-
-		protected virtual void SynchronizeData() {
-
-		}
-
+		
 		protected Client(Connection connection, User owner, StoryScene storyScene, BattleScene battleScene) :
 			base(connection, owner) {
 			_connection.AddMessageReceiver(ClientInitMessage.MESSAGE_TYPE, this);
@@ -59,7 +63,7 @@ namespace GameLib.ClientComponents {
 					return;
 			}
 			ShowSceneMessage message = new ShowSceneMessage();
-			message.sceneType = (int)scene;
+			message.sceneType = (byte)scene;
 			_connection.SendMessage(message);
 		}
 

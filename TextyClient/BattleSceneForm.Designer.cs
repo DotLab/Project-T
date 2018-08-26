@@ -1,6 +1,6 @@
 ﻿namespace TextyClient
 {
-    partial class SceneForm
+    partial class BattleSceneForm
     {
         /// <summary>
         /// Required designer variable.
@@ -31,7 +31,6 @@
 			this.components = new System.ComponentModel.Container();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
 			this.gridObjectSelectionListBox = new System.Windows.Forms.ListBox();
-			this.battleScene = new TextyClient.GameScene();
 			this.battleSceneMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.menuItemMove = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuItemExtraMovePoint = new System.Windows.Forms.ToolStripMenuItem();
@@ -45,6 +44,12 @@
 			this.hScrollBar = new System.Windows.Forms.HScrollBar();
 			this.vScrollBar = new System.Windows.Forms.VScrollBar();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
+			this.roundInfoLbl = new System.Windows.Forms.Label();
+			this.roundInfoPanel = new System.Windows.Forms.Panel();
+			this.actionPointLbl = new System.Windows.Forms.Label();
+			this.movePointLbl = new System.Windows.Forms.Label();
+			this.label4 = new System.Windows.Forms.Label();
+			this.label1 = new System.Windows.Forms.Label();
 			this.confirmTargetBtn = new System.Windows.Forms.Button();
 			this.selectAspectOverBtn = new System.Windows.Forms.Button();
 			this.selectionTypeGroupPanel = new System.Windows.Forms.Panel();
@@ -54,25 +59,19 @@
 			this.skipAspectSelectionCbx = new System.Windows.Forms.CheckBox();
 			this.confirmSelectionBtn = new System.Windows.Forms.Button();
 			this.selectionListBox = new System.Windows.Forms.ListBox();
-			this.leftActionPointLbl = new System.Windows.Forms.Label();
-			this.leftMovePointLbl = new System.Windows.Forms.Label();
 			this.label5 = new System.Windows.Forms.Label();
-			this.label4 = new System.Windows.Forms.Label();
-			this.label1 = new System.Windows.Forms.Label();
 			this.selectedGridObjectLbl = new System.Windows.Forms.Label();
 			this.mouseGridPosLbl = new System.Windows.Forms.Label();
-			this.roundInfoLbl = new System.Windows.Forms.Label();
 			this.dicePointsLbl = new System.Windows.Forms.Label();
 			this.label3 = new System.Windows.Forms.Label();
 			this.roundInfoListBox = new System.Windows.Forms.ListBox();
 			this.label2 = new System.Windows.Forms.Label();
-			this.battleScenePanel = new System.Windows.Forms.Panel();
-			this.storyScenePanel = new System.Windows.Forms.Panel();
+			this.battleScene = new TextyClient.GameScene();
 			this.groupBox1.SuspendLayout();
 			this.battleSceneMenuStrip.SuspendLayout();
 			this.groupBox2.SuspendLayout();
+			this.roundInfoPanel.SuspendLayout();
 			this.selectionTypeGroupPanel.SuspendLayout();
-			this.battleScenePanel.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// groupBox1
@@ -98,24 +97,6 @@
 			this.gridObjectSelectionListBox.TabIndex = 9;
 			this.gridObjectSelectionListBox.Visible = false;
 			this.gridObjectSelectionListBox.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.gridObjectSelectionList_MouseDoubleClick);
-			// 
-			// battleScene
-			// 
-			this.battleScene.ContextMenuStrip = this.battleSceneMenuStrip;
-			this.battleScene.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.battleScene.Location = new System.Drawing.Point(3, 17);
-			this.battleScene.Name = "battleScene";
-			this.battleScene.Size = new System.Drawing.Size(799, 561);
-			this.battleScene.TabIndex = 6;
-			this.battleScene.UpdateInterval = 100;
-			this.battleScene.ViewerRectangleLeft = 0;
-			this.battleScene.ViewerRectangleLeftTop = new System.Drawing.Point(0, 0);
-			this.battleScene.ViewerRectangleTop = 0;
-			this.battleScene.CanvasDrawing += new System.EventHandler<TextyClient.CanvasDrawingEventArgs>(this.battleScene_CanvasDrawing);
-			this.battleScene.CanvasMouseDown += new System.EventHandler<System.Windows.Forms.MouseEventArgs>(this.battleScene_CanvasMouseDown);
-			this.battleScene.SizeChanged += new System.EventHandler(this.battleScene_SizeChanged);
-			this.battleScene.MouseClick += new System.Windows.Forms.MouseEventHandler(this.battleScene_MouseClick);
-			this.battleScene.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.battleScene_MouseDoubleClick);
 			// 
 			// battleSceneMenuStrip
 			// 
@@ -214,6 +195,8 @@
 			// 
 			// groupBox2
 			// 
+			this.groupBox2.Controls.Add(this.roundInfoLbl);
+			this.groupBox2.Controls.Add(this.roundInfoPanel);
 			this.groupBox2.Controls.Add(this.confirmTargetBtn);
 			this.groupBox2.Controls.Add(this.selectAspectOverBtn);
 			this.groupBox2.Controls.Add(this.selectionTypeGroupPanel);
@@ -221,14 +204,9 @@
 			this.groupBox2.Controls.Add(this.skipAspectSelectionCbx);
 			this.groupBox2.Controls.Add(this.confirmSelectionBtn);
 			this.groupBox2.Controls.Add(this.selectionListBox);
-			this.groupBox2.Controls.Add(this.leftActionPointLbl);
-			this.groupBox2.Controls.Add(this.leftMovePointLbl);
 			this.groupBox2.Controls.Add(this.label5);
-			this.groupBox2.Controls.Add(this.label4);
-			this.groupBox2.Controls.Add(this.label1);
 			this.groupBox2.Controls.Add(this.selectedGridObjectLbl);
 			this.groupBox2.Controls.Add(this.mouseGridPosLbl);
-			this.groupBox2.Controls.Add(this.roundInfoLbl);
 			this.groupBox2.Controls.Add(this.dicePointsLbl);
 			this.groupBox2.Controls.Add(this.label3);
 			this.groupBox2.Controls.Add(this.roundInfoListBox);
@@ -240,14 +218,70 @@
 			this.groupBox2.TabIndex = 5;
 			this.groupBox2.TabStop = false;
 			// 
+			// roundInfoLbl
+			// 
+			this.roundInfoLbl.AutoSize = true;
+			this.roundInfoLbl.Location = new System.Drawing.Point(65, 145);
+			this.roundInfoLbl.Name = "roundInfoLbl";
+			this.roundInfoLbl.Size = new System.Drawing.Size(0, 12);
+			this.roundInfoLbl.TabIndex = 27;
+			// 
+			// roundInfoPanel
+			// 
+			this.roundInfoPanel.Controls.Add(this.actionPointLbl);
+			this.roundInfoPanel.Controls.Add(this.movePointLbl);
+			this.roundInfoPanel.Controls.Add(this.label4);
+			this.roundInfoPanel.Controls.Add(this.label1);
+			this.roundInfoPanel.Location = new System.Drawing.Point(0, 317);
+			this.roundInfoPanel.Name = "roundInfoPanel";
+			this.roundInfoPanel.Size = new System.Drawing.Size(200, 60);
+			this.roundInfoPanel.TabIndex = 30;
+			this.roundInfoPanel.Visible = false;
+			// 
+			// actionPointLbl
+			// 
+			this.actionPointLbl.AutoSize = true;
+			this.actionPointLbl.Location = new System.Drawing.Point(53, 35);
+			this.actionPointLbl.Name = "actionPointLbl";
+			this.actionPointLbl.Size = new System.Drawing.Size(0, 12);
+			this.actionPointLbl.TabIndex = 26;
+			// 
+			// movePointLbl
+			// 
+			this.movePointLbl.AutoSize = true;
+			this.movePointLbl.Location = new System.Drawing.Point(53, 14);
+			this.movePointLbl.Name = "movePointLbl";
+			this.movePointLbl.Size = new System.Drawing.Size(0, 12);
+			this.movePointLbl.TabIndex = 25;
+			// 
+			// label4
+			// 
+			this.label4.AutoSize = true;
+			this.label4.Location = new System.Drawing.Point(6, 35);
+			this.label4.Name = "label4";
+			this.label4.Size = new System.Drawing.Size(41, 12);
+			this.label4.TabIndex = 24;
+			this.label4.Text = "行动点";
+			// 
+			// label1
+			// 
+			this.label1.AutoSize = true;
+			this.label1.Location = new System.Drawing.Point(6, 14);
+			this.label1.Name = "label1";
+			this.label1.Size = new System.Drawing.Size(41, 12);
+			this.label1.TabIndex = 23;
+			this.label1.Text = "移动点";
+			// 
 			// confirmTargetBtn
 			// 
-			this.confirmTargetBtn.Location = new System.Drawing.Point(113, 81);
+			this.confirmTargetBtn.Location = new System.Drawing.Point(113, 38);
 			this.confirmTargetBtn.Name = "confirmTargetBtn";
 			this.confirmTargetBtn.Size = new System.Drawing.Size(75, 23);
 			this.confirmTargetBtn.TabIndex = 29;
 			this.confirmTargetBtn.Text = "确认选择";
 			this.confirmTargetBtn.UseVisualStyleBackColor = true;
+			this.confirmTargetBtn.Visible = false;
+			this.confirmTargetBtn.Click += new System.EventHandler(this.confirmTargetBtn_Click);
 			// 
 			// selectAspectOverBtn
 			// 
@@ -299,9 +333,8 @@
 			this.selectionTypeLbl.AutoSize = true;
 			this.selectionTypeLbl.Location = new System.Drawing.Point(9, 381);
 			this.selectionTypeLbl.Name = "selectionTypeLbl";
-			this.selectionTypeLbl.Size = new System.Drawing.Size(83, 12);
+			this.selectionTypeLbl.Size = new System.Drawing.Size(0, 12);
 			this.selectionTypeLbl.TabIndex = 26;
-			this.selectionTypeLbl.Text = "selectionType";
 			// 
 			// skipAspectSelectionCbx
 			// 
@@ -333,24 +366,6 @@
 			this.selectionListBox.Size = new System.Drawing.Size(178, 100);
 			this.selectionListBox.TabIndex = 23;
 			// 
-			// leftActionPointLbl
-			// 
-			this.leftActionPointLbl.AutoSize = true;
-			this.leftActionPointLbl.Location = new System.Drawing.Point(89, 340);
-			this.leftActionPointLbl.Name = "leftActionPointLbl";
-			this.leftActionPointLbl.Size = new System.Drawing.Size(41, 12);
-			this.leftActionPointLbl.TabIndex = 22;
-			this.leftActionPointLbl.Text = "label7";
-			// 
-			// leftMovePointLbl
-			// 
-			this.leftMovePointLbl.AutoSize = true;
-			this.leftMovePointLbl.Location = new System.Drawing.Point(89, 319);
-			this.leftMovePointLbl.Name = "leftMovePointLbl";
-			this.leftMovePointLbl.Size = new System.Drawing.Size(41, 12);
-			this.leftMovePointLbl.TabIndex = 21;
-			this.leftMovePointLbl.Text = "label6";
-			// 
 			// label5
 			// 
 			this.label5.AutoSize = true;
@@ -360,59 +375,29 @@
 			this.label5.TabIndex = 20;
 			this.label5.Text = "当前选择对象";
 			// 
-			// label4
-			// 
-			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(6, 340);
-			this.label4.Name = "label4";
-			this.label4.Size = new System.Drawing.Size(77, 12);
-			this.label4.TabIndex = 19;
-			this.label4.Text = "你剩余行动点";
-			// 
-			// label1
-			// 
-			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(6, 319);
-			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(77, 12);
-			this.label1.TabIndex = 18;
-			this.label1.Text = "你剩余移动点";
-			// 
 			// selectedGridObjectLbl
 			// 
 			this.selectedGridObjectLbl.AutoSize = true;
 			this.selectedGridObjectLbl.Location = new System.Drawing.Point(6, 61);
 			this.selectedGridObjectLbl.Name = "selectedGridObjectLbl";
-			this.selectedGridObjectLbl.Size = new System.Drawing.Size(113, 12);
+			this.selectedGridObjectLbl.Size = new System.Drawing.Size(0, 12);
 			this.selectedGridObjectLbl.TabIndex = 12;
-			this.selectedGridObjectLbl.Text = "selectedGridObject";
 			// 
 			// mouseGridPosLbl
 			// 
 			this.mouseGridPosLbl.AutoSize = true;
 			this.mouseGridPosLbl.Location = new System.Drawing.Point(6, 17);
 			this.mouseGridPosLbl.Name = "mouseGridPosLbl";
-			this.mouseGridPosLbl.Size = new System.Drawing.Size(77, 12);
+			this.mouseGridPosLbl.Size = new System.Drawing.Size(0, 12);
 			this.mouseGridPosLbl.TabIndex = 11;
-			this.mouseGridPosLbl.Text = "mouseGridPos";
-			// 
-			// roundInfoLbl
-			// 
-			this.roundInfoLbl.AutoSize = true;
-			this.roundInfoLbl.Location = new System.Drawing.Point(129, 145);
-			this.roundInfoLbl.Name = "roundInfoLbl";
-			this.roundInfoLbl.Size = new System.Drawing.Size(59, 12);
-			this.roundInfoLbl.TabIndex = 10;
-			this.roundInfoLbl.Text = "roundInfo";
 			// 
 			// dicePointsLbl
 			// 
 			this.dicePointsLbl.AutoSize = true;
 			this.dicePointsLbl.Location = new System.Drawing.Point(6, 111);
 			this.dicePointsLbl.Name = "dicePointsLbl";
-			this.dicePointsLbl.Size = new System.Drawing.Size(65, 12);
+			this.dicePointsLbl.Size = new System.Drawing.Size(0, 12);
 			this.dicePointsLbl.TabIndex = 9;
-			this.dicePointsLbl.Text = "dicePoints";
 			// 
 			// label3
 			// 
@@ -441,41 +426,43 @@
 			this.label2.TabIndex = 6;
 			this.label2.Text = "行动顺序";
 			// 
-			// battleScenePanel
+			// battleScene
 			// 
-			this.battleScenePanel.Controls.Add(this.groupBox1);
-			this.battleScenePanel.Controls.Add(this.groupBox2);
-			this.battleScenePanel.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.battleScenePanel.Location = new System.Drawing.Point(0, 0);
-			this.battleScenePanel.Name = "battleScenePanel";
-			this.battleScenePanel.Size = new System.Drawing.Size(1022, 598);
-			this.battleScenePanel.TabIndex = 10;
+			this.battleScene.ContextMenuStrip = this.battleSceneMenuStrip;
+			this.battleScene.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.battleScene.Location = new System.Drawing.Point(3, 17);
+			this.battleScene.Name = "battleScene";
+			this.battleScene.Size = new System.Drawing.Size(799, 561);
+			this.battleScene.TabIndex = 6;
+			this.battleScene.UpdateInterval = 100;
+			this.battleScene.ViewerRectangleLeft = 0;
+			this.battleScene.ViewerRectangleLeftTop = new System.Drawing.Point(0, 0);
+			this.battleScene.ViewerRectangleTop = 0;
+			this.battleScene.CanvasDrawing += new System.EventHandler<TextyClient.CanvasDrawingEventArgs>(this.battleScene_CanvasDrawing);
+			this.battleScene.CanvasMouseDown += new System.EventHandler<System.Windows.Forms.MouseEventArgs>(this.battleScene_CanvasMouseDown);
+			this.battleScene.SizeChanged += new System.EventHandler(this.battleScene_SizeChanged);
+			this.battleScene.MouseClick += new System.Windows.Forms.MouseEventHandler(this.battleScene_MouseClick);
+			this.battleScene.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.battleScene_MouseDoubleClick);
 			// 
-			// storyScenePanel
-			// 
-			this.storyScenePanel.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.storyScenePanel.Location = new System.Drawing.Point(0, 0);
-			this.storyScenePanel.Name = "storyScenePanel";
-			this.storyScenePanel.Size = new System.Drawing.Size(1022, 598);
-			this.storyScenePanel.TabIndex = 10;
-			// 
-			// SceneForm
+			// BattleSceneForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(1022, 598);
-			this.Controls.Add(this.battleScenePanel);
-			this.Controls.Add(this.storyScenePanel);
-			this.Name = "SceneForm";
-			this.Text = "SceneForm";
+			this.Controls.Add(this.groupBox1);
+			this.Controls.Add(this.groupBox2);
+			this.Name = "BattleSceneForm";
+			this.Text = "战斗场景";
+			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.BattleSceneForm_FormClosing);
 			this.Load += new System.EventHandler(this.BattleSceneForm_Load);
 			this.groupBox1.ResumeLayout(false);
 			this.battleSceneMenuStrip.ResumeLayout(false);
 			this.groupBox2.ResumeLayout(false);
 			this.groupBox2.PerformLayout();
+			this.roundInfoPanel.ResumeLayout(false);
+			this.roundInfoPanel.PerformLayout();
 			this.selectionTypeGroupPanel.ResumeLayout(false);
 			this.selectionTypeGroupPanel.PerformLayout();
-			this.battleScenePanel.ResumeLayout(false);
 			this.ResumeLayout(false);
 
         }
@@ -490,7 +477,6 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label dicePointsLbl;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label roundInfoLbl;
         private System.Windows.Forms.ContextMenuStrip battleSceneMenuStrip;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem menuItemViewData;
@@ -498,10 +484,6 @@
         private System.Windows.Forms.ListBox gridObjectSelectionListBox;
         private System.Windows.Forms.Label selectedGridObjectLbl;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label leftActionPointLbl;
-        private System.Windows.Forms.Label leftMovePointLbl;
         private System.Windows.Forms.ToolStripMenuItem menuItemMove;
         private System.Windows.Forms.ToolStripMenuItem menuItemCreateAspect;
         private System.Windows.Forms.ToolStripMenuItem menuItemSpecialAction;
@@ -518,7 +500,11 @@
         private System.Windows.Forms.Button selectAspectOverBtn;
         private System.Windows.Forms.ToolStripMenuItem menuItemExtraMovePoint;
         private System.Windows.Forms.Button confirmTargetBtn;
-		private System.Windows.Forms.Panel battleScenePanel;
-		private System.Windows.Forms.Panel storyScenePanel;
+		private System.Windows.Forms.Panel roundInfoPanel;
+		private System.Windows.Forms.Label roundInfoLbl;
+		private System.Windows.Forms.Label actionPointLbl;
+		private System.Windows.Forms.Label movePointLbl;
+		private System.Windows.Forms.Label label4;
+		private System.Windows.Forms.Label label1;
 	}
 }

@@ -61,7 +61,7 @@ namespace GameLib.CharacterSystem {
 
 			public void setInitiativeEffect(IJSAPI<InitiativeEffect> effect) {
 				try {
-					_outer.InitiativeEffect = JSContextHelper.Instance.GetAPIOrigin(effect);
+					_outer.Effect = JSContextHelper.Instance.GetAPIOrigin(effect);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 				}
@@ -69,7 +69,7 @@ namespace GameLib.CharacterSystem {
 
 			public IJSAPI<InitiativeEffect> getInitiativeEffect() {
 				try {
-					return (IJSAPI<InitiativeEffect>)_outer.InitiativeEffect.GetContext();
+					return (IJSAPI<InitiativeEffect>)_outer.Effect.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return null;
@@ -116,7 +116,7 @@ namespace GameLib.CharacterSystem {
 		public override string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
 		public override string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
 		public Character Belong { get => _belong; set => _belong = value; }
-		public InitiativeEffect InitiativeEffect {
+		public InitiativeEffect Effect {
 			get => _initiativeEffect;
 			set {
 				if (value == null) throw new ArgumentNullException(nameof(value));

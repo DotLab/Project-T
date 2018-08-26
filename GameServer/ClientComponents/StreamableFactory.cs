@@ -1,6 +1,6 @@
 ﻿using GameLib.CharacterSystem;
 using GameLib.Container.BattleComponent;
-using GameLib.Utilities.Network;
+using GameLib.Utilities.Network.Streamable;
 
 namespace GameLib.ClientComponents {
 	public static class StreamableFactory {
@@ -11,7 +11,7 @@ namespace GameLib.ClientComponents {
 			};
 			return ret;
 		}
-		
+
 		public static CharacterPropertyDescription CreateCharacterPropertyDescription(ICharacterProperty characterProperty) {
 			var ret = new CharacterPropertyDescription() {
 				propertyID = characterProperty.ID,
@@ -27,32 +27,23 @@ namespace GameLib.ClientComponents {
 			};
 			return ret;
 		}
+
+		public static BattleSceneObj CreateBattleSceneObj(SceneObject sceneObject) {
+			var ret = new BattleSceneObj() {
+				row = sceneObject.GridRef.PosRow,
+				col = sceneObject.GridRef.PosCol,
+				id = sceneObject.ID
+			};
+			return ret;
+		}
 		
-		public static BattleSceneObj CreateBattleSceneObj(GridObject gridObject) {
-			var ret = new BattleSceneObj() {
-				row = gridObject.GridRef.PosRow,
-				col = gridObject.GridRef.PosCol,
-				id = gridObject.ID
-			};
-			return ret;
-		}
-
-		public static BattleSceneObj CreateBattleSceneObj(LadderObject ladderObject) {
-			var ret = new BattleSceneObj() {
-				row = ladderObject.GridRef.PosRow,
-				col = ladderObject.GridRef.PosCol,
-				id = ladderObject.ID
-			};
-			return ret;
-		}
-
-		public static BattleSceneGridObjData CreateBattleSceneGridObjData(GridObject gridObject) {
-			var ret = new BattleSceneGridObjData();
+		public static GridObjectData CreateBattleSceneGridObjData(GridObject gridObject) {
+			var ret = new GridObjectData();
 			ret.obj.row = gridObject.GridRef.PosRow;
 			ret.obj.col = gridObject.GridRef.PosCol;
 			ret.highland = gridObject.IsHighland;
 			ret.obj.id = gridObject.ID;
-			ret.direction = (int)gridObject.Direction;
+			ret.direction = gridObject.Direction;
 			ret.obstacle = gridObject.IsObstacle;
 			ret.stagnate = gridObject.Stagnate;
 			ret.terrain = gridObject.IsTerrain;
@@ -60,18 +51,19 @@ namespace GameLib.ClientComponents {
 			if (actable) {
 				var actableObject = (ActableGridObject)gridObject;
 				ret.actableObjData.actionPoint = actableObject.ActionPoint;
+				ret.actableObjData.actionPointMax = actableObject.ActionPointMax;
 				ret.actableObjData.movable = actableObject.Movable;
 				ret.actableObjData.movePoint = actableObject.MovePoint;
 			}
 			return ret;
 		}
 
-		public static BattleSceneLadderObjData CreateBattleSceneLadderObjData(LadderObject ladderObject) {
-			var ret = new BattleSceneLadderObjData();
+		public static LadderObjectData CreateBattleSceneLadderObjData(LadderObject ladderObject) {
+			var ret = new LadderObjectData();
 			ret.obj.row = ladderObject.GridRef.PosRow;
 			ret.obj.col = ladderObject.GridRef.PosCol;
 			ret.obj.id = ladderObject.ID;
-			ret.direction = (int)ladderObject.DirectionOnFirstGrid;
+			ret.direction = ladderObject.DirectionOnFirstGrid;
 			return ret;
 		}
 	}

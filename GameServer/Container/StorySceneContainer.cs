@@ -16,20 +16,20 @@ namespace GameLib.Container {
 				_outer = outer;
 			}
 
-			public IJSAPI<StoryObject> createStoryObject(IJSAPI<Character> character) {
+			public IJSAPI<SceneObject> createStoryObject(IJSAPI<Character> character) {
 				try {
 					Character originCharacter = JSContextHelper.Instance.GetAPIOrigin(character);
-					StoryObject sceneObject = _outer.CreateStoryObject(originCharacter);
-					return (IJSAPI<StoryObject>)sceneObject.GetContext();
+					SceneObject sceneObject = _outer.CreateStoryObject(originCharacter);
+					return (IJSAPI<SceneObject>)sceneObject.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return null;
 				}
 			}
 
-			public bool addToScene(IJSAPI<IStoryObject> sceneObj) {
+			public bool addToScene(IJSAPI<ISceneObject> sceneObj) {
 				try {
-					IStoryObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+					ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
 					return _outer.AddIntoScene(originSceneObj);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
@@ -37,19 +37,19 @@ namespace GameLib.Container {
 				}
 			}
 
-			public IJSAPI<IStoryObject> getObject(string id) {
+			public IJSAPI<ISceneObject> getObject(string id) {
 				try {
-					IStoryObject sceneObject = _outer.ObjList[id];
-					return (IJSAPI<IStoryObject>)sceneObject.GetContext();
+					ISceneObject sceneObject = _outer.ObjList[id];
+					return (IJSAPI<ISceneObject>)sceneObject.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return null;
 				}
 			}
 
-			public bool isInScene(IJSAPI<IStoryObject> sceneObj) {
+			public bool isInScene(IJSAPI<ISceneObject> sceneObj) {
 				try {
-					IStoryObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+					ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
 					return _outer.ObjList.Contains(originSceneObj);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
@@ -66,9 +66,9 @@ namespace GameLib.Container {
 				}
 			}
 
-			public bool removeFromScene(IJSAPI<IStoryObject> sceneObj) {
+			public bool removeFromScene(IJSAPI<ISceneObject> sceneObj) {
 				try {
-					IStoryObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+					ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
 					return _outer.RemoveFromScene(originSceneObj);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
@@ -128,26 +128,26 @@ namespace GameLib.Container {
 		private static readonly StorySceneContainer _instance = new StorySceneContainer();
 		public static StorySceneContainer Instance => _instance;
 
-		private readonly IdentifiedObjList<IStoryObject> _objList;
+		private readonly IdentifiedObjList<ISceneObject> _objList;
 		private readonly IdentifiedObjList<Character> _playerCharacters;
 		private readonly Camera _camera;
 		private readonly List<TextBox> _textBoxes;
 
-		public IReadonlyIdentifiedObjList<IStoryObject> ObjList => _objList;
+		public IReadonlyIdentifiedObjList<ISceneObject> ObjList => _objList;
 		public IReadonlyIdentifiedObjList<Character> PlayerCharacters => _playerCharacters;
 		public Camera Camera => _camera;
 		public List<TextBox> TextBoxes => _textBoxes;
 
 		public StorySceneContainer() {
-			_objList = new IdentifiedObjList<IStoryObject>();
+			_objList = new IdentifiedObjList<ISceneObject>();
 			_playerCharacters = new IdentifiedObjList<Character>();
 			_camera = new Camera();
 			_textBoxes = new List<TextBox>();
 			_apiObj = new JSAPI(this);
 		}
 
-		private StoryObject CreateStoryObject(Character character) {
-			StoryObject ret = new StoryObject(character);
+		private SceneObject CreateStoryObject(Character character) {
+			SceneObject ret = new SceneObject(character);
 			return ret;
 		}
 
@@ -166,7 +166,7 @@ namespace GameLib.Container {
 			return this.RemovePlayerCharacter(playerCharacter.ID);
 		}
 
-		public bool AddIntoScene(IStoryObject sceneObject) {
+		public bool AddIntoScene(ISceneObject sceneObject) {
 			_objList.Add(sceneObject);
 			throw new NotImplementedException();
 			return true;
@@ -178,7 +178,7 @@ namespace GameLib.Container {
 			return ret;
 		}
 
-		public bool RemoveFromScene(IStoryObject sceneObject) {
+		public bool RemoveFromScene(ISceneObject sceneObject) {
 			return this.RemoveFromScene(sceneObject.ID);
 		}
 
@@ -193,7 +193,7 @@ namespace GameLib.Container {
 		}
 
 		public void StartCheck(
-			Character initiative, Character passive, SkillChecker.CharacterAction action,
+			Character initiative, Character passive, CharacterAction action,
 			Action<SkillChecker.CheckResult> initiativeCallback, Action<SkillChecker.CheckResult> passiveCallback
 			) {
 			SkillChecker.Instance.StartCheck(initiative, passive, action, initiativeCallback, passiveCallback);
@@ -246,9 +246,9 @@ namespace GameLib.Container {
 		}
 
 		public void InitiativeUseSkill(SkillType skillType, bool force, bool bigone, int[] fixedDicePoints = null) {
-			if (force || SkillChecker.Instance.Action == SkillChecker.CharacterAction.ATTACK) {
+			if (force || SkillChecker.Instance.Action == CharacterAction.ATTACK) {
 				this.InitiativeSelectSkill(skillType, bigone, fixedDicePoints);
-			} else if (SkillChecker.Instance.Action == SkillChecker.CharacterAction.CREATE_ASPECT || SkillChecker.Instance.Action == SkillChecker.CharacterAction.HINDER) {
+			} else if (SkillChecker.Instance.Action == CharacterAction.CREATE_ASPECT || SkillChecker.Instance.Action == CharacterAction.HINDER) {
 				Game.DM.DMClient.DMCheckDialog.RequestCheck(SkillChecker.Instance.Initiative.Controller,
 					SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
 					result => { if (result) this.InitiativeSelectSkill(skillType, bigone, fixedDicePoints); });
@@ -260,8 +260,8 @@ namespace GameLib.Container {
 			if (stunt.NeedDMCheck)
 				Game.DM.DMClient.DMCheckDialog.RequestCheck(SkillChecker.Instance.Initiative.Controller,
 					SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + stunt.Name + ",可以吗？",
-					result => { if (result) stunt.InitiativeEffect.DoAction(); });
-			else stunt.InitiativeEffect.DoAction();
+					result => { if (result) stunt.Effect.DoAction(); });
+			else stunt.Effect.DoAction();
 		}
 
 		private void PassiveSelectSkill(SkillType skillType, bool bigone, int[] fixedDicePoints) {
@@ -297,8 +297,8 @@ namespace GameLib.Container {
 			if (stunt.NeedDMCheck)
 				Game.DM.DMClient.DMCheckDialog.RequestCheck(SkillChecker.Instance.Passive.Controller,
 					SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + stunt.Name + ",可以吗？",
-					result => { if (result) stunt.InitiativeEffect.DoAction(); });
-			else stunt.InitiativeEffect.DoAction();
+					result => { if (result) stunt.Effect.DoAction(); });
+			else stunt.Effect.DoAction();
 		}
 
 		public void InitiativeUseAspect(Aspect aspect, bool reroll) {
@@ -354,7 +354,7 @@ namespace GameLib.Container {
 }
 
 namespace GameLib.Container.StoryComponent {
-	public interface IStoryObject : IIdentifiable {
+	public interface ISceneObject : IIdentifiable {
 		void OnInteract();
 		void OnCreateAspect();
 		void OnAttack();
@@ -367,12 +367,12 @@ namespace GameLib.Container.StoryComponent {
 		void ApplyEffect(CharacterViewEffect effect);
 	}
 
-	public class StoryObject : IStoryObject {
+	public class SceneObject : ISceneObject {
 		#region Javascript API class
-		protected class JSAPI : IJSAPI<StoryObject> {
-			private readonly StoryObject _outer;
+		protected class JSAPI : IJSAPI<SceneObject> {
+			private readonly SceneObject _outer;
 
-			public JSAPI(StoryObject outer) {
+			public JSAPI(SceneObject outer) {
 				_outer = outer;
 			}
 
@@ -495,7 +495,7 @@ namespace GameLib.Container.StoryComponent {
 				}
 			}
 
-			public StoryObject Origin(JSContextHelper proof) {
+			public SceneObject Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {
 						return _outer;
@@ -530,7 +530,7 @@ namespace GameLib.Container.StoryComponent {
 		public PortraitStyle Style => _style;
 		public CharacterViewEffect Effect => _effect;
 
-		public StoryObject(Character character) {
+		public SceneObject(Character character) {
 			_characterRef = character ?? throw new ArgumentNullException(nameof(character));
 			_layout = Layout.INIT;
 			_style = PortraitStyle.INIT;
@@ -584,9 +584,9 @@ namespace GameLib.Container.StoryComponent {
 		public void SetContext(IJSContext context) { }
 	}
 
-	public class PictureObject : StoryObject {
+	public class PictureObject : SceneObject {
 		#region Javascript API class
-		protected new class JSAPI : StoryObject.JSAPI, IJSAPI<PictureObject> {
+		protected new class JSAPI : SceneObject.JSAPI, IJSAPI<PictureObject> {
 			private readonly PictureObject _outer;
 
 			public JSAPI(PictureObject outer) :

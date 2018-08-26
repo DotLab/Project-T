@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GameLib.Utilities.Network {
+namespace GameLib.Utilities.Network.Streamable {
 	public interface IDataOutputStream {
 		void WriteBoolean(Boolean val);
 		void WriteString(String val);
@@ -52,15 +52,21 @@ namespace GameLib.Utilities.Network {
 		}
 
 		public static void WriteCharacterView(IDataOutputStream stream, CharacterView val) {
-			throw new NotImplementedException();
+			stream.WriteString(val.id);
+			stream.WriteString(val.story);
+			stream.WriteString(val.battle);
 		}
 
 		public static void WriteCameraEffect(IDataOutputStream stream, CameraEffect val) {
-			stream.WriteInt32((Int32)val.animation);
+			stream.WriteByte((byte)val.animation);
 		}
 
 		public static void WriteCharacterViewEffect(IDataOutputStream stream, CharacterViewEffect val) {
-			throw new NotImplementedException();
+			stream.WriteByte((byte)val.animation);
+			stream.WriteSingle(val.tint.W);
+			stream.WriteSingle(val.tint.X);
+			stream.WriteSingle(val.tint.Y);
+			stream.WriteSingle(val.tint.Z);
 		}
 
 		public static void WritePortraitStyle(IDataOutputStream stream, PortraitStyle val) {
@@ -72,6 +78,14 @@ namespace GameLib.Utilities.Network {
 			stream.WriteInt32(property.level);
 			stream.WriteBoolean(property.canAttack);
 			stream.WriteBoolean(property.canDefend);
+			stream.WriteInt32(property.actionPointCost);
+			WriteRange(stream, property.useRange);
+			stream.WriteBoolean(property.islinearUse);
+			stream.WriteByte((byte)property.linearUseDirection);
+			WriteRange(stream, property.affectRange);
+			stream.WriteBoolean(property.islinearAffect);
+			stream.WriteByte((byte)property.linearAffectDirection);
+			stream.WriteInt32(property.targetCount);
 		}
 	}
 
@@ -86,7 +100,7 @@ namespace GameLib.Utilities.Network {
 		}
 
 		public static Layout ReadLayout(IDataInputStream stream) {
-			Layout ret = new Layout();
+			var ret = new Layout();
 			ret.pos.X = stream.ReadSingle();
 			ret.pos.Y = stream.ReadSingle();
 			ret.pos.Z = stream.ReadSingle();
@@ -101,7 +115,7 @@ namespace GameLib.Utilities.Network {
 		}
 
 		public static Range ReadRange(IDataInputStream stream) {
-			Range ret = new Range();
+			var ret = new Range();
 			ret.lowOpen = stream.ReadBoolean();
 			ret.low = stream.ReadSingle();
 			ret.highOpen = stream.ReadBoolean();
@@ -110,31 +124,49 @@ namespace GameLib.Utilities.Network {
 		}
 
 		public static CharacterView ReadCharacterView(IDataInputStream stream) {
-			throw new NotImplementedException();
+			var ret = new CharacterView();
+			ret.id = stream.ReadString();
+			ret.story = stream.ReadString();
+			ret.battle = stream.ReadString();
+			return ret;
 		}
 
 		public static CameraEffect ReadCameraEffect(IDataInputStream stream) {
-			CameraEffect ret = new CameraEffect();
-			ret.animation = (CameraEffect.AnimateType)stream.ReadInt32();
+			var ret = new CameraEffect();
+			ret.animation = (CameraEffect.AnimateType)stream.ReadByte();
 			return ret;
 		}
 
 		public static CharacterViewEffect ReadCharacterViewEffect(IDataInputStream stream) {
-			throw new NotImplementedException();
+			var ret = new CharacterViewEffect();
+			ret.animation = (CharacterViewEffect.AnimateType)stream.ReadByte();
+			ret.tint.W = stream.ReadSingle();
+			ret.tint.X = stream.ReadSingle();
+			ret.tint.Y = stream.ReadSingle();
+			ret.tint.Z = stream.ReadSingle();
+			return ret;
 		}
 
 		public static PortraitStyle ReadPortraitStyle(IDataInputStream stream) {
-			PortraitStyle ret = new PortraitStyle();
+			var ret = new PortraitStyle();
 			ret.action = stream.ReadInt32();
 			ret.emotion = stream.ReadInt32();
 			return ret;
 		}
 
 		public static SkillProperty ReadSkillProperty(IDataInputStream stream) {
-			SkillProperty ret = new SkillProperty();
+			var ret = new SkillProperty();
 			ret.level = stream.ReadInt32();
 			ret.canAttack = stream.ReadBoolean();
 			ret.canDefend = stream.ReadBoolean();
+			ret.actionPointCost = stream.ReadInt32();
+			ret.useRange = ReadRange(stream);
+			ret.islinearUse = stream.ReadBoolean();
+			ret.linearUseDirection = (BattleMapDirection)stream.ReadByte();
+			ret.affectRange = ReadRange(stream);
+			ret.islinearAffect = stream.ReadBoolean();
+			ret.linearAffectDirection = (BattleMapDirection)stream.ReadByte();
+			ret.targetCount = stream.ReadInt32();
 			return ret;
 		}
 	}
@@ -207,20 +239,23 @@ namespace GameLib.Utilities.Network {
 		}
 	}
 
-	public struct BattleSceneGridObjData : IStreamable {
-		public struct ActableObjData : IStreamable {
+	public struct GridObjectData : IStreamable {
+		public struct ActableObjectData : IStreamable {
 			public int actionPoint;
+			public int actionPointMax;
 			public bool movable;
 			public int movePoint;
 
 			public void ReadFrom(IDataInputStream stream) {
 				actionPoint = stream.ReadInt32();
+				actionPointMax = stream.ReadInt32();
 				movable = stream.ReadBoolean();
 				movePoint = stream.ReadInt32();
 			}
 
 			public void WriteTo(IDataOutputStream stream) {
 				stream.WriteInt32(actionPoint);
+				stream.WriteInt32(actionPointMax);
 				stream.WriteBoolean(movable);
 				stream.WriteInt32(movePoint);
 			}
@@ -231,17 +266,17 @@ namespace GameLib.Utilities.Network {
 		public bool highland;
 		public int stagnate;
 		public bool terrain;
-		public int direction;
+		public BattleMapDirection direction;
 		public bool actable;
-		public ActableObjData actableObjData;
-		
+		public ActableObjectData actableObjData;
+
 		public void ReadFrom(IDataInputStream stream) {
 			obj.ReadFrom(stream);
 			obstacle = stream.ReadBoolean();
 			highland = stream.ReadBoolean();
 			stagnate = stream.ReadInt32();
 			terrain = stream.ReadBoolean();
-			direction = stream.ReadInt32();
+			direction = (BattleMapDirection)stream.ReadByte();
 			actable = stream.ReadBoolean();
 			if (actable) {
 				actableObjData.ReadFrom(stream);
@@ -254,29 +289,29 @@ namespace GameLib.Utilities.Network {
 			stream.WriteBoolean(highland);
 			stream.WriteInt32(stagnate);
 			stream.WriteBoolean(terrain);
-			stream.WriteInt32(direction);
+			stream.WriteByte((byte)direction);
 			stream.WriteBoolean(actable);
 			if (actable) {
 				actableObjData.WriteTo(stream);
 			}
 		}
 	}
-	
-	public struct BattleSceneLadderObjData : IStreamable {
+
+	public struct LadderObjectData : IStreamable {
 		public BattleSceneObj obj;
 		public int stagnate;
-		public int direction;
+		public BattleMapDirection direction;
 
 		public void ReadFrom(IDataInputStream stream) {
 			obj.ReadFrom(stream);
 			stagnate = stream.ReadInt32();
-			direction = stream.ReadInt32();
+			direction = (BattleMapDirection)stream.ReadByte();
 		}
 
 		public void WriteTo(IDataOutputStream stream) {
 			obj.WriteTo(stream);
 			stream.WriteInt32(stagnate);
-			stream.WriteInt32(direction);
+			stream.WriteByte((byte)direction);
 		}
 	}
 }

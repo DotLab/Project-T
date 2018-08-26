@@ -1,8 +1,8 @@
 ﻿namespace GameLib.Utilities {
 	public sealed class CharacterView {
-		public string id;
-		public string battle;
-		public string story;
+		public string id = "";
+		public string battle = "";
+		public string story = "";
 	}
 
 	public struct CameraEffect {

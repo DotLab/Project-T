@@ -1,4 +1,6 @@
-﻿namespace GameLib.Utilities.Network.ServerMessages {
+﻿using GameLib.Utilities.Network.Streamable;
+
+namespace GameLib.Utilities.Network.ServerMessages {
 	public sealed class ServerReadyMessage : Message {
 		public const int MESSAGE_TYPE = -1;
 		public override int MessageType => MESSAGE_TYPE;
@@ -174,14 +176,14 @@
 		public const int MESSAGE_TYPE = -13;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public int sceneType;
+		public byte sceneType;
 
 		public override void WriteTo(IDataOutputStream stream) {
-			stream.WriteInt32(sceneType);
+			stream.WriteByte(sceneType);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
-			sceneType = stream.ReadInt32();
+			sceneType = stream.ReadByte();
 		}
 	}
 
@@ -561,7 +563,7 @@
 		}
 	}
 
-	public sealed class SkillCheckPanelShowMessage : Message {
+	public sealed class StorySceneCheckerPanelShowMessage : Message {
 		public const int MESSAGE_TYPE = -35;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -588,7 +590,7 @@
 		}
 	}
 
-	public sealed class SkillCheckPanelHideMessage : Message {
+	public sealed class StorySceneCheckerPanelHideMessage : Message {
 		public const int MESSAGE_TYPE = -36;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -650,18 +652,18 @@
 
 		public string initiativeCharacterID;
 		public string passiveCharacterID;
-		public int action;
+		public CharacterAction action;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			initiativeCharacterID = stream.ReadString();
 			passiveCharacterID = stream.ReadString();
-			action = stream.ReadInt32();
+			action = (CharacterAction)stream.ReadByte();
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(initiativeCharacterID);
 			stream.WriteString(passiveCharacterID);
-			stream.WriteInt32(action);
+			stream.WriteByte((byte)action);
 		}
 	}
 
@@ -672,20 +674,20 @@
 		public string passiveCharacterID;
 		public string initiativeCharacterID;
 		public SkillTypeDescription initiativeSkillType;
-		public int action;
+		public CharacterAction action;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			passiveCharacterID = stream.ReadString();
 			initiativeCharacterID = stream.ReadString();
 			initiativeSkillType.ReadFrom(stream);
-			action = stream.ReadInt32();
+			action = (CharacterAction)stream.ReadByte();
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(passiveCharacterID);
 			stream.WriteString(initiativeCharacterID);
 			initiativeSkillType.WriteTo(stream);
-			stream.WriteInt32(action);
+			stream.WriteByte((byte)action);
 		}
 	}
 
@@ -855,7 +857,7 @@
 		public const int MESSAGE_TYPE = -50;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneGridObjData objData;
+		public GridObjectData objData;
 		public CharacterView view;
 
 		public override void WriteTo(IDataOutputStream stream) {
@@ -888,7 +890,7 @@
 		public const int MESSAGE_TYPE = -52;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneLadderObjData objData;
+		public LadderObjectData objData;
 		public CharacterView view;
 
 		public override void WriteTo(IDataOutputStream stream) {
@@ -938,7 +940,7 @@
 	public sealed class BattleSceneSetActingOrderMessage : Message {
 		public const int MESSAGE_TYPE = -55;
 		public override int MessageType => MESSAGE_TYPE;
-		
+
 		public BattleSceneObj[] objOrder;
 
 		public override void ReadFrom(IDataInputStream stream) {
@@ -982,20 +984,20 @@
 		public BattleSceneObj passiveObj;
 		public BattleSceneObj initiativeObj;
 		public SkillTypeDescription initiativeSkillType;
-		public int action;
+		public CharacterAction action;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			passiveObj.ReadFrom(stream);
 			initiativeObj.ReadFrom(stream);
 			initiativeSkillType.ReadFrom(stream);
-			action = stream.ReadInt32();
+			action = (CharacterAction)stream.ReadByte();
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
 			passiveObj.WriteTo(stream);
 			initiativeObj.WriteTo(stream);
 			initiativeSkillType.WriteTo(stream);
-			stream.WriteInt32(action);
+			stream.WriteByte((byte)action);
 		}
 	}
 
@@ -1004,16 +1006,13 @@
 		public override int MessageType => MESSAGE_TYPE;
 
 		public bool isInitiative;
-		public BattleSceneObj obj;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			isInitiative = stream.ReadBoolean();
-			obj.ReadFrom(stream);
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteBoolean(isInitiative);
-			obj.WriteTo(stream);
 		}
 	}
 
@@ -1128,18 +1127,18 @@
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj obj;
-		public int direction;
+		public BattleMapDirection direction;
 		public bool stairway;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			obj.ReadFrom(stream);
-			direction = stream.ReadInt32();
+			direction = (BattleMapDirection)stream.ReadByte();
 			stairway = stream.ReadBoolean();
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
 			obj.WriteTo(stream);
-			stream.WriteInt32(direction);
+			stream.WriteByte((byte)direction);
 			stream.WriteBoolean(stairway);
 		}
 	}
@@ -1148,20 +1147,14 @@
 		public const int MESSAGE_TYPE = -64;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj obj;
-		public int direction;
-		public bool stairway;
+		public GridObjectData objData;
 
 		public override void ReadFrom(IDataInputStream stream) {
-			obj.ReadFrom(stream);
-			direction = stream.ReadInt32();
-			stairway = stream.ReadBoolean();
+			objData.ReadFrom(stream);
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
-			obj.WriteTo(stream);
-			stream.WriteInt32(direction);
-			stream.WriteBoolean(stairway);
+			objData.WriteTo(stream);
 		}
 	}
 
@@ -1169,20 +1162,152 @@
 		public const int MESSAGE_TYPE = -65;
 		public override int MessageType => MESSAGE_TYPE;
 
+		public LadderObjectData objData;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			objData.ReadFrom(stream);
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			objData.WriteTo(stream);
+		}
+	}
+
+	public sealed class BattleSceneDisplayTakeExtraMovePointMessage : Message {
+		public const int MESSAGE_TYPE = -66;
+		public override int MessageType => MESSAGE_TYPE;
+
 		public BattleSceneObj obj;
-		public int direction;
-		public bool stairway;
+		public SkillTypeDescription moveSkillType;
+		public int newMovePoint;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			obj.ReadFrom(stream);
-			direction = stream.ReadInt32();
-			stairway = stream.ReadBoolean();
+			moveSkillType.ReadFrom(stream);
+			newMovePoint = stream.ReadInt32();
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
 			obj.WriteTo(stream);
-			stream.WriteInt32(direction);
-			stream.WriteBoolean(stairway);
+			moveSkillType.WriteTo(stream);
+			stream.WriteInt32(newMovePoint);
 		}
 	}
+
+	public sealed class BattleSceneUpdateActionPointMessage : Message {
+		public const int MESSAGE_TYPE = -67;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public BattleSceneObj obj;
+		public int newActionPoint;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			obj.ReadFrom(stream);
+			newActionPoint = stream.ReadInt32();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			obj.WriteTo(stream);
+			stream.WriteInt32(newActionPoint);
+		}
+	}
+
+	public sealed class BattleSceneObjectUsableSkillListMessage : Message {
+		public const int MESSAGE_TYPE = -68;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public SkillTypeDescription[] skillTypes;
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteInt32(skillTypes.Length);
+			foreach (var skillType in skillTypes) {
+				skillType.WriteTo(stream);
+			}
+		}
+
+		public override void ReadFrom(IDataInputStream stream) {
+			int length = stream.ReadInt32();
+			skillTypes = new SkillTypeDescription[length];
+			for (int i = 0; i < length; ++i) {
+				skillTypes[i].ReadFrom(stream);
+			}
+		}
+	}
+
+	public sealed class BattleSceneObjectUsableStuntListMessage : Message {
+		public const int MESSAGE_TYPE = -69;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public CharacterPropertyDescription[] stunts;
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteInt32(stunts.Length);
+			foreach (var stunt in stunts) {
+				stunt.WriteTo(stream);
+			}
+		}
+
+		public override void ReadFrom(IDataInputStream stream) {
+			int length = stream.ReadInt32();
+			stunts = new CharacterPropertyDescription[length];
+			for (int i = 0; i < length; ++i) {
+				stunts[i].ReadFrom(stream);
+			}
+		}
+	}
+
+	public sealed class BattleSceneCanTakeExtraMoveMessage : Message {
+		public const int MESSAGE_TYPE = -70;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public bool result;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			result = stream.ReadBoolean();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteBoolean(result);
+		}
+	}
+
+	public sealed class BattleSceneUpdateGridInfoMessage : Message {
+		public const int MESSAGE_TYPE = -71;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public int row;
+		public int col;
+		public bool isMiddleLand;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			row = stream.ReadInt32();
+			col = stream.ReadInt32();
+			isMiddleLand = stream.ReadBoolean();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteInt32(row);
+			stream.WriteInt32(col);
+			stream.WriteBoolean(isMiddleLand);
+		}
+	}
+	
+	public sealed class BattleSceneUpdateMovePointMessage : Message {
+		public const int MESSAGE_TYPE = -72;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public BattleSceneObj obj;
+		public int newMovePoint;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			obj.ReadFrom(stream);
+			newMovePoint = stream.ReadInt32();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			obj.WriteTo(stream);
+			stream.WriteInt32(newMovePoint);
+		}
+	}
+
 }

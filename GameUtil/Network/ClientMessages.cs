@@ -1,4 +1,6 @@
-﻿namespace GameLib.Utilities.Network.ClientMessages {
+﻿using GameLib.Utilities.Network.Streamable;
+
+namespace GameLib.Utilities.Network.ClientMessages {
 	public sealed class ClientInitMessage : Message {
 		public const int MESSAGE_TYPE = 1;
 		public override int MessageType => MESSAGE_TYPE;
@@ -8,7 +10,7 @@
 	}
 
 	public sealed class StorySceneObjectActionMessage : Message {
-		public enum PlayerAction : byte {
+		public enum PlayerAction {
 			INTERACT,
 			CREATE_ASPECT,
 			ATTACK,
@@ -110,7 +112,7 @@
 		public const int MESSAGE_TYPE = 8;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public enum DataType : byte {
+		public enum DataType {
 			INFO,
 			SKILLS,
 			ASPECTS,
@@ -230,16 +232,16 @@
 		public override int MessageType => MESSAGE_TYPE;
 
 		public string initiativeSkillTypeID;
-		public int actionType;
+		public CharacterAction actionType;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			initiativeSkillTypeID = stream.ReadString();
-			actionType = stream.ReadInt32();
+			actionType = (CharacterAction)stream.ReadByte();
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(initiativeSkillTypeID);
-			stream.WriteInt32(actionType);
+			stream.WriteByte((byte)actionType);
 		}
 	}
 
@@ -324,33 +326,33 @@
 
 		public string skillTypeOrStuntID;
 		public bool isStunt;
-		public int action;
+		public CharacterAction action;
 		public int dstRow;
 		public int dstCol;
-		public BattleSceneObj[] targets;
+		public string[] targets;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			skillTypeOrStuntID = stream.ReadString();
 			isStunt = stream.ReadBoolean();
-			action = stream.ReadInt32();
+			action = (CharacterAction)stream.ReadByte();
 			dstRow = stream.ReadInt32();
 			dstCol = stream.ReadInt32();
 			int length = stream.ReadInt32();
-			targets = new BattleSceneObj[length];
+			targets = new string[length];
 			for (int i = 0; i < length; ++i) {
-				targets[i].ReadFrom(stream);
+				targets[i] = stream.ReadString();
 			}
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(skillTypeOrStuntID);
 			stream.WriteBoolean(isStunt);
-			stream.WriteInt32(action);
+			stream.WriteByte((byte)action);
 			stream.WriteInt32(dstRow);
 			stream.WriteInt32(dstCol);
 			stream.WriteInt32(targets.Length);
 			foreach (var target in targets) {
-				target.WriteTo(stream);
+				stream.WriteString(target);
 			}
 		}
 	}
@@ -363,7 +365,7 @@
 		public bool isStunt;
 		public int dstRow;
 		public int dstCol;
-		public BattleSceneObj[] targets;
+		public string[] targets;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			skillTypeOrStuntID = stream.ReadString();
@@ -371,9 +373,9 @@
 			dstRow = stream.ReadInt32();
 			dstCol = stream.ReadInt32();
 			int length = stream.ReadInt32();
-			targets = new BattleSceneObj[length];
+			targets = new string[length];
 			for (int i = 0; i < length; ++i) {
-				targets[i].ReadFrom(stream);
+				targets[i] = stream.ReadString();
 			}
 		}
 
@@ -384,18 +386,95 @@
 			stream.WriteInt32(dstCol);
 			stream.WriteInt32(targets.Length);
 			foreach (var target in targets) {
-				target.WriteTo(stream);
+				stream.WriteString(target);
 			}
 		}
 	}
 
-	public sealed class BattleSceneMakeExtraMovePointMessage : Message {
+	public sealed class BattleSceneTakeExtraMovePointMessage : Message {
 		public const int MESSAGE_TYPE = 23;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public override void ReadFrom(IDataInputStream stream) { }
 		public override void WriteTo(IDataOutputStream stream) { }
 	}
+	
+	public sealed class BattleSceneGetGridObjectDataMessage : Message {
+		public const int MESSAGE_TYPE = 24;
+		public override int MessageType => MESSAGE_TYPE;
 
+		public string objID;
 
+		public override void ReadFrom(IDataInputStream stream) {
+			objID = stream.ReadString();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteString(objID);
+		}
+	}
+
+	public sealed class BattleSceneGetLadderObjectDataMessage : Message {
+		public const int MESSAGE_TYPE = 25;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public string objID;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			objID = stream.ReadString();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteString(objID);
+		}
+	}
+
+	public sealed class BattleSceneGetInitiativeUsableSkillOrStuntMessage : Message {
+		public const int MESSAGE_TYPE = 26;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public CharacterAction action;
+		public bool stunt;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			action = (CharacterAction)stream.ReadByte();
+			stunt = stream.ReadBoolean();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteByte((byte)action);
+			stream.WriteBoolean(stunt);
+		}
+	}
+
+	public sealed class BattleSceneGetPassiveUsableSkillOrStuntMessage : Message {
+		public const int MESSAGE_TYPE = 27;
+		public override int MessageType => MESSAGE_TYPE;
+		
+		public bool stunt;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			stunt = stream.ReadBoolean();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteBoolean(stunt);
+		}
+	}
+
+	public sealed class BattleSceneGetCanExtraMoveMessage : Message {
+		public const int MESSAGE_TYPE = 28;
+		public override int MessageType => MESSAGE_TYPE;
+		
+		public override void ReadFrom(IDataInputStream stream) { }
+		public override void WriteTo(IDataOutputStream stream) { }
+	}
+
+	public sealed class BattleSceneTurnOverMessage : Message {
+		public const int MESSAGE_TYPE = 29;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public override void ReadFrom(IDataInputStream stream) { }
+		public override void WriteTo(IDataOutputStream stream) { }
+	}
 }

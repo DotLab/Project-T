@@ -1,5 +1,6 @@
 ﻿using GameLib.Utilities.Network.ClientMessages;
 using GameLib.Utilities.Network.ServerMessages;
+using GameLib.Utilities.Network.Streamable;
 using System;
 using System.Collections.Generic;
 
@@ -11,6 +12,7 @@ namespace GameLib.Utilities.Network {
 				case IdentifiedMessage.MESSAGE_TYPE:
 					return new IdentifiedMessage();
 
+				// server message
 				case ServerReadyMessage.MESSAGE_TYPE:
 					return new ServerReadyMessage();
 				case StorySceneResetMessage.MESSAGE_TYPE:
@@ -79,10 +81,10 @@ namespace GameLib.Utilities.Network {
 					return new DirectResistSkillsDataMessage();
 				case SkillTypeListDataMessage.MESSAGE_TYPE:
 					return new SkillTypeListDataMessage();
-				case SkillCheckPanelShowMessage.MESSAGE_TYPE:
-					return new SkillCheckPanelShowMessage();
-				case SkillCheckPanelHideMessage.MESSAGE_TYPE:
-					return new SkillCheckPanelHideMessage();
+				case StorySceneCheckerPanelShowMessage.MESSAGE_TYPE:
+					return new StorySceneCheckerPanelShowMessage();
+				case StorySceneCheckerPanelHideMessage.MESSAGE_TYPE:
+					return new StorySceneCheckerPanelHideMessage();
 				case DMCheckPanelShowMessage.MESSAGE_TYPE:
 					return new DMCheckPanelShowMessage();
 				case DMCheckPanelHideMessage.MESSAGE_TYPE:
@@ -137,7 +139,26 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneMovePathInfoMessage();
 				case BattleSceneDisplayActableObjectMovingMessage.MESSAGE_TYPE:
 					return new BattleSceneDisplayActableObjectMovingMessage();
+				case BattleSceneGridObjectDataMessage.MESSAGE_TYPE:
+					return new BattleSceneGridObjectDataMessage();
+				case BattleSceneLadderObjectDataMessage.MESSAGE_TYPE:
+					return new BattleSceneLadderObjectDataMessage();
+				case BattleSceneDisplayTakeExtraMovePointMessage.MESSAGE_TYPE:
+					return new BattleSceneDisplayTakeExtraMovePointMessage();
+				case BattleSceneUpdateActionPointMessage.MESSAGE_TYPE:
+					return new BattleSceneUpdateActionPointMessage();
+				case BattleSceneObjectUsableSkillListMessage.MESSAGE_TYPE:
+					return new BattleSceneObjectUsableSkillListMessage();
+				case BattleSceneObjectUsableStuntListMessage.MESSAGE_TYPE:
+					return new BattleSceneObjectUsableStuntListMessage();
+				case BattleSceneCanTakeExtraMoveMessage.MESSAGE_TYPE:
+					return new BattleSceneCanTakeExtraMoveMessage();
+				case BattleSceneUpdateGridInfoMessage.MESSAGE_TYPE:
+					return new BattleSceneUpdateGridInfoMessage();
+				case BattleSceneUpdateMovePointMessage.MESSAGE_TYPE:
+					return new BattleSceneUpdateMovePointMessage();
 
+				// client message
 				case ClientInitMessage.MESSAGE_TYPE:
 					return new ClientInitMessage();
 				case StorySceneObjectActionMessage.MESSAGE_TYPE:
@@ -182,8 +203,21 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneActableObjectDoActionMessage();
 				case BattleSceneActableObjectDoSpecialActionMessage.MESSAGE_TYPE:
 					return new BattleSceneActableObjectDoSpecialActionMessage();
-				case BattleSceneMakeExtraMovePointMessage.MESSAGE_TYPE:
-					return new BattleSceneMakeExtraMovePointMessage();
+				case BattleSceneTakeExtraMovePointMessage.MESSAGE_TYPE:
+					return new BattleSceneTakeExtraMovePointMessage();
+				case BattleSceneGetGridObjectDataMessage.MESSAGE_TYPE:
+					return new BattleSceneGetGridObjectDataMessage();
+				case BattleSceneGetLadderObjectDataMessage.MESSAGE_TYPE:
+					return new BattleSceneGetLadderObjectDataMessage();
+				case BattleSceneGetInitiativeUsableSkillOrStuntMessage.MESSAGE_TYPE:
+					return new BattleSceneGetInitiativeUsableSkillOrStuntMessage();
+				case BattleSceneGetPassiveUsableSkillOrStuntMessage.MESSAGE_TYPE:
+					return new BattleSceneGetPassiveUsableSkillOrStuntMessage();
+				case BattleSceneGetCanExtraMoveMessage.MESSAGE_TYPE:
+					return new BattleSceneGetCanExtraMoveMessage();
+				case BattleSceneTurnOverMessage.MESSAGE_TYPE:
+					return new BattleSceneTurnOverMessage();
+
 				default:
 					throw new NotImplementedException();
 			}
@@ -203,7 +237,7 @@ namespace GameLib.Utilities.Network {
 
 		public const int MESSAGE_TYPE = 0;
 		public override int MessageType => MESSAGE_TYPE;
-		public int InnerMsgType => innerMessage.MessageType;
+		public int InnerMsgType => innerMessage == null ? 0 : innerMessage.MessageType;
 
 		public IdentifiedMessage() { }
 
@@ -215,15 +249,19 @@ namespace GameLib.Utilities.Network {
 
 		public override void ReadFrom(IDataInputStream stream) {
 			int innerType = stream.ReadInt32();
-			innerMessage = New(innerType);
-			innerMessage.ReadFrom(stream);
+			if (innerType == 0) {
+				innerMessage = null;
+			} else {
+				innerMessage = New(innerType);
+				innerMessage.ReadFrom(stream);
+			}
 			guid = InputStreamHelper.ReadGuid(stream);
 			resp = stream.ReadBoolean();
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteInt32(this.InnerMsgType);
-			innerMessage.WriteTo(stream);
+			if (innerMessage != null) innerMessage.WriteTo(stream);
 			OutputStreamHelper.WriteGuid(stream, guid);
 			stream.WriteBoolean(resp);
 		}
@@ -242,18 +280,18 @@ namespace GameLib.Utilities.Network {
 		private readonly Dictionary<int, IRequestHandler> _reqHandlerDict = new Dictionary<int, IRequestHandler>();
 
 		public void MessageReceived(Message message) {
-			var identifiedMessage = (IdentifiedMessage)message;
-			if (identifiedMessage.resp) {
-				if (_callbackDict.TryGetValue(identifiedMessage.guid, out Action<Message> callback)) {
-					callback(identifiedMessage.innerMessage);
-					_callbackDict.Remove(identifiedMessage.guid);
+			var identifiedMsg = (IdentifiedMessage)message;
+			if (identifiedMsg.resp) {
+				if (_callbackDict.TryGetValue(identifiedMsg.guid, out Action<Message> callback)) {
+					callback(identifiedMsg.innerMessage);
+					_callbackDict.Remove(identifiedMsg.guid);
 				}
 			} else {
 				Message resp = null;
-				if (_reqHandlerDict.TryGetValue(identifiedMessage.InnerMsgType, out IRequestHandler handler)) {
-					resp = handler.MakeResponse(identifiedMessage.innerMessage);
+				if (_reqHandlerDict.TryGetValue(identifiedMsg.InnerMsgType, out IRequestHandler handler)) {
+					resp = handler.MakeResponse(identifiedMsg.innerMessage);
 				}
-				var respWrapper = new IdentifiedMessage() { innerMessage = resp, guid = identifiedMessage.guid, resp = true };
+				var respWrapper = new IdentifiedMessage() { innerMessage = resp, guid = identifiedMsg.guid, resp = true };
 				SendMessage(respWrapper);
 			}
 		}

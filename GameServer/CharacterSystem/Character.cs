@@ -555,20 +555,29 @@ namespace GameLib.CharacterSystem {
 			if (CampaignManager.Instance.CurrentContainer == ContainerType.STORY) {
 				if (StorySceneContainer.Instance.PlayerCharacters.TryGetValue(id, out Character character)) {
 					return character;
-				} else if (StorySceneContainer.Instance.ObjList.TryGetValue(id, out IStoryObject storyObject)) {
+				} else if (StorySceneContainer.Instance.ObjList.TryGetValue(id, out ISceneObject storyObject)) {
 					return storyObject.CharacterRef;
 				} else {
-					foreach (Character character2 in StorySceneContainer.Instance.PlayerCharacters) {
-						Character item = this.FindItemRecursivelyByID(character2, id);
+					foreach (var character2 in StorySceneContainer.Instance.PlayerCharacters) {
+						var item = this.FindItemRecursivelyByID(character2, id);
 						if (item != null) return item;
 					}
-					foreach (IStoryObject obj in StorySceneContainer.Instance.ObjList) {
-						Character item = this.FindItemRecursivelyByID(obj.CharacterRef, id);
+					foreach (var obj in StorySceneContainer.Instance.ObjList) {
+						var item = this.FindItemRecursivelyByID(obj.CharacterRef, id);
 						if (item != null) return item;
 					}
 				}
 			} else if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
-				throw new NotImplementedException();
+				var sceneObject = BattleSceneContainer.Instance.FindObject(id);
+				if (sceneObject != null) return sceneObject.CharacterRef;
+				foreach (var gridObject in BattleSceneContainer.Instance.GridObjList) {
+					var item = this.FindItemRecursivelyByID(gridObject.CharacterRef, id);
+					if (item != null) return item;
+				}
+				foreach (var ladder in BattleSceneContainer.Instance.LadderObjList) {
+					var item = this.FindItemRecursivelyByID(ladder.CharacterRef, id);
+					if (item != null) return item;
+				}
 			}
 			return null;
 		}
@@ -577,11 +586,12 @@ namespace GameLib.CharacterSystem {
 			if (CampaignManager.Instance.CurrentContainer == ContainerType.STORY) {
 				if (StorySceneContainer.Instance.PlayerCharacters.TryGetValue(id, out Character character)) {
 					return character;
-				} else if (StorySceneContainer.Instance.ObjList.TryGetValue(id, out IStoryObject storyObject)) {
+				} else if (StorySceneContainer.Instance.ObjList.TryGetValue(id, out ISceneObject storyObject)) {
 					return storyObject.CharacterRef;
 				}
 			} else if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
-				throw new NotImplementedException();
+				var sceneObject = BattleSceneContainer.Instance.FindObject(id);
+				if (sceneObject != null) return sceneObject.CharacterRef;
 			}
 			return null;
 		}

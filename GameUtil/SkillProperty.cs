@@ -6,11 +6,17 @@
 		NEGATIVE_COL = 0b1000
 	}
 
+	public enum CharacterAction {
+		CREATE_ASPECT,
+		ATTACK,
+		HINDER
+	}
+
 	public struct SkillProperty {
 		public static readonly SkillProperty INIT = new SkillProperty {
 			level = 0,
-			canAttack = false,
-			canDefend = false,
+			canAttack = false, canDefend = false,
+			actionPointCost = 1,
 			useRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
 			affectRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
 			islinearUse = false,
@@ -23,6 +29,7 @@
 		public int level;
 		public bool canAttack;
 		public bool canDefend;
+		public int actionPointCost;
 		public Range useRange;
 		public bool islinearUse;
 		public BattleMapDirection linearUseDirection;

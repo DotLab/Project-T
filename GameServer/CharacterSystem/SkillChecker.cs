@@ -5,12 +5,6 @@ using System.Collections.Generic;
 
 namespace GameLib.CharacterSystem {
 	public sealed class SkillChecker {
-		public enum CharacterAction {
-			CREATE_ASPECT,
-			ATTACK,
-			HINDER
-		}
-
 		public enum CheckResult {
 			FAIL,
 			TIE,
@@ -134,6 +128,20 @@ namespace GameLib.CharacterSystem {
 
 		private SkillChecker() { }
 
+		public static bool CanInitiativeUseSkillOrStunt(SkillProperty skillProperty, CharacterAction action) {
+			if (action == CharacterAction.ATTACK) {
+				if (!skillProperty.canAttack) return false;
+			}
+			return true;
+		}
+
+		public static bool CanPassiveUseSkillOrStunt(SkillProperty skillProperty, CharacterAction action) {
+			if (action == CharacterAction.ATTACK) {
+				if (!skillProperty.canDefend) return false;
+			}
+			return true;
+		}
+
 		public static bool CanResistSkillWithoutDMCheck(SkillType initiativeUsing, SkillType resist, CharacterAction action) {
 			Dictionary<SkillType, List<SkillType>> resistTable;
 			switch (action) {
@@ -219,10 +227,8 @@ namespace GameLib.CharacterSystem {
 
 		public void InitiativeSelectSkill(SkillType skillType) {
 			if (_state != CheckerState.INITIATIVE_SKILL_OR_STUNT) throw new InvalidOperationException("State incorrect.");
-			if (_action == CharacterAction.ATTACK) {
-				SkillProperty skillProperty = _initiative.GetSkillProperty(skillType);
-				if (!skillProperty.canAttack) throw new ArgumentException("This skill cannot use in attack situation.", nameof(skillType));
-			}
+			var skillProperty = _initiative.GetSkillProperty(skillType);
+			if (!CanInitiativeUseSkillOrStunt(skillProperty, _action)) throw new InvalidOperationException("This skill cannot use in attack situation.");
 			_initiativeSkillType = skillType;
 		}
 
@@ -243,7 +249,7 @@ namespace GameLib.CharacterSystem {
 			_state = CheckerState.PASSIVE_ASPECT;
 		}
 
-		public bool CanInitiativeUseAspect(Aspect aspect, out string msg) {
+		public bool CheckInitiativeAspectUsable(Aspect aspect, out string msg) {
 			msg = "";
 			if (aspect.Benefit != _initiative && _initiative.FatePoint - 1 < 0) {
 				msg = "命运点不足";
@@ -267,10 +273,8 @@ namespace GameLib.CharacterSystem {
 
 		public void PassiveSelectSkill(SkillType skillType) {
 			if (_state != CheckerState.PASSIVE_SKILL_OR_STUNT) throw new InvalidOperationException("State incorrect.");
-			if (_action == CharacterAction.ATTACK) {
-				SkillProperty skillProperty = _passive.GetSkillProperty(skillType);
-				if (!skillProperty.canDefend) throw new ArgumentException("This skill cannot use in attack situation.", nameof(skillType));
-			}
+			var skillProperty = _passive.GetSkillProperty(skillType);
+			if (!CanPassiveUseSkillOrStunt(skillProperty, _action)) throw new InvalidOperationException("This skill cannot use in attack situation.");
 			_passiveSkillType = skillType;
 		}
 
@@ -291,7 +295,7 @@ namespace GameLib.CharacterSystem {
 			_state = CheckerState.WAITING_FOR_END;
 		}
 
-		public bool CanPassiveUseAspect(Aspect aspect, out string msg) {
+		public bool CheckPassiveAspectUsable(Aspect aspect, out string msg) {
 			msg = "";
 			if (aspect.Benefit != _passive && _passive.FatePoint - 1 < 0) {
 				msg = "命运点不足";

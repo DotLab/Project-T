@@ -64,7 +64,7 @@ namespace GameLib.CharacterSystem {
 
 			public IJSAPI<ExtraPropertyList<PassiveEffect>> getPassiveEffectList() {
 				try {
-					return (IJSAPI<ExtraPropertyList<PassiveEffect>>)_outer.PassiveEffects.GetContext();
+					return (IJSAPI<ExtraPropertyList<PassiveEffect>>)_outer.Effects.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return null;
@@ -121,7 +121,7 @@ namespace GameLib.CharacterSystem {
 		public bool IsLongRangeWeapon { get => _isLongRangeWeapon; set { _isLongRangeWeapon = value; if (value) _isTool = true; } }
 		public bool IsVehicle { get => _isVehicle; set { _isVehicle = value; if (value) _isTool = true; } }
 		public object CustomData { get => _customData; set => _customData = value; }
-		public ExtraPropertyList<PassiveEffect> PassiveEffects => _passiveEffects;
+		public ExtraPropertyList<PassiveEffect> Effects => _passiveEffects;
 
 		public override IJSContext GetContext() {
 			return _apiObj;

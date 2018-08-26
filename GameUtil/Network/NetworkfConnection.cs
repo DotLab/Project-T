@@ -1,4 +1,5 @@
-﻿using GameLib.Utilities.Network.ServerMessages;
+﻿using GameLib.Utilities.Network.Streamable;
+using GameLib.Utilities.Network.ServerMessages;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -37,6 +38,7 @@ namespace GameLib.Utilities.Network {
 		private readonly List<Message> _sendingMsgCache = new List<Message>();
 		private readonly List<Message> _receivedMsgCache = new List<Message>();
 		private readonly Dictionary<int, List<IMessageReceiver>> _messageReceiverDict = new Dictionary<int, List<IMessageReceiver>>();
+		private readonly byte[] _exchange = new byte[4096];
 
 		public NetworkfConnection() {
 			Task.Run((Action)SendCachedMessage);
@@ -73,7 +75,12 @@ namespace GameLib.Utilities.Network {
 		public override void SendMessage(Message message) {
 			if (_service != null) {
 				lock (_sendingMsgCache) {
-					_sendingMsgCache.Add(message);
+					var copy = Message.New(message.MessageType);
+					var read = new BitDataInputStream(_exchange);
+					var write = new BitDataOutputStream(_exchange);
+					message.WriteTo(write);
+					copy.ReadFrom(read);
+					_sendingMsgCache.Add(copy);
 					Monitor.Pulse(_sendingMsgCache);
 				}
 			} else {

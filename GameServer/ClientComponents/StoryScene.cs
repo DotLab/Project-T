@@ -93,7 +93,7 @@ namespace GameLib.ClientComponents {
 
 		public void Open(Character initiative, Character passive, ClientPosition clientState) {
 			if (_isUsing) return;
-			SkillCheckPanelShowMessage message = new SkillCheckPanelShowMessage();
+			StorySceneCheckerPanelShowMessage message = new StorySceneCheckerPanelShowMessage();
 			message.initiativeCharacterID = initiative.ID;
 			message.initiativeView = initiative.View;
 			message.passiveCharacterID = passive.ID;
@@ -105,28 +105,28 @@ namespace GameLib.ClientComponents {
 
 		public void Close() {
 			if (!_isUsing) return;
-			SkillCheckPanelHideMessage message = new SkillCheckPanelHideMessage();
+			StorySceneCheckerPanelHideMessage message = new StorySceneCheckerPanelHideMessage();
 			_connection.SendMessage(message);
 			_position = ClientPosition.OBSERVER;
 			_isUsing = false;
 		}
 
-		public void NotifyInitiativeSelectSkillOrStunt(SkillChecker.CharacterAction action, Character initiative, Character passive) {
+		public void NotifyInitiativeSelectSkillOrStunt(CharacterAction action, Character initiative, Character passive) {
 			if (!_isUsing) return;
 			var message = new StorySceneCheckerNotifyInitiativeSelectSkillOrStuntMessage();
 			message.initiativeCharacterID = initiative.ID;
 			message.passiveCharacterID = passive.ID;
-			message.action = (int)action;
+			message.action = action;
 			_connection.SendMessage(message);
 		}
 
-		public void NotifyPassiveSelectSkillOrStunt(SkillChecker.CharacterAction action, Character passive, Character initiative, SkillType initiativeSkillType) {
+		public void NotifyPassiveSelectSkillOrStunt(CharacterAction action, Character passive, Character initiative, SkillType initiativeSkillType) {
 			if (!_isUsing) return;
 			var message = new StorySceneCheckerNotifyPassiveSelectSkillOrStuntMessage();
 			message.passiveCharacterID = passive.ID;
 			message.initiativeCharacterID = initiative.ID;
 			message.initiativeSkillType = StreamableFactory.CreateSkillTypeDescription(initiativeSkillType);
-			message.action = (int)action;
+			message.action = action;
 			_connection.SendMessage(message);
 		}
 
@@ -279,7 +279,7 @@ namespace GameLib.ClientComponents {
 			_connection.SendMessage(message);
 		}
 
-		public void AddObject(IStoryObject obj) {
+		public void AddObject(ISceneObject obj) {
 			StorySceneObjectAddMessage message = new StorySceneObjectAddMessage();
 			message.objID = obj.ID;
 			message.view = obj.CharacterRef.View;
@@ -292,25 +292,25 @@ namespace GameLib.ClientComponents {
 			_connection.SendMessage(message);
 		}
 
-		public void RemoveObject(IStoryObject obj) {
+		public void RemoveObject(ISceneObject obj) {
 			this.RemoveObject(obj.ID);
 		}
 
-		public void TransformObject(IStoryObject obj, Layout to) {
+		public void TransformObject(ISceneObject obj, Layout to) {
 			StorySceneObjectTransformMessage message = new StorySceneObjectTransformMessage();
 			message.objID = obj.ID;
 			message.to = to;
 			_connection.SendMessage(message);
 		}
 
-		public void SetObjectViewEffect(IStoryObject obj, CharacterViewEffect effect) {
+		public void SetObjectViewEffect(ISceneObject obj, CharacterViewEffect effect) {
 			StorySceneObjectViewEffectMessage message = new StorySceneObjectViewEffectMessage();
 			message.objID = obj.ID;
 			message.effect = effect;
 			_connection.SendMessage(message);
 		}
 
-		public void SetObjectPortraitStyle(IStoryObject obj, PortraitStyle portrait) {
+		public void SetObjectPortraitStyle(ISceneObject obj, PortraitStyle portrait) {
 			StorySceneObjectPortraitStyleMessage message = new StorySceneObjectPortraitStyleMessage();
 			message.objID = obj.ID;
 			message.portrait = portrait;

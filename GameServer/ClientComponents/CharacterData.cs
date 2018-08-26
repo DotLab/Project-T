@@ -1,9 +1,11 @@
 ﻿using GameLib.CharacterSystem;
 using GameLib.Core;
 using GameLib.Core.DataSystem;
+using GameLib.Utilities;
 using GameLib.Utilities.Network;
 using GameLib.Utilities.Network.ClientMessages;
 using GameLib.Utilities.Network.ServerMessages;
+using GameLib.Utilities.Network.Streamable;
 using System;
 using System.Collections.Generic;
 
@@ -59,9 +61,9 @@ namespace GameLib.ClientComponents {
 						}
 						break;
 					case GetSkillDataMessage.MESSAGE_TYPE: {
-							var skillLevelDataMessage = (GetSkillDataMessage)request;
-							var character = CharacterManager.Instance.FindCharacterByID(skillLevelDataMessage.characterID);
-							resp = GetSkillData(character, SkillType.SkillTypes[skillLevelDataMessage.skillTypeID]);
+							var skillDataMessage = (GetSkillDataMessage)request;
+							var character = CharacterManager.Instance.FindCharacterByID(skillDataMessage.characterID);
+							resp = GetSkillData(character, SkillType.SkillTypes[skillDataMessage.skillTypeID]);
 						}
 						break;
 					case GetStuntDataMessage.MESSAGE_TYPE: {
@@ -90,7 +92,7 @@ namespace GameLib.ClientComponents {
 						break;
 					case GetDirectResistSkillsMessage.MESSAGE_TYPE: {
 							var resistSkillsMessage = (GetDirectResistSkillsMessage)request;
-							resp = GetDirectResistSkills(SkillType.SkillTypes[resistSkillsMessage.initiativeSkillTypeID], (SkillChecker.CharacterAction)resistSkillsMessage.actionType);
+							resp = GetDirectResistSkills(SkillType.SkillTypes[resistSkillsMessage.initiativeSkillTypeID], (CharacterAction)resistSkillsMessage.actionType);
 						}
 						break;
 					case GetSkillTypeListMessage.MESSAGE_TYPE: {
@@ -241,7 +243,7 @@ namespace GameLib.ClientComponents {
 			return message;
 		}
 
-		private Message GetDirectResistSkills(SkillType initiativeSkillType, SkillChecker.CharacterAction action) {
+		private Message GetDirectResistSkills(SkillType initiativeSkillType, CharacterAction action) {
 			var message = new DirectResistSkillsDataMessage();
 			List<SkillType> resistables = new List<SkillType>();
 			foreach (var skillType in SkillType.SkillTypes) {
