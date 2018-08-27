@@ -1,4 +1,6 @@
-﻿using System;
+﻿using GameLib.Utilities.Network.ClientMessages;
+using GameLib.Utilities.Network.ServerMessages;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -14,48 +16,82 @@ namespace TextyClient {
 			InitializeComponent();
 		}
 
-		public void SetName(string name) {
-			nameTbx.Text = name;
-		}
-
-		public void SetDescription(string description) {
-			descriptionTbx.Text = description;
-		}
-
-		public void SetRefreshPoint(int point) {
-			refreshPointLbl.Text = point.ToString();
-		}
-
-		public void SetFatePoint(int point) {
-			fatePointLbl.Text = point.ToString();
-		}
-
-		public void SetAspects(object list) {
-			aspectListBox.DataSource = list;
-		}
-
-		public void SetSkills(object list) {
-			skillListBox.DataSource = list;
-		}
-
-		public void SetStunts(object list) {
-			stuntListBox.DataSource = list;
-		}
-
-		public void SetExtras(object list) {
-			extraListBox.DataSource = list;
-		}
-
-		public void SetConsequences(object list) {
-			consequenceListBox.DataSource = list;
-		}
-
-		public void SetPhysicsStress(int val, int maxVal) {
-			physicsStressLbl.Text = val + " / " + maxVal;
-		}
-
-		public void SetMentalStress(int val, int maxVal) {
-			mentalStressLbl.Text = val + "/" + maxVal;
+		public void RequestData(string characterID) {
+			var request = new GetCharacterDataMessage() {
+				characterID = characterID,
+				dataType = GetCharacterDataMessage.DataType.INFO
+			};
+			Program.connection.Request(request, result => {
+				var resp = result as CharacterInfoDataMessage;
+				if (resp != null) {
+					this.nameTbx.Text = resp.describable.name;
+					this.descriptionTbx.Text = resp.describable.description;
+				}
+			});
+			request.dataType = GetCharacterDataMessage.DataType.FATEPOINT;
+			Program.connection.Request(request, result => {
+				var resp = result as CharacterFatePointDataMessage;
+				if (resp != null) {
+					this.fatePointLbl.Text = resp.fatePoint.ToString();
+					this.refreshPointLbl.Text = resp.refreshPoint.ToString();
+				}
+			});
+			request.dataType = GetCharacterDataMessage.DataType.ASPECTS;
+			Program.connection.Request(request, result => {
+				var resp = result as CharacterAspectsDescriptionMessage;
+				if (resp != null) {
+					foreach (var aspect in resp.properties) {
+						this.aspectListBox.Items.Add(aspect.describable.name);
+					}
+				}
+			});
+			foreach (var skillType in Program.skillTypes) {
+				var skillReq = new GetSkillDataMessage() {
+					characterID = characterID,
+					skillTypeID = skillType.propertyID
+				};
+				Program.connection.Request(skillReq, result => {
+					var resp = result as SkillDataMessage;
+					if (resp != null) {
+						this.skillListBox.Items.Add(skillType.name + " " + (resp.skillProperty.level >= 0 ? "+" : "") + resp.skillProperty.level);
+					}
+				});
+			}
+			request.dataType = GetCharacterDataMessage.DataType.STUNTS;
+			Program.connection.Request(request, result => {
+				var resp = result as CharacterStuntsDescriptionMessage;
+				if (resp != null) {
+					foreach (var stunt in resp.properties) {
+						this.stuntListBox.Items.Add(stunt.describable.name + "：" + stunt.describable.description);
+					}
+				}
+			});
+			request.dataType = GetCharacterDataMessage.DataType.EXTRAS;
+			Program.connection.Request(request, result => {
+				var resp = result as CharacterExtrasDescriptionMessage;
+				if (resp != null) {
+					foreach (var extra in resp.properties) {
+						this.extraListBox.Items.Add(extra.describable.name + "：" + extra.describable.description);
+					}
+				}
+			});
+			request.dataType = GetCharacterDataMessage.DataType.STRESS;
+			Program.connection.Request(request, result => {
+				var resp = result as CharacterStressDataMessage;
+				if (resp != null) {
+					this.physicsStressLbl.Text = resp.physicsStress + "/" + resp.physicsStressMax;
+					this.mentalStressLbl.Text = resp.mentalStress + "/" + resp.mentalStressMax;
+				}
+			});
+			request.dataType = GetCharacterDataMessage.DataType.CONSEQUENCES;
+			Program.connection.Request(request, result => {
+				var resp = result as CharacterConsequencesDescriptionMessage;
+				if (resp != null) {
+					foreach (var consequence in resp.properties) {
+						this.consequenceListBox.Items.Add(consequence.describable.name);
+					}
+				}
+			});
 		}
 	}
 }

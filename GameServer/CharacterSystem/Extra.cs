@@ -97,7 +97,7 @@ namespace GameLib.CharacterSystem {
 			if (item == null) throw new ArgumentNullException(nameof(item));
 			if (item.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(item));
 			_item = item;
-			item.Belong = this;
+			item.SetBelong(this);
 			_passiveEffects = new ExtraPropertyList<PassiveEffect>(this);
 			_apiObj = new JSAPI(this);
 		}
@@ -106,15 +106,15 @@ namespace GameLib.CharacterSystem {
 
 		public override string Name { get => _item.Name; set => _item.Name = value; }
 		public override string Description { get => _item.Description; set => _item.Description = value; }
-		public Character Belong { get => _belong; set => _belong = value; }
+		public Character Belong => _belong;
 		public Character Item {
 			get => _item;
 			set {
 				if (value == null) throw new ArgumentNullException(nameof(value));
 				if (value.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(value));
-				_item.Belong = null;
+				_item.SetBelong(null);
 				_item = value;
-				value.Belong = this;
+				value.SetBelong(this);
 			}
 		}
 		public bool IsTool { get => _isTool; set { _isTool = value; if (!value) _isLongRangeWeapon = _isVehicle = false; } }
@@ -122,6 +122,10 @@ namespace GameLib.CharacterSystem {
 		public bool IsVehicle { get => _isVehicle; set { _isVehicle = value; if (value) _isTool = true; } }
 		public object CustomData { get => _customData; set => _customData = value; }
 		public ExtraPropertyList<PassiveEffect> Effects => _passiveEffects;
+
+		public void SetBelong(Character belong) {
+			_belong = belong;
+		}
 
 		public override IJSContext GetContext() {
 			return _apiObj;

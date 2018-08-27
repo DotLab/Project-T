@@ -32,14 +32,14 @@ namespace GameLib.ClientComponents {
 		}
 
 		public Message MakeResponse(Message request) {
-			//try {
+			try {
 				if (!_isUsing) return null;
 				var container = BattleSceneContainer.Instance;
 				switch (request.MessageType) {
 					case BattleSceneGetGridObjectDataMessage.MESSAGE_TYPE: {
 							var reqMsg = (BattleSceneGetGridObjectDataMessage)request;
 							var resp = new BattleSceneGridObjectDataMessage();
-							var gridObject = BattleSceneContainer.Instance.FindGridObject(reqMsg.objID);
+							var gridObject = BattleSceneContainer.Instance.FindObject(reqMsg.objID) as GridObject;
 							if (gridObject == null) throw new InvalidOperationException("Invalid object id.");
 							resp.objData = StreamableFactory.CreateBattleSceneGridObjData(gridObject);
 							return resp;
@@ -47,7 +47,7 @@ namespace GameLib.ClientComponents {
 					case BattleSceneGetLadderObjectDataMessage.MESSAGE_TYPE: {
 							var reqMsg = (BattleSceneGetLadderObjectDataMessage)request;
 							var resp = new BattleSceneLadderObjectDataMessage();
-							var ladderObject = BattleSceneContainer.Instance.FindLadderObject(reqMsg.objID);
+							var ladderObject = BattleSceneContainer.Instance.FindObject(reqMsg.objID) as LadderObject;
 							if (ladderObject == null) throw new InvalidOperationException("Invalid object id.");
 							resp.objData = StreamableFactory.CreateBattleSceneLadderObjData(ladderObject);
 							return resp;
@@ -130,16 +130,17 @@ namespace GameLib.ClientComponents {
 						break;
 				}
 				return null;
-			/*} catch (Exception e) {
+			} catch (Exception e) {
 				Logger.WriteLine(e.Message);
+				throw e;
 				return null;
-			}*/
+			}
 		}
 
 		public override void MessageReceived(Message message) {
 			if (!_isUsing) return;
 			var container = BattleSceneContainer.Instance;
-			//try {
+			try {
 				switch (message.MessageType) {
 					case BattleSceneActableObjectMoveMessage.MESSAGE_TYPE: {
 							var msg = (BattleSceneActableObjectMoveMessage)message;
@@ -199,7 +200,7 @@ namespace GameLib.ClientComponents {
 							if (SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL_OR_STUNT
 								&& container.CurrentPassive.CharacterRef.Controller == _owner) {
 								var selectedSkillType = SkillType.SkillTypes[msg.skillTypeID];
-								container.CurrentPassiveUseSkill(selectedSkillType, false, false);
+								container.CurrentPassiveUseSkill(selectedSkillType);
 							}
 						}
 						break;
@@ -222,7 +223,7 @@ namespace GameLib.ClientComponents {
 							if (!container.IsChecking) return;
 							if (SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_ASPECT
 								&& container.Initiative.CharacterRef.Controller == _owner) {
-								var gridObj = container.FindGridObject(msg.characterID);
+								var gridObj = container.FindObject(msg.characterID);
 								foreach (var aspect in gridObj.CharacterRef.Aspects) {
 									if (aspect.ID == msg.aspectID) {
 										container.InitiativeSelectAspect(aspect, msg.reroll);
@@ -231,7 +232,7 @@ namespace GameLib.ClientComponents {
 								}
 							} else if (SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_ASPECT
 								  && container.CurrentPassive.CharacterRef.Controller == _owner) {
-								var gridObj = container.FindGridObject(msg.characterID);
+								var gridObj = container.FindObject(msg.characterID);
 								foreach (var aspect in gridObj.CharacterRef.Aspects) {
 									if (aspect.ID == msg.aspectID) {
 										container.CurrentPassiveSelectAspect(aspect, msg.reroll);
@@ -261,9 +262,10 @@ namespace GameLib.ClientComponents {
 					default:
 						break;
 				}
-			/*} catch (Exception e) {
+			} catch (Exception e) {
 				Logger.WriteLine(e.Message);
-			}*/
+				throw e;
+			}
 		}
 
 		protected BattleScene(Connection connection, User owner) :
@@ -550,6 +552,35 @@ namespace GameLib.ClientComponents {
 			var message = new BattleSceneUpdateMovePointMessage();
 			message.obj = StreamableFactory.CreateBattleSceneObj(actable);
 			message.newMovePoint = actable.MovePoint;
+			_connection.SendMessage(message);
+		}
+
+		public void StartCheck(SceneObject initiative, SkillType initiativeSkillType, CharacterAction action, IEnumerable<SceneObject> targets) {
+			if (!_isUsing) return;
+			var message = new BattleSceneStartCheckMessage();
+			message.initiativeObj = StreamableFactory.CreateBattleSceneObj(initiative);
+			message.initiativeSkillType = StreamableFactory.CreateSkillTypeDescription(initiativeSkillType);
+			message.action = action;
+			int count = 0;
+			foreach (var target in targets) ++count;
+			message.targets = new BattleSceneObj[count];
+			int i = 0;
+			foreach (var target in targets) {
+				message.targets[i++] = StreamableFactory.CreateBattleSceneObj(target);
+			}
+			_connection.SendMessage(message);
+		}
+
+		public void CheckNextone(SceneObject nextone) {
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
+			var message = new BattleSceneCheckNextoneMessage();
+			message.nextone = StreamableFactory.CreateBattleSceneObj(nextone);
+			_connection.SendMessage(message);
+		}
+
+		public void EndCheck() {
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
+			var message = new BattleSceneEndCheckMessage();
 			_connection.SendMessage(message);
 		}
 	}

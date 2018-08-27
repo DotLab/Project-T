@@ -89,21 +89,4 @@ namespace GameLib.CharacterSystem {
 			return !(a == b);
 		}
 	}
-
-	public sealed class Skill : IDescribable {
-		private string _description = "";
-		private SkillType _skillType;
-		private SkillProperty _property;
-
-		public string Name { get => _skillType.Name; set { } }
-		public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
-		public SkillType SkillType { get => _skillType; set => _skillType = value ?? throw new ArgumentNullException(nameof(value)); }
-		public SkillProperty Property { get => _property; set => _property = value; }
-
-		public Skill(SkillType skillType) {
-			_skillType = skillType ?? throw new ArgumentNullException(nameof(skillType));
-			_property = skillType.Property;
-		}
-
-	}
 }

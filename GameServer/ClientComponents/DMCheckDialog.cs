@@ -26,7 +26,10 @@ namespace GameLib.ClientComponents {
 		}
 
 		public void RequestCheck(User user, string text, Action<bool> result) {
-			if (_isChecking) return;
+			if (_isChecking) {
+				result(false);
+				return;
+			}
 			if (user.IsDM) {
 				result(true);
 				return;

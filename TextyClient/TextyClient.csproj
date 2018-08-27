@@ -57,6 +57,12 @@
     <Compile Include="CharacterInfo.Designer.cs">
       <DependentUpon>CharacterInfo.cs</DependentUpon>
     </Compile>
+    <Compile Include="DMCheckForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DMCheckForm.Designer.cs">
+      <DependentUpon>DMCheckForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -91,6 +97,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="CharacterInfo.resx">
       <DependentUpon>CharacterInfo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DMCheckForm.resx">
+      <DependentUpon>DMCheckForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>

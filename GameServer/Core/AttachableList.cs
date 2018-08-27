@@ -5,7 +5,8 @@ using System.Collections.Generic;
 
 namespace GameLib.Core {
 	public interface IAttachable<T> : IJSContextProvider where T : class, IJSContextProvider {
-		T Belong { get; set; }
+		T Belong { get; }
+		void SetBelong(T belong);
 	}
 
 	public class AttachableList<TOwner, TItem> : IEnumerable<TItem>, IEnumerable, IJSContextProvider
@@ -195,9 +196,9 @@ namespace GameLib.Core {
 			get => _container[i];
 			set {
 				if (value.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(value));
-				_container[i].Belong = null;
+				_container[i].SetBelong(null);
 				_container[i] = value;
-				value.Belong = _owner;
+				value.SetBelong(_owner);
 			}
 		}
 
@@ -210,7 +211,7 @@ namespace GameLib.Core {
 		public virtual void Add(TItem item) {
 			if (item.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(item));
 			_container.Add(item);
-			item.Belong = _owner;
+			item.SetBelong(_owner);
 		}
 
 		public virtual void AddRange(IEnumerable<TItem> items) {
@@ -219,13 +220,13 @@ namespace GameLib.Core {
 			}
 			_container.AddRange(items);
 			foreach (TItem item in items) {
-				item.Belong = _owner;
+				item.SetBelong(_owner);
 			}
 		}
 
 		public virtual void Clear() {
 			foreach (TItem item in _container) {
-				item.Belong = null;
+				item.SetBelong(null);
 			}
 			_container.Clear();
 		}
@@ -246,7 +247,7 @@ namespace GameLib.Core {
 		public virtual void Insert(int index, TItem item) {
 			if (item.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(item));
 			_container.Insert(index, item);
-			item.Belong = _owner;
+			item.SetBelong(_owner);
 		}
 
 		public virtual int LastIndexOf(TItem item, int index = 0, int count = -1) {
@@ -256,12 +257,12 @@ namespace GameLib.Core {
 
 		public virtual bool Remove(TItem item) {
 			bool ret = _container.Remove(item);
-			if (ret) item.Belong = null;
+			if (ret) item.SetBelong(null);
 			return ret;
 		}
 
 		public virtual void RemoveAt(int index) {
-			_container[index].Belong = null;
+			_container[index].SetBelong(null);
 			_container.RemoveAt(index);
 		}
 

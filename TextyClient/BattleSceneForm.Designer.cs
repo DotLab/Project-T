@@ -31,6 +31,7 @@
 			this.components = new System.ComponentModel.Container();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
 			this.gridObjectSelectionListBox = new System.Windows.Forms.ListBox();
+			this.battleScene = new TextyClient.GameScene();
 			this.battleSceneMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.menuItemMove = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuItemExtraMovePoint = new System.Windows.Forms.ToolStripMenuItem();
@@ -44,6 +45,7 @@
 			this.hScrollBar = new System.Windows.Forms.HScrollBar();
 			this.vScrollBar = new System.Windows.Forms.VScrollBar();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
+			this.targetCountLbl = new System.Windows.Forms.Label();
 			this.roundInfoLbl = new System.Windows.Forms.Label();
 			this.roundInfoPanel = new System.Windows.Forms.Panel();
 			this.actionPointLbl = new System.Windows.Forms.Label();
@@ -62,11 +64,9 @@
 			this.label5 = new System.Windows.Forms.Label();
 			this.selectedGridObjectLbl = new System.Windows.Forms.Label();
 			this.mouseGridPosLbl = new System.Windows.Forms.Label();
-			this.dicePointsLbl = new System.Windows.Forms.Label();
-			this.label3 = new System.Windows.Forms.Label();
 			this.roundInfoListBox = new System.Windows.Forms.ListBox();
 			this.label2 = new System.Windows.Forms.Label();
-			this.battleScene = new TextyClient.GameScene();
+			this.checkingStateLbl = new System.Windows.Forms.Label();
 			this.groupBox1.SuspendLayout();
 			this.battleSceneMenuStrip.SuspendLayout();
 			this.groupBox2.SuspendLayout();
@@ -97,6 +97,24 @@
 			this.gridObjectSelectionListBox.TabIndex = 9;
 			this.gridObjectSelectionListBox.Visible = false;
 			this.gridObjectSelectionListBox.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.gridObjectSelectionList_MouseDoubleClick);
+			// 
+			// battleScene
+			// 
+			this.battleScene.ContextMenuStrip = this.battleSceneMenuStrip;
+			this.battleScene.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.battleScene.Location = new System.Drawing.Point(3, 17);
+			this.battleScene.Name = "battleScene";
+			this.battleScene.Size = new System.Drawing.Size(799, 561);
+			this.battleScene.TabIndex = 6;
+			this.battleScene.UpdateInterval = 16;
+			this.battleScene.ViewerRectangleLeft = 0;
+			this.battleScene.ViewerRectangleLeftTop = new System.Drawing.Point(0, 0);
+			this.battleScene.ViewerRectangleTop = 0;
+			this.battleScene.CanvasDrawing += new System.EventHandler<TextyClient.CanvasDrawingEventArgs>(this.battleScene_CanvasDrawing);
+			this.battleScene.CanvasMouseDown += new System.EventHandler<System.Windows.Forms.MouseEventArgs>(this.battleScene_CanvasMouseDown);
+			this.battleScene.SizeChanged += new System.EventHandler(this.battleScene_SizeChanged);
+			this.battleScene.MouseClick += new System.Windows.Forms.MouseEventHandler(this.battleScene_MouseClick);
+			this.battleScene.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.battleScene_MouseDoubleClick);
 			// 
 			// battleSceneMenuStrip
 			// 
@@ -195,6 +213,8 @@
 			// 
 			// groupBox2
 			// 
+			this.groupBox2.Controls.Add(this.checkingStateLbl);
+			this.groupBox2.Controls.Add(this.targetCountLbl);
 			this.groupBox2.Controls.Add(this.roundInfoLbl);
 			this.groupBox2.Controls.Add(this.roundInfoPanel);
 			this.groupBox2.Controls.Add(this.confirmTargetBtn);
@@ -207,8 +227,6 @@
 			this.groupBox2.Controls.Add(this.label5);
 			this.groupBox2.Controls.Add(this.selectedGridObjectLbl);
 			this.groupBox2.Controls.Add(this.mouseGridPosLbl);
-			this.groupBox2.Controls.Add(this.dicePointsLbl);
-			this.groupBox2.Controls.Add(this.label3);
 			this.groupBox2.Controls.Add(this.roundInfoListBox);
 			this.groupBox2.Controls.Add(this.label2);
 			this.groupBox2.Dock = System.Windows.Forms.DockStyle.Right;
@@ -217,6 +235,15 @@
 			this.groupBox2.Size = new System.Drawing.Size(200, 598);
 			this.groupBox2.TabIndex = 5;
 			this.groupBox2.TabStop = false;
+			// 
+			// targetCountLbl
+			// 
+			this.targetCountLbl.AutoSize = true;
+			this.targetCountLbl.Location = new System.Drawing.Point(113, 95);
+			this.targetCountLbl.Name = "targetCountLbl";
+			this.targetCountLbl.Size = new System.Drawing.Size(0, 12);
+			this.targetCountLbl.TabIndex = 31;
+			this.targetCountLbl.Visible = false;
 			// 
 			// roundInfoLbl
 			// 
@@ -274,7 +301,7 @@
 			// 
 			// confirmTargetBtn
 			// 
-			this.confirmTargetBtn.Location = new System.Drawing.Point(113, 38);
+			this.confirmTargetBtn.Location = new System.Drawing.Point(113, 65);
 			this.confirmTargetBtn.Name = "confirmTargetBtn";
 			this.confirmTargetBtn.Size = new System.Drawing.Size(75, 23);
 			this.confirmTargetBtn.TabIndex = 29;
@@ -391,23 +418,6 @@
 			this.mouseGridPosLbl.Size = new System.Drawing.Size(0, 12);
 			this.mouseGridPosLbl.TabIndex = 11;
 			// 
-			// dicePointsLbl
-			// 
-			this.dicePointsLbl.AutoSize = true;
-			this.dicePointsLbl.Location = new System.Drawing.Point(6, 111);
-			this.dicePointsLbl.Name = "dicePointsLbl";
-			this.dicePointsLbl.Size = new System.Drawing.Size(0, 12);
-			this.dicePointsLbl.TabIndex = 9;
-			// 
-			// label3
-			// 
-			this.label3.AutoSize = true;
-			this.label3.Location = new System.Drawing.Point(6, 92);
-			this.label3.Name = "label3";
-			this.label3.Size = new System.Drawing.Size(53, 12);
-			this.label3.TabIndex = 8;
-			this.label3.Text = "骰子点数";
-			// 
 			// roundInfoListBox
 			// 
 			this.roundInfoListBox.FormattingEnabled = true;
@@ -426,23 +436,13 @@
 			this.label2.TabIndex = 6;
 			this.label2.Text = "行动顺序";
 			// 
-			// battleScene
+			// checkingStateLbl
 			// 
-			this.battleScene.ContextMenuStrip = this.battleSceneMenuStrip;
-			this.battleScene.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.battleScene.Location = new System.Drawing.Point(3, 17);
-			this.battleScene.Name = "battleScene";
-			this.battleScene.Size = new System.Drawing.Size(799, 561);
-			this.battleScene.TabIndex = 6;
-			this.battleScene.UpdateInterval = 100;
-			this.battleScene.ViewerRectangleLeft = 0;
-			this.battleScene.ViewerRectangleLeftTop = new System.Drawing.Point(0, 0);
-			this.battleScene.ViewerRectangleTop = 0;
-			this.battleScene.CanvasDrawing += new System.EventHandler<TextyClient.CanvasDrawingEventArgs>(this.battleScene_CanvasDrawing);
-			this.battleScene.CanvasMouseDown += new System.EventHandler<System.Windows.Forms.MouseEventArgs>(this.battleScene_CanvasMouseDown);
-			this.battleScene.SizeChanged += new System.EventHandler(this.battleScene_SizeChanged);
-			this.battleScene.MouseClick += new System.Windows.Forms.MouseEventHandler(this.battleScene_MouseClick);
-			this.battleScene.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.battleScene_MouseDoubleClick);
+			this.checkingStateLbl.AutoSize = true;
+			this.checkingStateLbl.Location = new System.Drawing.Point(6, 116);
+			this.checkingStateLbl.Name = "checkingStateLbl";
+			this.checkingStateLbl.Size = new System.Drawing.Size(0, 12);
+			this.checkingStateLbl.TabIndex = 32;
 			// 
 			// BattleSceneForm
 			// 
@@ -475,8 +475,6 @@
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.ListBox roundInfoListBox;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Label dicePointsLbl;
-        private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ContextMenuStrip battleSceneMenuStrip;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem menuItemViewData;
@@ -506,5 +504,7 @@
 		private System.Windows.Forms.Label movePointLbl;
 		private System.Windows.Forms.Label label4;
 		private System.Windows.Forms.Label label1;
+		private System.Windows.Forms.Label targetCountLbl;
+		private System.Windows.Forms.Label checkingStateLbl;
 	}
 }

@@ -14,6 +14,9 @@ namespace TextyClient {
 		private abstract class BattleSceneObject {
 			public readonly string id;
 			public readonly CharacterView view;
+			public string state;
+			public bool showCheckPoint;
+			public int checkPoint;
 
 			public abstract bool Actable { get; }
 			public abstract bool Movable { get; }
@@ -24,7 +27,7 @@ namespace TextyClient {
 			}
 
 			public override string ToString() {
-				return view.battle;
+				return view.battle + " " + state + (showCheckPoint ? ", " + checkPoint : "");
 			}
 		}
 
@@ -131,8 +134,8 @@ namespace TextyClient {
 		private bool _canActing = false;
 		private InitiativeState _initiativeState = InitiativeState.ACTING;
 		private PassiveCheckingState _checkingStateAsPassive = PassiveCheckingState.IDLE;
-		private BindingList<CharacterPropertyInfo> _selectionList = new BindingList<CharacterPropertyInfo>();
-		private BindingList<CharacterPropertyInfo> _selectionList2 = new BindingList<CharacterPropertyInfo>();
+		private readonly BindingList<CharacterPropertyInfo> _selectionList = new BindingList<CharacterPropertyInfo>();
+		private readonly BindingList<CharacterPropertyInfo> _selectionList2 = new BindingList<CharacterPropertyInfo>();
 
 		private ReachablePlace[] _movePathInfo = null;
 		private ReachablePlace _selectedMoveDst = null;
@@ -145,6 +148,8 @@ namespace TextyClient {
 		private Grid _selectedAffectCenter = null;
 		private bool _isSelectingTarget = false;
 		private readonly BindingList<BattleSceneObject> _targets = new BindingList<BattleSceneObject>();
+
+		private List<ReachablePlace> _targetPlaces = null;
 
 		public void MessageReceived(GameLib.Utilities.Network.Message message) {
 			switch (message.MessageType) {
@@ -159,13 +164,16 @@ namespace TextyClient {
 					break;
 				case DisplayDicePointsMessage.MESSAGE_TYPE: {
 						var msg = (DisplayDicePointsMessage)message;
-						dicePointsLbl.Text = msg.userID + ": ";
+						string dicePointsLbl = msg.userID + "投出了: ";
 						int sum = 0;
 						foreach (int point in msg.dicePoints) {
-							dicePointsLbl.Text += point + ", ";
+							dicePointsLbl += point + ", ";
 							sum += point;
 						}
-						dicePointsLbl.Text += "Sum: " + sum;
+						dicePointsLbl += "共计: " + sum;
+						Program.mainForm.connectionUpdater.Enabled = false;
+						MessageBox.Show(dicePointsLbl, "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+						Program.mainForm.connectionUpdater.Enabled = true;
 					}
 					break;
 				case BattleSceneResetMessage.MESSAGE_TYPE: {
@@ -266,7 +274,7 @@ namespace TextyClient {
 						var orderMessage = (BattleSceneSetActingOrderMessage)message;
 						_actingOrder.Clear();
 						foreach (var obj in orderMessage.objOrder) {
-							var gridObject = this.GetGridObject(obj.row, obj.col, obj.id);
+							var gridObject = GetGridObject(obj.row, obj.col, obj.id, out bool highland);
 							var objWithAP = new ActableObjWithAP { actable = gridObject };
 							_actingOrder.Add(objWithAP);
 						}
@@ -283,7 +291,7 @@ namespace TextyClient {
 							roundInfoLbl.Text = "你的回合";
 						} else {
 							roundInfoPanel.Visible = false;
-							roundInfoLbl.Text = this.GetGridObject(orderMessage.gridObj) + " 的回合";
+							roundInfoLbl.Text = GetGridObject(orderMessage.gridObj, out bool highland) + " 的回合";
 						}
 						for (int i = 0; i < _actingOrder.Count; ++i) {
 							if (_actingOrder[i].actable.id == orderMessage.gridObj.id) {
@@ -364,6 +372,38 @@ namespace TextyClient {
 						}
 					}
 					break;
+				case BattleSceneStartCheckMessage.MESSAGE_TYPE: {
+						var msg = (BattleSceneStartCheckMessage)message;
+						var gridObject = GetGridObject(msg.initiativeObj, out bool highland);
+						checkingStateLbl.Text = gridObject.ToString() + "发起了行动！";
+						_targetPlaces = new List<ReachablePlace>();
+						foreach (var target in msg.targets) {
+							_targetPlaces.Add(new ReachablePlace() { row = target.row, col = target.col, highland = highland });
+						}
+					}
+					break;
+				case BattleSceneCheckerDisplaySkillReadyMessage.MESSAGE_TYPE: {
+						var msg = (BattleSceneCheckerDisplaySkillReadyMessage)message;
+						var gridObject = GetGridObject(msg.obj, out bool highland);
+						foreach (var skillType in Program.skillTypes) {
+							if (skillType.propertyID == msg.skillTypeID) {
+								gridObject.state = "使用 " + skillType.name;
+								break;
+							}
+						}
+					}
+					break;
+				case BattleSceneCheckerDisplayUsingAspectMessage.MESSAGE_TYPE: {
+
+					}
+					break;
+				case BattleSceneCheckerUpdateSumPointMessage.MESSAGE_TYPE: {
+						var msg = (BattleSceneCheckerUpdateSumPointMessage)message;
+						var gridObject = GetGridObject(msg.obj, out bool highland);
+						gridObject.checkPoint = msg.point;
+						gridObject.showCheckPoint = true;
+					}
+					break;
 				case BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage.MESSAGE_TYPE: {
 						if (_checkingStateAsPassive != PassiveCheckingState.IDLE) return;
 						var selectSkillMsg = (BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage)message;
@@ -433,12 +473,17 @@ namespace TextyClient {
 								}
 							}
 						});
+						Program.mainForm.connectionUpdater.Enabled = false;
+						MessageBox.Show("进行被动对抗", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+						Program.mainForm.connectionUpdater.Enabled = true;
 					}
 					break;
 				case CheckerSelectSkillOrStuntCompleteMessage.MESSAGE_TYPE: {
 						var completeMsg = (CheckerSelectSkillOrStuntCompleteMessage)message;
 						if (completeMsg.failure) {
+							Program.mainForm.connectionUpdater.Enabled = false;
 							MessageBox.Show(completeMsg.extraMessage, "失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+							Program.mainForm.connectionUpdater.Enabled = true;
 						} else {
 							if (_checkingStateAsPassive == PassiveCheckingState.SELECT_SKILL_OR_STUNT && !completeMsg.isInitiative) {
 								_selectionList.Clear();
@@ -462,6 +507,8 @@ namespace TextyClient {
 									_usingSkillOrStuntID = null;
 									_selectedAffectCenter = null;
 									_isSelectingTarget = false;
+									confirmTargetBtn.Visible = false;
+									targetCountLbl.Visible = false;
 									_targets.Clear();
 								}
 							}
@@ -481,6 +528,9 @@ namespace TextyClient {
 						selectionTypeLbl.Text = "特征选择";
 						selectionListBox.DataSource = _selectionList;
 						selectAspectOverBtn.Visible = true;
+						Program.mainForm.connectionUpdater.Enabled = false;
+						MessageBox.Show("选择特征", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+						Program.mainForm.connectionUpdater.Enabled = true;
 					}
 					break;
 				case CheckerSelectAspectCompleteMessage.MESSAGE_TYPE: {
@@ -530,6 +580,10 @@ namespace TextyClient {
 			Program.connection.AddMessageReceiver(BattleSceneUpdateMovePointMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneDisplayActableObjectMovingMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneDisplayTakeExtraMovePointMessage.MESSAGE_TYPE, this);
+			Program.connection.AddMessageReceiver(BattleSceneStartCheckMessage.MESSAGE_TYPE, this);
+			Program.connection.AddMessageReceiver(BattleSceneCheckerDisplaySkillReadyMessage.MESSAGE_TYPE, this);
+			Program.connection.AddMessageReceiver(BattleSceneCheckerDisplayUsingAspectMessage.MESSAGE_TYPE, this);
+			Program.connection.AddMessageReceiver(BattleSceneCheckerUpdateSumPointMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(CheckerSelectSkillOrStuntCompleteMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneCheckerNotifySelectAspectMessage.MESSAGE_TYPE, this);
@@ -556,18 +610,25 @@ namespace TextyClient {
 			}
 		}
 
-		private GridObject GetGridObject(BattleSceneObj messageObj) {
-			return this.GetGridObject(messageObj.row, messageObj.col, messageObj.id);
+		private GridObject GetGridObject(BattleSceneObj messageObj, out bool highland) {
+			return this.GetGridObject(messageObj.row, messageObj.col, messageObj.id, out highland);
 		}
 
-		private GridObject GetGridObject(int row, int col, string id) {
+		private GridObject GetGridObject(int row, int col, string id, out bool highland) {
 			Grid grid = _grids[row, col];
 			for (int i = grid.lowland.Count - 1; i >= 0; --i) {
-				if (grid.lowland[i].id == id) return grid.lowland[i];
+				if (grid.lowland[i].id == id) {
+					highland = false;
+					return grid.lowland[i];
+				}
 			}
 			for (int i = grid.highland.Count - 1; i >= 0; --i) {
-				if (grid.highland[i].id == id) return grid.highland[i];
+				if (grid.highland[i].id == id) {
+					highland = true;
+					return grid.highland[i];
+				}
 			}
+			highland = false;
 			return null;
 		}
 
@@ -741,7 +802,7 @@ namespace TextyClient {
 			} else if (gridObject.view.battle == "障碍") {
 				g.FillPolygon(Brushes.DarkGray, gridPoints);
 			} else {
-				g.DrawString(gridObject.view.battle, new Font("宋体", 12), Brushes.Black, new PointF(gridPoints[0].X - 12, gridPoints[0].Y + 12));
+				g.DrawString(gridObject.ToString(), new Font("宋体", 12), Brushes.Black, new PointF(gridPoints[0].X - 12, gridPoints[0].Y + 12));
 			}
 		}
 
@@ -750,14 +811,13 @@ namespace TextyClient {
 			Graphics g = e.g;
 			g.Clear(Color.White);
 			if (_grids != null) {
-				var b1 = new SolidBrush(Color.FromArgb(80, 0, 0, 255));
-				var b2 = new SolidBrush(Color.FromArgb(80, 255, 0, 0));
+				var transpBlue = new SolidBrush(Color.FromArgb(80, 0, 0, 255));
+				var transpRed = new SolidBrush(Color.FromArgb(80, 255, 0, 0));
 				for (int row = 0; row < _rows; ++row) {
 					for (int col = 0; col < _cols; ++col) {
 						Grid grid = _grids[row, col];
 						if (grid.lowland.Count > 0) {
-							PointF[] gridPoints = new PointF[4]
-							{
+							PointF[] gridPoints = new PointF[4] {
 								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
 								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
 								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
@@ -770,39 +830,39 @@ namespace TextyClient {
 							if (_isUsingSkill && !_isSelectingTarget) {
 								if (_usingSkill.islinearUse) {
 									if (row == _actingObjRow && col == _actingObjCol && _usingSkill.useRange.InRange(0)) {
-										g.FillPolygon(b1, gridPoints);
+										g.FillPolygon(transpBlue, gridPoints);
 									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.POSITIVE_ROW) != 0 && col == _actingObjCol && _usingSkill.useRange.InRange(row - _actingObjRow)) {
-										g.FillPolygon(b1, gridPoints);
+										g.FillPolygon(transpBlue, gridPoints);
 									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && col == _actingObjCol && _usingSkill.useRange.InRange(_actingObjRow - row)) {
-										g.FillPolygon(b1, gridPoints);
+										g.FillPolygon(transpBlue, gridPoints);
 									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.POSITIVE_COL) != 0 && row == _actingObjRow && _usingSkill.useRange.InRange(col - _actingObjCol)) {
-										g.FillPolygon(b1, gridPoints);
+										g.FillPolygon(transpBlue, gridPoints);
 									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.NEGATIVE_COL) != 0 && row == _actingObjRow && _usingSkill.useRange.InRange(_actingObjCol - col)) {
-										g.FillPolygon(b1, gridPoints);
+										g.FillPolygon(transpBlue, gridPoints);
 									}
 								} else if (_usingSkill.useRange.InRange(Math.Abs(row - _actingObjRow) + Math.Abs(col - _actingObjCol))) {
-									g.FillPolygon(b1, gridPoints);
+									g.FillPolygon(transpBlue, gridPoints);
 								}
 							}
 							if (_isUsingSkill && _selectedAffectCenter != null) {
 								if (_usingSkill.islinearAffect) {
 									if (_usingSkill.affectRange.InRange(0)) {
-										g.FillPolygon(b2, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									}
 									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0 && _usingSkill.affectRange.InRange(row - _selectedAffectCenter.row)) {
-										g.FillPolygon(b2, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									}
 									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.row - row)) {
-										g.FillPolygon(b2, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									}
 									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0 && _usingSkill.affectRange.InRange(col - _selectedAffectCenter.col)) {
-										g.FillPolygon(b2, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									}
 									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.col - col)) {
-										g.FillPolygon(b2, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									}
 								} else if (_usingSkill.affectRange.InRange(Math.Abs(row - _selectedAffectCenter.row) + Math.Abs(col - _selectedAffectCenter.col))) {
-									g.FillPolygon(b2, gridPoints);
+									g.FillPolygon(transpRed, gridPoints);
 								}
 							}
 						}
@@ -832,44 +892,6 @@ namespace TextyClient {
 									new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f)
 								};
 							}
-							if (_isUsingSkill && !_isSelectingTarget) {
-								if (_usingSkill.islinearUse) {
-									if (row == _actingObjRow && col == _actingObjCol && _usingSkill.useRange.InRange(0)) {
-										g.FillPolygon(b1, gridPoints);
-									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.POSITIVE_ROW) != 0 && col == _actingObjCol && _usingSkill.useRange.InRange(row - _actingObjRow)) {
-										g.FillPolygon(b1, gridPoints);
-									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && col == _actingObjCol && _usingSkill.useRange.InRange(_actingObjRow - row)) {
-										g.FillPolygon(b1, gridPoints);
-									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.POSITIVE_COL) != 0 && row == _actingObjRow && _usingSkill.useRange.InRange(col - _actingObjCol)) {
-										g.FillPolygon(b1, gridPoints);
-									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.NEGATIVE_COL) != 0 && row == _actingObjRow && _usingSkill.useRange.InRange(_actingObjCol - col)) {
-										g.FillPolygon(b1, gridPoints);
-									}
-								} else if (_usingSkill.useRange.InRange(Math.Abs(row - _actingObjRow) + Math.Abs(col - _actingObjCol))) {
-									g.FillPolygon(b1, gridPoints);
-								}
-							}
-							if (_isUsingSkill && _selectedAffectCenter != null) {
-								if (_usingSkill.islinearAffect) {
-									if (_usingSkill.affectRange.InRange(0)) {
-										g.FillPolygon(b2, gridPoints);
-									}
-									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0 && _usingSkill.affectRange.InRange(row - _selectedAffectCenter.row)) {
-										g.FillPolygon(b2, gridPoints);
-									}
-									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.row - row)) {
-										g.FillPolygon(b2, gridPoints);
-									}
-									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0 && _usingSkill.affectRange.InRange(col - _selectedAffectCenter.col)) {
-										g.FillPolygon(b2, gridPoints);
-									}
-									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.col - col)) {
-										g.FillPolygon(b2, gridPoints);
-									}
-								} else if (_usingSkill.affectRange.InRange(Math.Abs(row - _selectedAffectCenter.row) + Math.Abs(col - _selectedAffectCenter.col))) {
-									g.FillPolygon(b2, gridPoints);
-								}
-							}
 							for (int k = 0; k < 4; ++k) {
 								g.DrawLine(Pens.Cyan, gridPoints[k], lowlandGridPoints[k]);
 							}
@@ -877,6 +899,44 @@ namespace TextyClient {
 								this.BattleSceneObjectPresent(gridObject, g, gridPoints);
 							}
 							g.DrawPolygon(Pens.Cyan, gridPoints);
+							if (_isUsingSkill && !_isSelectingTarget) {
+								if (_usingSkill.islinearUse) {
+									if (row == _actingObjRow && col == _actingObjCol && _usingSkill.useRange.InRange(0)) {
+										g.FillPolygon(transpBlue, gridPoints);
+									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.POSITIVE_ROW) != 0 && col == _actingObjCol && _usingSkill.useRange.InRange(row - _actingObjRow)) {
+										g.FillPolygon(transpBlue, gridPoints);
+									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && col == _actingObjCol && _usingSkill.useRange.InRange(_actingObjRow - row)) {
+										g.FillPolygon(transpBlue, gridPoints);
+									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.POSITIVE_COL) != 0 && row == _actingObjRow && _usingSkill.useRange.InRange(col - _actingObjCol)) {
+										g.FillPolygon(transpBlue, gridPoints);
+									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.NEGATIVE_COL) != 0 && row == _actingObjRow && _usingSkill.useRange.InRange(_actingObjCol - col)) {
+										g.FillPolygon(transpBlue, gridPoints);
+									}
+								} else if (_usingSkill.useRange.InRange(Math.Abs(row - _actingObjRow) + Math.Abs(col - _actingObjCol))) {
+									g.FillPolygon(transpBlue, gridPoints);
+								}
+							}
+							if (_isUsingSkill && _selectedAffectCenter != null) {
+								if (_usingSkill.islinearAffect) {
+									if (_usingSkill.affectRange.InRange(0)) {
+										g.FillPolygon(transpRed, gridPoints);
+									}
+									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0 && _usingSkill.affectRange.InRange(row - _selectedAffectCenter.row)) {
+										g.FillPolygon(transpRed, gridPoints);
+									}
+									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.row - row)) {
+										g.FillPolygon(transpRed, gridPoints);
+									}
+									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0 && _usingSkill.affectRange.InRange(col - _selectedAffectCenter.col)) {
+										g.FillPolygon(transpRed, gridPoints);
+									}
+									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.col - col)) {
+										g.FillPolygon(transpRed, gridPoints);
+									}
+								} else if (_usingSkill.affectRange.InRange(Math.Abs(row - _selectedAffectCenter.row) + Math.Abs(col - _selectedAffectCenter.col))) {
+									g.FillPolygon(transpRed, gridPoints);
+								}
+							}
 						}
 					}
 				}
@@ -949,6 +1009,40 @@ namespace TextyClient {
 						}
 						pathEnd = pathEnd.prevPlace;
 					} while (pathEnd != null);
+				}
+			}
+			if (_targetPlaces != null) {
+				foreach (var place in _targetPlaces) {
+					int row = place.row;
+					int col = place.col;
+					var b = new SolidBrush(Color.FromArgb(80, 255, 0, 0));
+					if (!place.highland) {
+						PointF[] gridPoints = new PointF[4]{
+							new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+							new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+							new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+							new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
+						};
+						g.FillPolygon(b, gridPoints);
+					} else {
+						PointF[] gridPoints;
+						if (_grids[row, col].isMiddleLand) {
+							gridPoints = new PointF[4] {
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col) * DIAMOND_LENGTH / 2.0f),
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (row + col + 1) * DIAMOND_LENGTH / 2.0f)
+							};
+						} else {
+							gridPoints = new PointF[4] {
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col) * DIAMOND_LENGTH / 2.0f),
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f),
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 2) * DIAMOND_LENGTH / 2.0f),
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (col - row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (row + col + 1) * DIAMOND_LENGTH / 2.0f)
+							};
+						}
+						g.FillPolygon(b, gridPoints);
+					}
 				}
 			}
 			if (_selectedRow != -1 && _selectedCol != -1) {
@@ -1320,6 +1414,7 @@ namespace TextyClient {
 						selectionListBox.DataSource = _selectionList2;
 					}
 					confirmTargetBtn.Visible = false;
+					targetCountLbl.Visible = false;
 				} else {
 					_isSelectingTarget = true;
 					selectionTypeGroupPanel.Visible = false;
@@ -1327,12 +1422,19 @@ namespace TextyClient {
 					selectionTypeLbl.Text = "目标列表";
 					selectionListBox.DataSource = _targets;
 					confirmTargetBtn.Visible = true;
+					targetCountLbl.Visible = true;
+					targetCountLbl.Text = "(0/" + _usingSkill.targetCount + ")";
 				}
 			}
 		}
 
 		private void menuItemViewData_Click(object sender, EventArgs e) {
-
+			var selectedObj = GetSelectedObject();
+			if (selectedObj == null) return;
+			CharacterInfo infoFrm = new CharacterInfo();
+			infoFrm.RequestData(selectedObj.id);
+			infoFrm.Visible = true;
+			infoFrm.Activate();
 		}
 
 		private void skipAspectSelectionCbx_CheckedChanged(object sender, EventArgs e) {
@@ -1353,7 +1455,7 @@ namespace TextyClient {
 					Program.connection.SendMessage(message);
 				}
 			} else if ((_canActing && _initiativeState == InitiativeState.CHECKING_SELECT_ASPECT) || _checkingStateAsPassive == PassiveCheckingState.SELECT_ASPECT) {
-				DialogResult dr = MessageBox.Show("+2（是）还是重投（否）？", "选项", MessageBoxButtons.YesNo);
+				DialogResult dr = MessageBox.Show("+2（是）还是重投（否）？", "选项", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 				var selectedAspect = (CharacterPropertyInfo)selectionListBox.SelectedValue;
 				var message = new CheckerAspectSelectedMessage();
 				message.characterID = selectedAspect.ownerID;
@@ -1418,11 +1520,26 @@ namespace TextyClient {
 		}
 
 		private void confirmTargetBtn_Click(object sender, EventArgs e) {
+			if (_targets.Count >= _usingSkill.targetCount) {
+				MessageBox.Show("已达到最大目标数" + _usingSkill.targetCount, "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				return;
+			}
+			do {
+				if (_usingSkill.islinearAffect) {
+					if (_usingSkill.affectRange.InRange(0)) break;
+					if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0 && _usingSkill.affectRange.InRange(_selectedRow - _selectedAffectCenter.row)) break;
+					if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.row - _selectedRow)) break;
+					if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0 && _usingSkill.affectRange.InRange(_selectedCol - _selectedAffectCenter.col)) break;
+					if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.col - _selectedCol)) break;
+				} else if (_usingSkill.affectRange.InRange(Math.Abs(_selectedRow - _selectedAffectCenter.row) + Math.Abs(_selectedCol - _selectedAffectCenter.col))) break;
+				return;
+			} while (false);
 			var selectedObject = GetSelectedObject();
 			foreach (var target in _targets) {
 				if (target.id == selectedObject.id) return;
 			}
 			_targets.Add(selectedObject);
+			targetCountLbl.Text = "(" + _targets.Count + "/" + _usingSkill.targetCount + ")";
 		}
 
 		private void stuntRbn_CheckedChanged(object sender, EventArgs e) {

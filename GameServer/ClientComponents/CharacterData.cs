@@ -117,7 +117,6 @@ namespace GameLib.ClientComponents {
 				case GetCharacterDataMessage.DataType.ASPECTS:
 				case GetCharacterDataMessage.DataType.CONSEQUENCES:
 				case GetCharacterDataMessage.DataType.EXTRAS:
-				case GetCharacterDataMessage.DataType.SKILLS:
 				case GetCharacterDataMessage.DataType.STUNTS:
 					return GetCharacterPropertiesDescriptionData(character, dataType);
 				case GetCharacterDataMessage.DataType.FATEPOINT:
@@ -174,12 +173,6 @@ namespace GameLib.ClientComponents {
 					message.properties = new CharacterPropertyDescription[character.Extras.Count];
 					for (int i = 0; i < character.Extras.Count; ++i)
 						message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.Extras[i]);
-					break;
-				case GetCharacterDataMessage.DataType.SKILLS:
-					message = new CharacterSkillsDescriptionMessage();
-					message.properties = new CharacterPropertyDescription[character.ReadonlySkillList.Count];
-					for (int i = 0; i < character.ReadonlySkillList.Count; ++i)
-						message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.ReadonlySkillList[i]);
 					break;
 				case GetCharacterDataMessage.DataType.STUNTS:
 					message = new CharacterStuntsDescriptionMessage();

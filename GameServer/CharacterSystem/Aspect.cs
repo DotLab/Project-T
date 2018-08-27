@@ -6,7 +6,7 @@ namespace GameLib.CharacterSystem {
 	public enum PersistenceType {
 		Fixed = 0,
 		Common = 1,
-		Boost = 2
+		Temporary = 2
 	}
 
 	public class Aspect : AutogenIdentifiable, ICharacterProperty {
@@ -109,7 +109,6 @@ namespace GameLib.CharacterSystem {
 		public override string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
 		public override string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
 		public PersistenceType PersistenceType { get => _persistenceType; set => _persistenceType = value; }
-		public Character Belong { get => _belong; set => _belong = value; }
 		public Character Benefit {
 			get => _benefit;
 			set {
@@ -125,13 +124,17 @@ namespace GameLib.CharacterSystem {
 				if (_benefitTimes <= 0) _benefit = null;
 			}
 		}
+		public Character Belong => _belong;
+
+		public void SetBelong(Character belong) {
+			_belong = belong;
+		}
 
 		public override IJSContext GetContext() {
 			return _apiObj;
 		}
 
 		public sealed override void SetContext(IJSContext context) { }
-
 	}
 
 	public sealed class Consequence : Aspect {

@@ -40,9 +40,11 @@ namespace XUnitTest {
 		private string _name;
 
 		public string ID => "";
-		public Character Belong { get => null; set { } }
+		public Character Belong => null;
 		public string Description { get => _description; set => _description = value; }
 		public string Name { get => _name; set => _name = value; }
+
+		public void SetBelong(Character belong) { }
 
 		public TestElement() {
 			_apiObj = new API(this);

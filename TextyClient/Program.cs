@@ -72,7 +72,7 @@ namespace TextyClient {
 
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			mainForm = new Form1();
+			mainForm = new Form1(isDM);
 			mainForm.storySceneForm.Text += id;
 			mainForm.battleSceneForm.Text += id;
 			Application.Run(mainForm);
@@ -80,6 +80,8 @@ namespace TextyClient {
 
 		private static void Connection_EventCaught(object sender, NetworkEventCaughtEventArgs e) {
 			MessageBox.Show(e.message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			var updater = mainForm?.connectionUpdater;
+			if (updater != null) updater.Enabled = false;
 		}
 	}
 }

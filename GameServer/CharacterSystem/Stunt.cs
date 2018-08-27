@@ -6,6 +6,10 @@ using System;
 namespace GameLib.CharacterSystem {
 	public interface IStuntProperty : IAttachable<Stunt> { }
 
+	public class StuntPropertyList<T> : AttachableList<Stunt, T> where T : class, IStuntProperty {
+		public StuntPropertyList(Stunt owner) : base(owner) { }
+	}
+
 	public sealed class Stunt : AutogenIdentifiable, ICharacterProperty {
 		#region Javascript API class
 		private sealed class JSAPI : IJSAPI<Stunt> {
@@ -93,7 +97,9 @@ namespace GameLib.CharacterSystem {
 		private string _name = "";
 		private string _description = "";
 		private Character _belong = null;
+		private Func<Character, Character, CharacterAction, SkillType, SkillType, bool, bool> _condition = null;
 		private InitiativeEffect _initiativeEffect;
+		private readonly StuntPropertyList<PassiveEffect> _passiveEffects;
 		private SkillType _boundSkillType;
 		private SkillProperty _skillProperty;
 		private readonly bool _needDMCheck;
@@ -102,12 +108,13 @@ namespace GameLib.CharacterSystem {
 			if (effect == null) throw new ArgumentNullException(nameof(effect));
 			if (effect.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(effect));
 			_initiativeEffect = effect;
-			effect.Belong = this;
+			effect.SetBelong(this);
 			_boundSkillType = boundSkillType ?? throw new ArgumentNullException(nameof(boundSkillType));
 			_skillProperty = _boundSkillType.Property;
 			_needDMCheck = needDMCheck;
 			_name = name ?? throw new ArgumentNullException(nameof(name));
 			_description = description ?? throw new ArgumentNullException(nameof(description));
+			_passiveEffects = new StuntPropertyList<PassiveEffect>(this);
 			_apiObj = new JSAPI(this);
 		}
 
@@ -115,20 +122,26 @@ namespace GameLib.CharacterSystem {
 
 		public override string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
 		public override string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
-		public Character Belong { get => _belong; set => _belong = value; }
+		public Character Belong => _belong;
+		public Func<Character, Character, CharacterAction, SkillType, SkillType, bool, bool> Condition { get => _condition; set => _condition = value; }
 		public InitiativeEffect Effect {
 			get => _initiativeEffect;
 			set {
 				if (value == null) throw new ArgumentNullException(nameof(value));
 				if (value.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(value));
-				_initiativeEffect.Belong = null;
+				_initiativeEffect.SetBelong(null);
 				_initiativeEffect = value;
-				value.Belong = this;
+				value.SetBelong(this);
 			}
 		}
+		public StuntPropertyList<PassiveEffect> PassiveEffects => _passiveEffects;
 		public SkillType BoundSkillType { get => _boundSkillType; set => _boundSkillType = value ?? throw new ArgumentNullException(nameof(value)); }
 		public SkillProperty SkillProperty { get => _skillProperty; set => _skillProperty = value; }
 		public bool NeedDMCheck => _needDMCheck;
+
+		public void SetBelong(Character belong) {
+			_belong = belong;
+		}
 
 		public override IJSContext GetContext() {
 			return _apiObj;
@@ -136,5 +149,4 @@ namespace GameLib.CharacterSystem {
 
 		public override void SetContext(IJSContext context) { }
 	}
-
 }

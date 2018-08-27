@@ -19,15 +19,7 @@ namespace GameLib.ClientComponents {
 			};
 			return ret;
 		}
-
-		public static CharacterPropertyDescription CreateCharacterPropertyDescription(Skill skill) {
-			var ret = new CharacterPropertyDescription() {
-				propertyID = skill.SkillType.ID,
-				describable = new Describable(skill)
-			};
-			return ret;
-		}
-
+		
 		public static BattleSceneObj CreateBattleSceneObj(SceneObject sceneObject) {
 			var ret = new BattleSceneObj() {
 				row = sceneObject.GridRef.PosRow,
@@ -44,7 +36,7 @@ namespace GameLib.ClientComponents {
 			ret.highland = gridObject.IsHighland;
 			ret.obj.id = gridObject.ID;
 			ret.direction = gridObject.Direction;
-			ret.obstacle = gridObject.IsObstacle;
+			ret.obstacle = gridObject.Obstacle;
 			ret.stagnate = gridObject.Stagnate;
 			ret.terrain = gridObject.IsTerrain;
 			bool actable = ret.actable = gridObject is ActableGridObject;

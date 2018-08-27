@@ -31,7 +31,10 @@ namespace TestConsoleApp {
 
 		static void Main(string[] args) {
 			var brught_jackson = player1characters[0] = new KeyCharacter("PlayerBrughtJackson", new CharacterView() { battle = "布鲁特", story = "布鲁特·杰克逊" });
+			brught_jackson.Name = "布鲁特·杰克逊";
 			brught_jackson.Description = "正在读大学的布鲁特是他所成长的街区内这一辈年轻人里唯一一个拿到私立大学奖学金的人，被考古专业录取的他对于一切古老而神秘的事务充满好奇。";
+			brught_jackson.PhysicsStressMax = 2;
+			brught_jackson.MentalStressMax = 4;
 			brught_jackson.Aspects.Add(new Aspect() { Name = "年少老成", PersistenceType = PersistenceType.Fixed });
 			brught_jackson.Aspects.Add(new Aspect() { Name = "痴迷于古代文化", PersistenceType = PersistenceType.Fixed });
 			brught_jackson.Aspects.Add(new Aspect() { Name = "相较于发达大脑的贫弱体格", PersistenceType = PersistenceType.Fixed });
@@ -69,7 +72,10 @@ namespace TestConsoleApp {
 
 			
 			var ranbo = player2characters[0] = new KeyCharacter("PlayerRanbo", new CharacterView() { battle = "蓝波", story = "蓝波" });
+			ranbo.Name = "蓝波";
 			ranbo.Description = "从小就备受欺负的蓝波，坚信一身强健的肌肉可以保护自己，长大后成为了亚特兰大市民中心内的健身房教练，出生于美国中部州的他对政府极度不信任。";
+			ranbo.PhysicsStressMax = 4;
+			ranbo.MentalStressMax = 3;
 			ranbo.Aspects.Add(new Aspect() { Name = "“所有人都在注视着我的肌肉！”", PersistenceType = PersistenceType.Fixed });
 			ranbo.Aspects.Add(new Aspect() { Name = "政府阴谋论支持者", PersistenceType = PersistenceType.Fixed });
 			ranbo.Aspects.Add(new Aspect() { Name = "体育中心的健身教练", PersistenceType = PersistenceType.Fixed });
@@ -107,7 +113,9 @@ namespace TestConsoleApp {
 
 
 			var lily = player2characters[1] = new KeyCharacter("Lily", new CharacterView() { battle = "李莉", story = "李莉" });
+			lily.Name = "李莉";
 			lily.Description = "联邦调查局，负责人口失踪与贩卖类别的调查。由于移民身份总是受到同事的排挤。";
+			lily.PhysicsStressMax = lily.MentalStressMax = 3;
 			lily.Aspects.Add(new Aspect() { Name = "身手不凡的调查员", PersistenceType = PersistenceType.Fixed });
 			lily.Aspects.Add(new Aspect() { Name = "种族问题", PersistenceType = PersistenceType.Fixed });
 			lily.FatePoint = lily.RefreshPoint = 3;
@@ -141,6 +149,7 @@ namespace TestConsoleApp {
 			skillProperty = lily.GetSkillProperty(SkillType.Notice);
 			skillProperty.level = 1;
 			lily.SetSkillProperty(SkillType.Notice, skillProperty);
+			
 
 			Player[] players = new Player[2];
 			players[0] = new Player("Player1", "Player1", player1Connection, 1, player1characters);
@@ -197,12 +206,12 @@ namespace TestConsoleApp {
 			CampaignManager.Instance.CurrentContainer = ContainerType.BATTLE;
 
 			var battleScene = BattleSceneContainer.Instance;
-			battleScene.Reset(24, 24);
+			battleScene.Reset(12, 12);
 
 			var groundView = new CharacterView();
 			groundView.battle = "地面";
-			for (int i = 0; i < 24; ++i) {
-				for (int j = 0; j < 24; ++j) {
+			for (int i = 0; i < 12; ++i) {
+				for (int j = 0; j < 12; ++j) {
 					var ground = new GridObject(CharacterManager.Instance.CreateTemporaryCharacter(CharacterManager.DataLevel.Temporary, groundView), true);
 					ground.Stagnate = 1;
 					battleScene.PushGridObject(i, j, false, ground);
@@ -210,8 +219,8 @@ namespace TestConsoleApp {
 			}
 
 			battleScene.PushGridObject(1, 1, false, new ActableGridObject(player1characters[0]));
-			battleScene.PushGridObject(5, 20, false, new ActableGridObject(player2characters[0]));
-			battleScene.PushGridObject(18, 9, false, new ActableGridObject(player2characters[1]));
+			battleScene.PushGridObject(2, 2, false, new ActableGridObject(player2characters[0]));
+			battleScene.PushGridObject(3, 3, false, new ActableGridObject(player2characters[1]));
 
 			battleScene.NewRound();
 		}

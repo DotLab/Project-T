@@ -160,11 +160,7 @@ namespace GameLib.CharacterSystem {
 			if (resistTable.TryGetValue(resist, out List<SkillType> initiativeSkills)) return initiativeSkills.Contains(initiativeUsing);
 			else return false;
 		}
-
-		public int[] RollDice() {
-			return FateDice.Roll();
-		}
-
+		
 		public void StartCheck(
 			Character initiative, Character passive, CharacterAction action,
 			Action<CheckResult> initiativeCallback, Action<CheckResult> passiveCallback,
@@ -233,7 +229,7 @@ namespace GameLib.CharacterSystem {
 		}
 
 		public int[] InitiativeRollDice(int[] fixedDicePoints = null) {
-			int[] dicePoints = fixedDicePoints ?? this.RollDice();
+			int[] dicePoints = fixedDicePoints ?? FateDice.Roll();
 			_initiativeRollPoint = 0;
 			foreach (int point in dicePoints) _initiativeRollPoint += point;
 			return dicePoints;
@@ -258,7 +254,7 @@ namespace GameLib.CharacterSystem {
 			return true;
 		}
 
-		public void InitiativeUseAspect(Aspect aspect, bool reroll) {
+		public int[] InitiativeUseAspect(Aspect aspect, bool reroll) {
 			if (_state != CheckerState.INITIATIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
 			if (aspect.Benefit != _initiative && _initiative.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
 			if (aspect.Benefit != null && aspect.Benefit != _initiative) {
@@ -267,8 +263,11 @@ namespace GameLib.CharacterSystem {
 				++_passive.FatePoint;
 			}
 			if (aspect.Benefit != _initiative) --_initiative.FatePoint;
-			if (reroll) this.InitiativeRollDice();
-			else _initiativeExtraPoint += 2;
+			if (reroll) return this.InitiativeRollDice();
+			else {
+				_initiativeExtraPoint += 2;
+				return null;
+			}
 		}
 
 		public void PassiveSelectSkill(SkillType skillType) {
@@ -279,7 +278,7 @@ namespace GameLib.CharacterSystem {
 		}
 
 		public int[] PassiveRollDice(int[] fixedDicePoints = null) {
-			int[] dicePoints = fixedDicePoints ?? this.RollDice();
+			int[] dicePoints = fixedDicePoints ?? FateDice.Roll();
 			_passiveRollPoint = 0;
 			foreach (int point in dicePoints) _passiveRollPoint += point;
 			return dicePoints;
@@ -304,7 +303,7 @@ namespace GameLib.CharacterSystem {
 			return true;
 		}
 
-		public void PassiveUseAspect(Aspect aspect, bool reroll) {
+		public int[] PassiveUseAspect(Aspect aspect, bool reroll) {
 			if (_state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
 			if (aspect.Benefit != _passive && _passive.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
 			if (aspect.Benefit != null && aspect.Benefit != _passive) {
@@ -313,8 +312,11 @@ namespace GameLib.CharacterSystem {
 				++_initiative.FatePoint;
 			}
 			if (aspect.Benefit != _passive) --_passive.FatePoint;
-			if (reroll) this.PassiveRollDice();
-			else _passiveExtraPoint += 2;
+			if (reroll) return this.PassiveRollDice();
+			else {
+				_passiveExtraPoint += 2;
+				return null;
+			}
 		}
 	}
 }

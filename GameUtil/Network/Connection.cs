@@ -53,8 +53,6 @@ namespace GameLib.Utilities.Network {
 					return new TextBoxPortraitEffectMessage();
 				case CharacterInfoDataMessage.MESSAGE_TYPE:
 					return new CharacterInfoDataMessage();
-				case CharacterSkillsDescriptionMessage.MESSAGE_TYPE:
-					return new CharacterSkillsDescriptionMessage();
 				case CharacterAspectsDescriptionMessage.MESSAGE_TYPE:
 					return new CharacterAspectsDescriptionMessage();
 				case CharacterStuntsDescriptionMessage.MESSAGE_TYPE:
@@ -157,6 +155,12 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneUpdateGridInfoMessage();
 				case BattleSceneUpdateMovePointMessage.MESSAGE_TYPE:
 					return new BattleSceneUpdateMovePointMessage();
+				case BattleSceneStartCheckMessage.MESSAGE_TYPE:
+					return new BattleSceneStartCheckMessage();
+				case BattleSceneCheckNextoneMessage.MESSAGE_TYPE:
+					return new BattleSceneCheckNextoneMessage();
+				case BattleSceneEndCheckMessage.MESSAGE_TYPE:
+					return new BattleSceneEndCheckMessage();
 
 				// client message
 				case ClientInitMessage.MESSAGE_TYPE:

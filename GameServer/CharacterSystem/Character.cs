@@ -261,6 +261,22 @@ namespace GameLib.CharacterSystem {
 		}
 		#endregion
 		private readonly JSAPI _apiObj;
+		
+		protected sealed class Skill : IDescribable {
+			private string _description = "";
+			private SkillType _skillType;
+			private SkillProperty _property;
+
+			public string Name { get => _skillType.Name; set { } }
+			public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
+			public SkillType SkillType { get => _skillType; set => _skillType = value ?? throw new ArgumentNullException(nameof(value)); }
+			public SkillProperty Property { get => _property; set => _property = value; }
+
+			public Skill(SkillType skillType) {
+				_skillType = skillType ?? throw new ArgumentNullException(nameof(skillType));
+				_property = skillType.Property;
+			}
+		}
 
 		protected readonly string _id;
 		protected string _name = "";
@@ -268,14 +284,20 @@ namespace GameLib.CharacterSystem {
 		protected Extra _belong = null;
 		protected readonly CharacterView _view;
 		protected Player _controlPlayer = null;
+		protected bool _dead = false;
 
 		public string ID => _id;
 		public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
 		public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
-		public Extra Belong { get => _belong; set => _belong = value; }
+		public Extra Belong => _belong;
 		public CharacterView View => _view;
 		public Player ControlPlayer { get => _controlPlayer; set => _controlPlayer = value; }
 		public User Controller => _controlPlayer ?? (User)Game.DM;
+		public bool Dead => _dead;
+
+		public void SetBelong(Extra belong) {
+			_belong = belong;
+		}
 
 		protected Character(string id, CharacterView view) {
 			_id = id ?? throw new ArgumentNullException(nameof(id));
@@ -296,18 +318,16 @@ namespace GameLib.CharacterSystem {
 		public abstract int MentalStress { get; set; }
 		public abstract int MentalStressMax { get; set; }
 		public abstract bool MentalInvincible { get; set; }
-
-		public IReadOnlyList<Skill> ReadonlySkillList => this.Skills;
-
-		public IDescribable GetSkillNameAndDescription(SkillType skillType) {
+		
+		public string GetSkillDescription(SkillType skillType) {
 			foreach (Skill skill in this.Skills) {
 				if (skill.SkillType == skillType) {
-					return skill;
+					return skill.Description;
 				}
 			}
-			return new Skill(skillType);
+			return "";
 		}
-
+		
 		public void SetSkillDescription(SkillType skillType, string description) {
 			foreach (Skill skill in this.Skills) {
 				if (skill.SkillType == skillType) {
@@ -350,12 +370,15 @@ namespace GameLib.CharacterSystem {
 			this.Skills.Add(newSkill);
 		}
 
+		public void MarkDead() {
+			_dead = true;
+		}
+
 		public IJSContext GetContext() {
 			return _apiObj;
 		}
 
 		public void SetContext(IJSContext context) { }
-
 	}
 
 	public sealed class TemporaryCharacter : Character {
@@ -570,12 +593,8 @@ namespace GameLib.CharacterSystem {
 			} else if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
 				var sceneObject = BattleSceneContainer.Instance.FindObject(id);
 				if (sceneObject != null) return sceneObject.CharacterRef;
-				foreach (var gridObject in BattleSceneContainer.Instance.GridObjList) {
-					var item = this.FindItemRecursivelyByID(gridObject.CharacterRef, id);
-					if (item != null) return item;
-				}
-				foreach (var ladder in BattleSceneContainer.Instance.LadderObjList) {
-					var item = this.FindItemRecursivelyByID(ladder.CharacterRef, id);
+				foreach (var sceneObject2 in BattleSceneContainer.Instance.ObjList) {
+					var item = this.FindItemRecursivelyByID(sceneObject2.CharacterRef, id);
 					if (item != null) return item;
 				}
 			}
@@ -647,12 +666,7 @@ namespace GameLib.CharacterSystem {
 			Consequence ret = new Consequence();
 			return ret;
 		}
-
-		public Skill CreateSkill() {
-			Skill ret = new Skill(SkillType.Athletics);
-			throw new NotImplementedException();
-		}
-
+		
 		public Stunt CreateStunt() {
 			throw new NotImplementedException();
 		}

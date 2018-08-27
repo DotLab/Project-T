@@ -114,7 +114,6 @@ namespace GameLib.Utilities.Network.ClientMessages {
 
 		public enum DataType {
 			INFO,
-			SKILLS,
 			ASPECTS,
 			STUNTS,
 			EXTRAS,

@@ -35,8 +35,7 @@ namespace GameLib.Container {
 		private static readonly BattleSceneContainer _instance = new BattleSceneContainer();
 		public static BattleSceneContainer Instance => _instance;
 
-		private readonly IdentifiedObjList<GridObject> _gridObjList;
-		private readonly IdentifiedObjList<LadderObject> _ladderObjList;
+		private readonly IdentifiedObjList<SceneObject> _objList;
 		private readonly List<ActableGridObject> _actableObjList;
 		private readonly BattleMap _battleMap;
 		private ActableGridObject _currentActable = null;
@@ -45,13 +44,14 @@ namespace GameLib.Container {
 
 		private SceneObject _initiative;
 		private SkillType _initiativeSkillType;
+		private bool _initiativeSkillBigone;
 		private int _initiativeRollPoint;
+		private int _initiativeFixedExtraPoint;
 		private CharacterAction _checkingAction;
 		private List<SceneObject> _passives;
 		private SceneObject _currentPassive;
 
-		public IReadonlyIdentifiedObjList<GridObject> GridObjList => _gridObjList;
-		public IReadonlyIdentifiedObjList<LadderObject> LadderObjList => _ladderObjList;
+		public IReadonlyIdentifiedObjList<SceneObject> ObjList => _objList;
 		public IReadOnlyList<ActableGridObject> ActableObjList => _actableObjList;
 		public BattleMap BattleMap => _battleMap;
 		public ActableGridObject CurrentActable => _currentActable;
@@ -63,8 +63,7 @@ namespace GameLib.Container {
 		public SceneObject CurrentPassive => _currentPassive;
 
 		public BattleSceneContainer() {
-			_gridObjList = new IdentifiedObjList<GridObject>();
-			_ladderObjList = new IdentifiedObjList<LadderObject>();
+			_objList = new IdentifiedObjList<SceneObject>();
 			_actableObjList = new List<ActableGridObject>();
 			_battleMap = new BattleMap();
 			_passives = new List<SceneObject>();
@@ -73,9 +72,9 @@ namespace GameLib.Container {
 
 		public void ClientSynchronizeData(BattleScene battleScene) {
 			battleScene.Reset(_battleMap.Rows, _battleMap.Cols);
-			for (int i = 0; i < _battleMap.Rows; ++i) {
-				for (int j = 0; j < _battleMap.Cols; ++j) {
-					var grid = _battleMap[i, j];
+			for (int row = 0; row < _battleMap.Rows; ++row) {
+				for (int col = 0; col < _battleMap.Cols; ++col) {
+					var grid = _battleMap[row, col];
 					battleScene.UpdateGridInfo(grid);
 					foreach (var lowlandObj in grid.Lowland) {
 						battleScene.PushGridObject(lowlandObj);
@@ -105,8 +104,7 @@ namespace GameLib.Container {
 
 		public void Reset(int rows, int cols) {
 			_battleMap.Reset(rows, cols);
-			_gridObjList.Clear();
-			_ladderObjList.Clear();
+			_objList.Clear();
 			_actableObjList.Clear();
 			_currentActable = null;
 			_roundCount = 0;
@@ -117,35 +115,22 @@ namespace GameLib.Container {
 			this.Update();
 		}
 
-		public GridObject FindGridObject(string id) {
-			if (_gridObjList.TryGetValue(id, out GridObject gridObject)) {
+		public SceneObject FindObject(string id) {
+			if (_objList.TryGetValue(id, out SceneObject gridObject)) {
 				return gridObject;
 			}
 			return null;
 		}
-
-		public LadderObject FindLadderObject(string id) {
-			if (_ladderObjList.TryGetValue(id, out LadderObject ladderObject)) {
-				return ladderObject;
-			}
-			return null;
-		}
-
-		public SceneObject FindObject(string id) {
-			SceneObject ret = FindGridObject(id);
-			if (ret == null) ret = FindLadderObject(id);
-			return ret;
-		}
-
+		
 		public void PushGridObject(int row, int col, bool highland, GridObject gridObject) {
-			if (_gridObjList.Contains(gridObject)) throw new ArgumentException("This object is already added to scene.", nameof(gridObject));
+			if (_objList.Contains(gridObject)) throw new ArgumentException("This object is already added to scene.", nameof(gridObject));
 			List<GridObject> land;
 			if (highland) land = (List<GridObject>)_battleMap[row, col].Highland;
 			else land = (List<GridObject>)_battleMap[row, col].Lowland;
 			land.Add(gridObject);
 			gridObject.SetGridRef(_battleMap[row, col]);
 			gridObject.SetHighland(highland);
-			_gridObjList.Add(gridObject);
+			_objList.Add(gridObject);
 			if (gridObject is ActableGridObject) {
 				_actableObjList.Add((ActableGridObject)gridObject);
 				foreach (Player player in Game.Players) {
@@ -168,7 +153,7 @@ namespace GameLib.Container {
 				ret = land[land.Count - 1];
 				land.RemoveAt(land.Count - 1);
 				ret.SetGridRef(null);
-				_gridObjList.Remove(ret);
+				_objList.Remove(ret);
 				if (ret is ActableGridObject) {
 					_actableObjList.Remove((ActableGridObject)ret);
 					foreach (Player player in Game.Players) {
@@ -187,11 +172,11 @@ namespace GameLib.Container {
 		}
 
 		public bool RemoveGridObject(GridObject gridObject) {
-			if (!_gridObjList.Contains(gridObject)) return false;
+			if (!_objList.Contains(gridObject)) return false;
 			if (gridObject.IsHighland) ((List<GridObject>)gridObject.GridRef.Highland).Remove(gridObject);
 			else ((List<GridObject>)gridObject.GridRef.Lowland).Remove(gridObject);
 			gridObject.SetGridRef(null);
-			_gridObjList.Remove(gridObject);
+			_objList.Remove(gridObject);
 			if (gridObject is ActableGridObject) {
 				_actableObjList.Remove((ActableGridObject)gridObject);
 				foreach (Player player in Game.Players) {
@@ -207,7 +192,7 @@ namespace GameLib.Container {
 		}
 
 		public void AddLadderObject(int row, int col, BattleMapDirection direction, LadderObject ladderObject) {
-			if (_ladderObjList.Contains(ladderObject)) throw new ArgumentException("This object is already added to scene.", nameof(ladderObject));
+			if (_objList.Contains(ladderObject)) throw new ArgumentException("This object is already added to scene.", nameof(ladderObject));
 			if (row == 0 && direction == BattleMapDirection.NEGATIVE_ROW) throw new ArgumentOutOfRangeException(nameof(direction));
 			if (row == _battleMap.Rows - 1 && direction == BattleMapDirection.POSITIVE_ROW) throw new ArgumentOutOfRangeException(nameof(direction));
 			if (col == 0 && direction == BattleMapDirection.NEGATIVE_COL) throw new ArgumentOutOfRangeException(nameof(direction));
@@ -217,33 +202,33 @@ namespace GameLib.Container {
 			switch (direction) {
 				case BattleMapDirection.POSITIVE_ROW: {
 						Grid anotherGrid = _battleMap[row + 1, col];
-						grid.SetLadderRef(BattleMapDirection.POSITIVE_ROW, ladderObject);
+						grid.SetLadder(BattleMapDirection.POSITIVE_ROW, ladderObject);
 						ladderObject.SetFirstGridRef(grid);
-						anotherGrid.SetLadderRef(BattleMapDirection.NEGATIVE_ROW, ladderObject);
+						anotherGrid.SetLadder(BattleMapDirection.NEGATIVE_ROW, ladderObject);
 						ladderObject.SetSecondGridRef(anotherGrid);
 					}
 					break;
 				case BattleMapDirection.POSITIVE_COL: {
 						Grid anotherGrid = _battleMap[row, col + 1];
-						grid.SetLadderRef(BattleMapDirection.POSITIVE_COL, ladderObject);
+						grid.SetLadder(BattleMapDirection.POSITIVE_COL, ladderObject);
 						ladderObject.SetFirstGridRef(grid);
-						anotherGrid.SetLadderRef(BattleMapDirection.NEGATIVE_COL, ladderObject);
+						anotherGrid.SetLadder(BattleMapDirection.NEGATIVE_COL, ladderObject);
 						ladderObject.SetSecondGridRef(anotherGrid);
 					}
 					break;
 				case BattleMapDirection.NEGATIVE_ROW: {
 						Grid anotherGrid = _battleMap[row - 1, col];
-						grid.SetLadderRef(BattleMapDirection.NEGATIVE_ROW, ladderObject);
+						grid.SetLadder(BattleMapDirection.NEGATIVE_ROW, ladderObject);
 						ladderObject.SetFirstGridRef(grid);
-						anotherGrid.SetLadderRef(BattleMapDirection.POSITIVE_ROW, ladderObject);
+						anotherGrid.SetLadder(BattleMapDirection.POSITIVE_ROW, ladderObject);
 						ladderObject.SetSecondGridRef(anotherGrid);
 					}
 					break;
 				case BattleMapDirection.NEGATIVE_COL: {
 						Grid anotherGrid = _battleMap[row, col - 1];
-						grid.SetLadderRef(BattleMapDirection.NEGATIVE_COL, ladderObject);
+						grid.SetLadder(BattleMapDirection.NEGATIVE_COL, ladderObject);
 						ladderObject.SetFirstGridRef(grid);
-						anotherGrid.SetLadderRef(BattleMapDirection.POSITIVE_COL, ladderObject);
+						anotherGrid.SetLadder(BattleMapDirection.POSITIVE_COL, ladderObject);
 						ladderObject.SetSecondGridRef(anotherGrid);
 					}
 					break;
@@ -251,7 +236,7 @@ namespace GameLib.Container {
 					throw new ArgumentOutOfRangeException(nameof(direction));
 			}
 			ladderObject.SetDirectionOnFirstGrid(direction);
-			_ladderObjList.Add(ladderObject);
+			_objList.Add(ladderObject);
 			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.AddLadderObject(ladderObject);
 			}
@@ -272,8 +257,8 @@ namespace GameLib.Container {
 						ladderObject = grid.PositiveRowLadder;
 						ladderObject.SetFirstGridRef(null);
 						ladderObject.SetSecondGridRef(null);
-						grid.SetLadderRef(BattleMapDirection.POSITIVE_ROW, null);
-						anotherGrid.SetLadderRef(BattleMapDirection.NEGATIVE_ROW, null);
+						grid.SetLadder(BattleMapDirection.POSITIVE_ROW, null);
+						anotherGrid.SetLadder(BattleMapDirection.NEGATIVE_ROW, null);
 					}
 					break;
 				case BattleMapDirection.POSITIVE_COL: {
@@ -281,8 +266,8 @@ namespace GameLib.Container {
 						ladderObject = grid.PositiveColLadder;
 						ladderObject.SetFirstGridRef(null);
 						ladderObject.SetSecondGridRef(null);
-						grid.SetLadderRef(BattleMapDirection.POSITIVE_COL, null);
-						anotherGrid.SetLadderRef(BattleMapDirection.NEGATIVE_COL, null);
+						grid.SetLadder(BattleMapDirection.POSITIVE_COL, null);
+						anotherGrid.SetLadder(BattleMapDirection.NEGATIVE_COL, null);
 					}
 					break;
 				case BattleMapDirection.NEGATIVE_ROW: {
@@ -290,8 +275,8 @@ namespace GameLib.Container {
 						ladderObject = grid.NegativeRowLadder;
 						ladderObject.SetFirstGridRef(null);
 						ladderObject.SetSecondGridRef(null);
-						grid.SetLadderRef(BattleMapDirection.NEGATIVE_ROW, null);
-						anotherGrid.SetLadderRef(BattleMapDirection.POSITIVE_ROW, null);
+						grid.SetLadder(BattleMapDirection.NEGATIVE_ROW, null);
+						anotherGrid.SetLadder(BattleMapDirection.POSITIVE_ROW, null);
 					}
 					break;
 				case BattleMapDirection.NEGATIVE_COL: {
@@ -299,14 +284,14 @@ namespace GameLib.Container {
 						ladderObject = grid.NegativeColLadder;
 						ladderObject.SetFirstGridRef(null);
 						ladderObject.SetSecondGridRef(null);
-						grid.SetLadderRef(BattleMapDirection.NEGATIVE_COL, null);
-						anotherGrid.SetLadderRef(BattleMapDirection.POSITIVE_COL, null);
+						grid.SetLadder(BattleMapDirection.NEGATIVE_COL, null);
+						anotherGrid.SetLadder(BattleMapDirection.POSITIVE_COL, null);
 					}
 					break;
 				default:
 					throw new ArgumentOutOfRangeException(nameof(direction));
 			}
-			_ladderObjList.Remove(ladderObject);
+			_objList.Remove(ladderObject);
 			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.RemoveLadderObject(ladderObject);
 			}
@@ -316,20 +301,20 @@ namespace GameLib.Container {
 
 		public bool RemoveLadderObject(LadderObject ladderObject) {
 			if (ladderObject == null) throw new ArgumentNullException(nameof(ladderObject));
-			if (!_ladderObjList.Contains(ladderObject)) return false;
-			if (ladderObject.GridRef.PositiveRowLadder == ladderObject) ladderObject.GridRef.SetLadderRef(BattleMapDirection.POSITIVE_ROW, null);
-			else if (ladderObject.GridRef.PositiveColLadder == ladderObject) ladderObject.GridRef.SetLadderRef(BattleMapDirection.POSITIVE_COL, null);
-			else if (ladderObject.GridRef.NegativeRowLadder == ladderObject) ladderObject.GridRef.SetLadderRef(BattleMapDirection.NEGATIVE_ROW, null);
-			else if (ladderObject.GridRef.NegativeColLadder == ladderObject) ladderObject.GridRef.SetLadderRef(BattleMapDirection.POSITIVE_COL, null);
+			if (!_objList.Contains(ladderObject)) return false;
+			if (ladderObject.GridRef.PositiveRowLadder == ladderObject) ladderObject.GridRef.SetLadder(BattleMapDirection.POSITIVE_ROW, null);
+			else if (ladderObject.GridRef.PositiveColLadder == ladderObject) ladderObject.GridRef.SetLadder(BattleMapDirection.POSITIVE_COL, null);
+			else if (ladderObject.GridRef.NegativeRowLadder == ladderObject) ladderObject.GridRef.SetLadder(BattleMapDirection.NEGATIVE_ROW, null);
+			else if (ladderObject.GridRef.NegativeColLadder == ladderObject) ladderObject.GridRef.SetLadder(BattleMapDirection.POSITIVE_COL, null);
 			else return false;
-			if (ladderObject.SecondGridRef.PositiveRowLadder == ladderObject) ladderObject.SecondGridRef.SetLadderRef(BattleMapDirection.POSITIVE_ROW, null);
-			else if (ladderObject.SecondGridRef.PositiveColLadder == ladderObject) ladderObject.SecondGridRef.SetLadderRef(BattleMapDirection.POSITIVE_COL, null);
-			else if (ladderObject.SecondGridRef.NegativeRowLadder == ladderObject) ladderObject.SecondGridRef.SetLadderRef(BattleMapDirection.NEGATIVE_ROW, null);
-			else if (ladderObject.SecondGridRef.NegativeColLadder == ladderObject) ladderObject.SecondGridRef.SetLadderRef(BattleMapDirection.NEGATIVE_COL, null);
+			if (ladderObject.SecondGridRef.PositiveRowLadder == ladderObject) ladderObject.SecondGridRef.SetLadder(BattleMapDirection.POSITIVE_ROW, null);
+			else if (ladderObject.SecondGridRef.PositiveColLadder == ladderObject) ladderObject.SecondGridRef.SetLadder(BattleMapDirection.POSITIVE_COL, null);
+			else if (ladderObject.SecondGridRef.NegativeRowLadder == ladderObject) ladderObject.SecondGridRef.SetLadder(BattleMapDirection.NEGATIVE_ROW, null);
+			else if (ladderObject.SecondGridRef.NegativeColLadder == ladderObject) ladderObject.SecondGridRef.SetLadder(BattleMapDirection.NEGATIVE_COL, null);
 			else return false;
 			ladderObject.SetFirstGridRef(null);
 			ladderObject.SetSecondGridRef(null);
-			_ladderObjList.Remove(ladderObject);
+			_objList.Remove(ladderObject);
 			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.RemoveLadderObject(ladderObject);
 			}
@@ -369,6 +354,7 @@ namespace GameLib.Container {
 				_currentActable.AddMovePoint();
 			} else _currentActable = null;
 			++_roundCount;
+			this.Update();
 		}
 
 		public void CurrentTurnOver() {
@@ -391,12 +377,30 @@ namespace GameLib.Container {
 		}
 
 		public void Update() {
+			List<SceneObject> removal = new List<SceneObject>();
+			for (int row = 0; row < _battleMap.Rows; ++row) {
+				for (int col = 0; col < _battleMap.Cols; ++col) {
+					var grid = _battleMap[row, col];
+					foreach (var lowlandObj in grid.Lowland) {
+						var actable = lowlandObj as ActableGridObject;
+						if (actable != null && actable.Dead) removal.Add(actable);
+					}
+					foreach (var highlandObj in grid.Highland) {
 
+					}
+					/*
+					if (grid.PositiveRowLadder != null) battleScene.AddLadderObject(grid.PositiveRowLadder);
+					if (grid.PositiveColLadder != null) battleScene.AddLadderObject(grid.PositiveColLadder);
+					if (grid.NegativeRowLadder != null) battleScene.AddLadderObject(grid.NegativeRowLadder);
+					if (grid.NegativeColLadder != null) battleScene.AddLadderObject(grid.NegativeColLadder);*/
+				}
+			}
 		}
 
 		public void StartCheck(
 			SceneObject initiative, IEnumerable<SceneObject> passives,
-			CharacterAction action, SkillType initiativeSkillType
+			CharacterAction action, SkillType initiativeSkillType,
+			bool bigone = false, int fixedExtraPoint = 0, int[] fixedDicePoints = null
 			) {
 			if (_isChecking) throw new InvalidOperationException("It's in checking state.");
 			if (passives == null) throw new ArgumentNullException(nameof(passives));
@@ -413,23 +417,113 @@ namespace GameLib.Container {
 			_passives.AddRange(passives);
 			_passives.Reverse();
 			_currentPassive = null;
-			int[] dicePoints = FateDice.Roll();
+			int[] dicePoints = fixedDicePoints ?? FateDice.Roll();
 			_initiativeRollPoint = 0;
 			foreach (int point in dicePoints) _initiativeRollPoint += point;
+			_initiativeSkillBigone = bigone;
+			_initiativeFixedExtraPoint = fixedExtraPoint;
 			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.DisplayDicePoints(initiative.CharacterRef.Controller, dicePoints);
+				player.Client.BattleScene.StartCheck(initiative, initiativeSkillType, action, passives);
 			}
 			Game.DM.Client.BattleScene.DisplayDicePoints(initiative.CharacterRef.Controller, dicePoints);
+			Game.DM.Client.BattleScene.StartCheck(initiative, initiativeSkillType, action, passives);
 			_isChecking = true;
 			this.NextPassiveCheck();
 		}
 
 		private void OnceInitiativeResult(SkillChecker.CheckResult result) {
+			if (_checkingAction == CharacterAction.CREATE_ASPECT) {
+				switch (result) {
+					case SkillChecker.CheckResult.TIE: {
+							var boost = new Aspect();
+							boost.PersistenceType = PersistenceType.Temporary;
+							
+							_currentPassive.CharacterRef.Aspects.Add(boost);
+						}
+						break;
+					case SkillChecker.CheckResult.SUCCEED:
+						break;
+					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
+						break;
+					default:
+						break;
+				}
+			} else if (_checkingAction == CharacterAction.ATTACK) {
+				switch (result) {
+					case SkillChecker.CheckResult.FAIL:
 
+						break;
+					case SkillChecker.CheckResult.TIE:
+						break;
+					case SkillChecker.CheckResult.SUCCEED:
+						break;
+					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
+						break;
+					default:
+						return;
+				}
+			} else if (_checkingAction == CharacterAction.HINDER) {
+				switch (result) {
+					case SkillChecker.CheckResult.FAIL:
+
+						break;
+					case SkillChecker.CheckResult.TIE:
+						break;
+					case SkillChecker.CheckResult.SUCCEED:
+						break;
+					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
+						break;
+					default:
+						return;
+				}
+			}
 		}
 
 		private void OncePassiveResult(SkillChecker.CheckResult result) {
+			if (_checkingAction == CharacterAction.CREATE_ASPECT) {
+				switch (result) {
+					case SkillChecker.CheckResult.FAIL:
 
+						break;
+					case SkillChecker.CheckResult.TIE:
+						break;
+					case SkillChecker.CheckResult.SUCCEED:
+						break;
+					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
+						break;
+					default:
+						return;
+				}
+			} else if (_checkingAction == CharacterAction.ATTACK) {
+				switch (result) {
+					case SkillChecker.CheckResult.FAIL:
+
+						break;
+					case SkillChecker.CheckResult.TIE:
+						break;
+					case SkillChecker.CheckResult.SUCCEED:
+						break;
+					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
+						break;
+					default:
+						return;
+				}
+			} else if (_checkingAction == CharacterAction.HINDER) {
+				switch (result) {
+					case SkillChecker.CheckResult.FAIL:
+
+						break;
+					case SkillChecker.CheckResult.TIE:
+						break;
+					case SkillChecker.CheckResult.SUCCEED:
+						break;
+					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
+						break;
+					default:
+						return;
+				}
+			}
 		}
 
 		private void OnceCheckOver() {
@@ -446,9 +540,16 @@ namespace GameLib.Container {
 			_passives.RemoveAt(_passives.Count - 1);
 			SkillChecker.Instance.StartCheck(_initiative.CharacterRef, _currentPassive.CharacterRef, _checkingAction, this.OnceInitiativeResult, this.OncePassiveResult, this.OnceCheckOver);
 			SkillChecker.Instance.InitiativeSelectSkill(_initiativeSkillType);
-			int[] point = { _initiativeRollPoint };
-			SkillChecker.Instance.InitiativeRollDice(point);
+			SkillChecker.Instance.InitiativeRollDice(new int[] { _initiativeRollPoint });
+			SkillChecker.Instance.InitiativeExtraPoint = _initiativeFixedExtraPoint;
 			SkillChecker.Instance.InitiativeSkillSelectionOver();
+			int sumPoint = SkillChecker.Instance.InitiativePoint;
+			foreach (Player player in Game.Players) {
+				player.Client.BattleScene.DisplaySkillReady(_initiative, _initiativeSkillType, _initiativeSkillBigone);
+				player.Client.BattleScene.UpdateSumPoint(_initiative, sumPoint);
+			}
+			Game.DM.Client.BattleScene.DisplaySkillReady(_initiative, _initiativeSkillType, _initiativeSkillBigone);
+			Game.DM.Client.BattleScene.UpdateSumPoint(_initiative, sumPoint);
 			_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectSkillOrStunt(_checkingAction, _currentPassive, _initiative, _initiativeSkillType);
 		}
 
@@ -470,7 +571,7 @@ namespace GameLib.Container {
 			return true;
 		}
 
-		public void CurrentPassiveUseSkill(SkillType skillType, bool force, bool bigone, int[] fixedDicePoints = null) {
+		public void CurrentPassiveUseSkill(SkillType skillType, bool force = false, bool bigone = false, int[] fixedDicePoints = null) {
 			if (skillType == null) throw new ArgumentNullException(nameof(skillType));
 			var skillProperty = _currentPassive.CharacterRef.GetSkillProperty(skillType);
 			if (!SkillChecker.CanPassiveUseSkillOrStunt(skillProperty, _checkingAction)) throw new InvalidOperationException("Cannot use this skill.");
@@ -487,7 +588,7 @@ namespace GameLib.Container {
 					_initiative.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectAspect();
 				} else {
 					Game.DM.DMClient.DMCheckDialog.RequestCheck(_currentPassive.CharacterRef.Controller,
-						SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
+						SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + skillType.Name + ",可以吗？",
 						result => {
 							if (result) {
 								this.CurrentPassiveApplySkill(skillType, bigone, fixedDicePoints);
@@ -530,19 +631,21 @@ namespace GameLib.Container {
 				_initiative.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectAspectFailure(msg);
 				return;
 			}
-			var ownerGridObject = FindGridObject(aspect.Belong.ID);
+			var ownerGridObject = FindObject(aspect.Belong.ID);
 			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.DisplayUsingAspect(_initiative, ownerGridObject, aspect);
 			}
 			Game.DM.Client.BattleScene.DisplayUsingAspect(_initiative, ownerGridObject, aspect);
 			Game.DM.DMClient.DMCheckDialog.RequestCheck(_initiative.CharacterRef.Controller,
-				SkillChecker.Instance.Initiative.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
+				SkillChecker.Instance.Initiative.Name + "想使用" + aspect.Belong.Name + "的特征“" + aspect.Name + "”可以吗？",
 				result => {
 					if (result) {
-						SkillChecker.Instance.InitiativeUseAspect(aspect, reroll);
+						int[] rerollPoints = SkillChecker.Instance.InitiativeUseAspect(aspect, reroll);
 						foreach (Player player in Game.Players) {
+							if (reroll) player.Client.BattleScene.DisplayDicePoints(_initiative.CharacterRef.Controller, rerollPoints);
 							player.Client.BattleScene.UpdateSumPoint(_initiative, SkillChecker.Instance.InitiativePoint);
 						}
+						if (reroll) Game.DM.Client.BattleScene.DisplayDicePoints(_initiative.CharacterRef.Controller, rerollPoints);
 						Game.DM.Client.BattleScene.UpdateSumPoint(_initiative, SkillChecker.Instance.InitiativePoint);
 						_initiative.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectAspectComplete();
 					} else {
@@ -564,19 +667,21 @@ namespace GameLib.Container {
 				_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectAspectFailure(msg);
 				return;
 			}
-			var ownerGridObject = FindGridObject(aspect.Belong.ID);
+			var ownerGridObject = FindObject(aspect.Belong.ID);
 			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.DisplayUsingAspect(_currentPassive, ownerGridObject, aspect);
 			}
 			Game.DM.Client.BattleScene.DisplayUsingAspect(_currentPassive, ownerGridObject, aspect);
 			Game.DM.DMClient.DMCheckDialog.RequestCheck(_currentPassive.CharacterRef.Controller,
-				SkillChecker.Instance.Passive.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
+				SkillChecker.Instance.Passive.Name + "想使用" + aspect.Belong.Name + "的特征“" + aspect.Name + "”可以吗？",
 				result => {
 					if (result) {
-						SkillChecker.Instance.PassiveUseAspect(aspect, reroll);
+						int[] rerollPoints = SkillChecker.Instance.PassiveUseAspect(aspect, reroll);
 						foreach (Player player in Game.Players) {
+							if (reroll) player.Client.BattleScene.DisplayDicePoints(_currentPassive.CharacterRef.Controller, rerollPoints);
 							player.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.PassivePoint);
 						}
+						if (reroll) Game.DM.Client.BattleScene.DisplayDicePoints(_currentPassive.CharacterRef.Controller, rerollPoints);
 						Game.DM.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.PassivePoint);
 						_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectAspectComplete();
 					} else {
@@ -645,12 +750,12 @@ namespace GameLib.Container.BattleComponent {
 		#endregion
 		private readonly JSAPI _apiObj;
 
-		protected bool _isObstacle;
+		protected bool _obstacle;
 		protected bool _isHighland;
 		protected readonly bool _isTerrain;
 		protected BattleMapDirection _direction;
 
-		public bool IsObstacle { get => _isObstacle; set => _isObstacle = value; }
+		public bool Obstacle { get => _obstacle; set => _obstacle = value; }
 		public bool IsHighland => _isHighland;
 		public override bool IsTerrain => _isTerrain;
 		public BattleMapDirection Direction { get => _direction; set => _direction = value; }
@@ -752,12 +857,13 @@ namespace GameLib.Container.BattleComponent {
 		private static void GetAroundReachablePlacesRecursively(List<ReachablePlace> list, ReachablePlace center) {
 			int leftMovePoint = center.leftMovePoint;
 			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.POSITIVE_ROW, false, ref leftMovePoint)) {
-				var next = new ReachablePlace();
-				next.row = center.row + 1;
-				next.col = center.col;
-				next.highland = center.highland;
-				next.prevPlace = center;
-				next.leftMovePoint = leftMovePoint;
+				var next = new ReachablePlace() {
+					row = center.row + 1,
+					col = center.col,
+					highland = center.highland,
+					prevPlace = center,
+					leftMovePoint = leftMovePoint
+				};
 				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
@@ -772,12 +878,13 @@ namespace GameLib.Container.BattleComponent {
 			}
 			leftMovePoint = center.leftMovePoint;
 			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.POSITIVE_COL, false, ref leftMovePoint)) {
-				ReachablePlace next = new ReachablePlace();
-				next.row = center.row;
-				next.col = center.col + 1;
-				next.highland = center.highland;
-				next.prevPlace = center;
-				next.leftMovePoint = leftMovePoint;
+				var next = new ReachablePlace() {
+					row = center.row,
+					col = center.col + 1,
+					highland = center.highland,
+					prevPlace = center,
+					leftMovePoint = leftMovePoint
+				};
 				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
@@ -792,12 +899,13 @@ namespace GameLib.Container.BattleComponent {
 			}
 			leftMovePoint = center.leftMovePoint;
 			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.NEGATIVE_ROW, false, ref leftMovePoint)) {
-				ReachablePlace next = new ReachablePlace();
-				next.row = center.row - 1;
-				next.col = center.col;
-				next.highland = center.highland;
-				next.prevPlace = center;
-				next.leftMovePoint = leftMovePoint;
+				var next = new ReachablePlace() {
+					row = center.row - 1,
+					col = center.col,
+					highland = center.highland,
+					prevPlace = center,
+					leftMovePoint = leftMovePoint
+				};
 				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
@@ -812,12 +920,13 @@ namespace GameLib.Container.BattleComponent {
 			}
 			leftMovePoint = center.leftMovePoint;
 			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.NEGATIVE_COL, false, ref leftMovePoint)) {
-				ReachablePlace next = new ReachablePlace();
-				next.row = center.row;
-				next.col = center.col - 1;
-				next.highland = center.highland;
-				next.prevPlace = center;
-				next.leftMovePoint = leftMovePoint;
+				var next = new ReachablePlace() {
+					row = center.row,
+					col = center.col - 1,
+					highland = center.highland,
+					prevPlace = center,
+					leftMovePoint = leftMovePoint
+				};
 				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
@@ -832,12 +941,13 @@ namespace GameLib.Container.BattleComponent {
 			}
 			leftMovePoint = center.leftMovePoint;
 			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.POSITIVE_ROW, true, ref leftMovePoint)) {
-				ReachablePlace next = new ReachablePlace();
-				next.row = center.row + 1;
-				next.col = center.col;
-				next.highland = !center.highland;
-				next.prevPlace = center;
-				next.leftMovePoint = leftMovePoint;
+				var next = new ReachablePlace() {
+					row = center.row + 1,
+					col = center.col,
+					highland = !center.highland,
+					prevPlace = center,
+					leftMovePoint = leftMovePoint
+				};
 				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
@@ -852,12 +962,13 @@ namespace GameLib.Container.BattleComponent {
 			}
 			leftMovePoint = center.leftMovePoint;
 			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.POSITIVE_COL, true, ref leftMovePoint)) {
-				ReachablePlace next = new ReachablePlace();
-				next.row = center.row;
-				next.col = center.col + 1;
-				next.highland = !center.highland;
-				next.prevPlace = center;
-				next.leftMovePoint = leftMovePoint;
+				var next = new ReachablePlace() {
+					row = center.row,
+					col = center.col + 1,
+					highland = !center.highland,
+					prevPlace = center,
+					leftMovePoint = leftMovePoint
+				};
 				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
@@ -872,12 +983,13 @@ namespace GameLib.Container.BattleComponent {
 			}
 			leftMovePoint = center.leftMovePoint;
 			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.NEGATIVE_ROW, true, ref leftMovePoint)) {
-				ReachablePlace next = new ReachablePlace();
-				next.row = center.row - 1;
-				next.col = center.col;
-				next.highland = !center.highland;
-				next.prevPlace = center;
-				next.leftMovePoint = leftMovePoint;
+				var next = new ReachablePlace() {
+					row = center.row - 1,
+					col = center.col,
+					highland = !center.highland,
+					prevPlace = center,
+					leftMovePoint = leftMovePoint
+				};
 				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
@@ -892,12 +1004,13 @@ namespace GameLib.Container.BattleComponent {
 			}
 			leftMovePoint = center.leftMovePoint;
 			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.NEGATIVE_COL, true, ref leftMovePoint)) {
-				ReachablePlace next = new ReachablePlace();
-				next.row = center.row;
-				next.col = center.col - 1;
-				next.highland = !center.highland;
-				next.prevPlace = center;
-				next.leftMovePoint = leftMovePoint;
+				var next = new ReachablePlace() {
+					row = center.row,
+					col = center.col - 1,
+					highland = !center.highland,
+					prevPlace = center,
+					leftMovePoint = leftMovePoint
+				};
 				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
@@ -935,7 +1048,7 @@ namespace GameLib.Container.BattleComponent {
 			Grid dstGrid = BattleSceneContainer.Instance.BattleMap[dstRow, dstCol];
 			bool dstHighland = stairway ^ srcHighland;
 			IReadOnlyList<GridObject> land = dstHighland ? dstGrid.Highland : dstGrid.Lowland;
-			if (land.Count <= 0 || land[land.Count - 1].IsObstacle) return false;
+			if (land.Count <= 0 || land[land.Count - 1].Obstacle) return false;
 			if (stairway) {
 				LadderObject ladderObject = BattleSceneContainer.Instance.BattleMap[srcRow, srcCol].GetLadder(direction);
 				leftMovePoint -= ladderObject.Stagnate;
@@ -971,11 +1084,17 @@ namespace GameLib.Container.BattleComponent {
 		public int ActionPointMax { get => _actionPointMax; set => _actionPointMax = value; }
 		public bool Movable { get => _movable; set => _movable = value; }
 		public int MovePoint { get => _movePoint; set => _movePoint = value; }
+		public bool Dead => _characterRef.Dead;
 
 		public ActableGridObject(Character characterRef, bool movable = true) :
 			base(characterRef, false) {
 			_apiObj = new JSAPI(this);
 			_movable = movable;
+			_obstacle = true;
+		}
+
+		public void MarkDead() {
+			_characterRef.MarkDead();
 		}
 
 		public void AddMovePoint() {
@@ -1015,12 +1134,13 @@ namespace GameLib.Container.BattleComponent {
 
 		public List<ReachablePlace> GetReachablePlaceList() {
 			List<ReachablePlace> ret = new List<ReachablePlace>();
-			ReachablePlace begin = new ReachablePlace();
-			begin.prevPlace = null;
-			begin.row = this.GridRef.PosRow;
-			begin.col = this.GridRef.PosCol;
-			begin.highland = this.IsHighland;
-			begin.leftMovePoint = this.MovePoint;
+			ReachablePlace begin = new ReachablePlace {
+				prevPlace = null,
+				row = this.GridRef.PosRow,
+				col = this.GridRef.PosCol,
+				highland = this.IsHighland,
+				leftMovePoint = this.MovePoint
+			};
 			ret.Add(begin);
 			GetAroundReachablePlacesRecursively(ret, begin);
 			return ret;
@@ -1052,7 +1172,7 @@ namespace GameLib.Container.BattleComponent {
 			Grid dstGrid = BattleSceneContainer.Instance.BattleMap[dstRow, dstCol];
 			bool dstHighland = stairway ^ this.IsHighland;
 			IReadOnlyList<GridObject> land = dstHighland ? dstGrid.Highland : dstGrid.Lowland;
-			if (land.Count <= 0 || land[land.Count - 1].IsObstacle) throw new InvalidOperationException("Cannot reach the place.");
+			if (land.Count <= 0 || land[land.Count - 1].Obstacle) throw new InvalidOperationException("Cannot reach the place.");
 			int leftMovePoint = this.MovePoint;
 			if (stairway) {
 				LadderObject ladderObject = this.GridRef.GetLadder(direction);
@@ -1203,35 +1323,37 @@ namespace GameLib.Container.BattleComponent {
 			}
 		}
 
-		public void UseSkill(SkillType skillType, CharacterAction action, int centerRow, int centerCol, IEnumerable<SceneObject> targets) {
+		public void UseSkill(SkillType skillType, CharacterAction action, int centerRow, int centerCol, IEnumerable<SceneObject> targets, bool force = false) {
 			if (skillType == null) throw new ArgumentNullException(nameof(skillType));
 			var skillProperty = this.CharacterRef.GetSkillProperty(skillType);
 			ActionSecurityFilter(ref skillProperty, ref action, ref centerRow, ref centerCol, ref targets);
-			
-			if (action == CharacterAction.CREATE_ASPECT) {
-				Game.DM.DMClient.DMCheckDialog.RequestCheck(this.CharacterRef.Controller,
-					SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
-					result => {
-						if (result) {
-							this.ActionPoint -= skillProperty.actionPointCost;
-							foreach (Player player in Game.Players) {
-								player.Client.BattleScene.UpdateActionPoint(this);
+			if (!force) {
+				if (action == CharacterAction.CREATE_ASPECT) {
+					Game.DM.DMClient.DMCheckDialog.RequestCheck(this.CharacterRef.Controller,
+						this.CharacterRef.Name + "想使用" + skillType.Name + ",可以吗？",
+						result => {
+							if (result) {
+								this.ActionPoint -= skillProperty.actionPointCost;
+								this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntComplete();
+								foreach (Player player in Game.Players) {
+									player.Client.BattleScene.UpdateActionPoint(this);
+								}
+								Game.DM.Client.BattleScene.UpdateActionPoint(this);
+								BattleSceneContainer.Instance.StartCheck(this, targets, action, skillType);
+							} else {
+								this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntFailure("DM拒绝了你选择的技能");
 							}
-							Game.DM.Client.BattleScene.UpdateActionPoint(this);
-							this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntComplete();
-							BattleSceneContainer.Instance.StartCheck(this, targets, action, skillType);
-						} else {
-							this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntFailure("DM拒绝了你选择的技能");
-						}
-					});
-			} else {
-				this.ActionPoint -= skillProperty.actionPointCost;
-				foreach (Player player in Game.Players) {
-					player.Client.BattleScene.UpdateActionPoint(this);
+						});
+					return;
 				}
-				Game.DM.Client.BattleScene.UpdateActionPoint(this);
-				BattleSceneContainer.Instance.StartCheck(this, targets, action, skillType);
 			}
+			this.ActionPoint -= skillProperty.actionPointCost;
+			this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntComplete();
+			foreach (Player player in Game.Players) {
+				player.Client.BattleScene.UpdateActionPoint(this);
+			}
+			Game.DM.Client.BattleScene.UpdateActionPoint(this);
+			BattleSceneContainer.Instance.StartCheck(this, targets, action, skillType);
 		}
 		
 		public void UseStunt(Stunt stunt, CharacterAction action, int centerRow, int centerCol, IEnumerable<SceneObject> targets) {
@@ -1239,18 +1361,17 @@ namespace GameLib.Container.BattleComponent {
 			if (stunt.Belong != this.CharacterRef) throw new ArgumentException("This stunt is not belong to the character.", nameof(stunt));
 			var skillProperty = stunt.SkillProperty;
 			ActionSecurityFilter(ref skillProperty, ref action, ref centerRow, ref centerCol, ref targets);
-
 			if (stunt.NeedDMCheck) {
 				Game.DM.DMClient.DMCheckDialog.RequestCheck(this.CharacterRef.Controller,
-					SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + stunt.Name + ",可以吗？",
+					this.CharacterRef.Name + "想使用" + stunt.Name + ",可以吗？",
 					result => {
 						if (result) {
 							this.ActionPoint -= skillProperty.actionPointCost;
+							this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntComplete();
 							foreach (Player player in Game.Players) {
 								player.Client.BattleScene.UpdateActionPoint(this);
 							}
 							Game.DM.Client.BattleScene.UpdateActionPoint(this);
-							this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntComplete();
 							stunt.Effect.DoAction();
 						} else {
 							this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntFailure("DM拒绝了你选择的特技");
@@ -1258,6 +1379,7 @@ namespace GameLib.Container.BattleComponent {
 					});
 			} else {
 				this.ActionPoint -= skillProperty.actionPointCost;
+				this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntComplete();
 				foreach (Player player in Game.Players) {
 					player.Client.BattleScene.UpdateActionPoint(this);
 				}
@@ -1337,7 +1459,7 @@ namespace GameLib.Container.BattleComponent {
 			}
 		}
 
-		public void SetLadderRef(BattleMapDirection direction, LadderObject ladderRef) {
+		public void SetLadder(BattleMapDirection direction, LadderObject ladderRef) {
 			switch (direction) {
 				case BattleMapDirection.POSITIVE_ROW:
 					_positiveRowLadder = ladderRef;

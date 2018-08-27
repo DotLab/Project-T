@@ -39,7 +39,11 @@ namespace GameLib.CharacterSystem {
 
 		private Stunt _belong = null;
 
-		public Stunt Belong { get => _belong; set => _belong = value; }
+		public Stunt Belong => _belong;
+
+		public void SetBelong(Stunt belong) {
+			_belong = belong;
+		}
 
 		public InitiativeEffect(Action action) : this(false, action, null) { }
 
@@ -63,7 +67,7 @@ namespace GameLib.CharacterSystem {
 		public void SetContext(IJSContext context) { }
 	}
 
-	public sealed class PassiveEffect : Trigger, IExtraProperty {
+	public sealed class PassiveEffect : Trigger, IStuntProperty, IExtraProperty {
 		#region Javascript API class
 		private new class JSAPI : Trigger.JSAPI, IJSAPI<PassiveEffect> {
 			private readonly PassiveEffect _outer;
@@ -73,9 +77,19 @@ namespace GameLib.CharacterSystem {
 				_outer = outer;
 			}
 
+			public IJSAPI<Stunt> getBelongStunt() {
+				try {
+					if (_outer.BelongStunt != null) return (IJSAPI<Stunt>)_outer.BelongStunt.GetContext();
+					else return null;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
+
 			public IJSAPI<Extra> getBelongExtra() {
 				try {
-					if (_outer.Belong != null) return (IJSAPI<Extra>)_outer.Belong.GetContext();
+					if (_outer.BelongExtra != null) return (IJSAPI<Extra>)_outer.BelongExtra.GetContext();
 					else return null;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
@@ -97,24 +111,37 @@ namespace GameLib.CharacterSystem {
 		#endregion
 		private readonly JSAPI _apiObj;
 
-		private Extra _belong = null;
+		private Stunt _belongStunt = null;
+		private Extra _belongExtra = null;
 
+		Stunt IAttachable<Stunt>.Belong => _belongStunt;
+		Extra IAttachable<Extra>.Belong => _belongExtra;
+		public Stunt BelongStunt => _belongStunt;
+		public Extra BelongExtra => _belongExtra;
+
+		public void SetBelong(Stunt belong) {
+			_belongStunt = belong;
+		}
+
+		public void SetBelong(Extra belong) {
+			_belongExtra = belong;
+		}
+		
 		public PassiveEffect(string boundEventID, Command command) :
 			base(boundEventID, command) {
 			_apiObj = new JSAPI(this);
 		}
 
 		public override void Notify() {
-			JSEngineManager.Engine.SynchronizeContext("$__belongExtra__", _belong);
+			JSEngineManager.Engine.SynchronizeContext("$__belongStunt__", _belongStunt);
+			JSEngineManager.Engine.SynchronizeContext("$__belongExtra__", _belongExtra);
 			base.Notify();
+			JSEngineManager.Engine.RemoveContext("$__belongStunt__");
 			JSEngineManager.Engine.RemoveContext("$__belongExtra__");
 		}
-
-		public Extra Belong { get => _belong; set => _belong = value; }
 
 		public override IJSContext GetContext() {
 			return _apiObj;
 		}
-
 	}
 }
