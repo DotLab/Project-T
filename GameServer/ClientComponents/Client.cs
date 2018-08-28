@@ -3,6 +3,7 @@ using GameLib.Core;
 using GameLib.Utilities.Network;
 using GameLib.Utilities.Network.ClientMessages;
 using GameLib.Utilities.Network.ServerMessages;
+using System;
 
 namespace GameLib.ClientComponents {
 	public abstract class ClientComponent : IMessageReceiver {
@@ -18,6 +19,9 @@ namespace GameLib.ClientComponents {
 	}
 
 	public class Client : ClientComponent {
+		protected bool _isDetermining = false;
+		protected Action<int> _determinCallback = null;
+
 		protected readonly CharacterData _characterData;
 		protected readonly StoryScene _storyScene;
 		protected readonly BattleScene _battleScene;
@@ -26,20 +30,28 @@ namespace GameLib.ClientComponents {
 		public BattleScene BattleScene => _battleScene;
 
 		public override void MessageReceived(Message message) {
-			_battleScene.SynchronizeData();
+			if (message.MessageType == ClientInitMessage.MESSAGE_TYPE) {
+				_battleScene.SynchronizeData();
 
-			if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
-				ShowScene(ContainerType.BATTLE);
-				_battleScene.SynchronizeState();
-			} else if (CampaignManager.Instance.CurrentContainer == ContainerType.STORY) {
-				ShowScene(ContainerType.STORY);
+				if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
+					ShowScene(ContainerType.BATTLE);
+					_battleScene.SynchronizeState();
+				} else if (CampaignManager.Instance.CurrentContainer == ContainerType.STORY) {
+					ShowScene(ContainerType.STORY);
 
+				}
+			} else if (message.MessageType == UserDeterminResultMessage.MESSAGE_TYPE) {
+				var msg = (UserDeterminResultMessage)message;
+				if (_determinCallback != null) _determinCallback(msg.result);
+				_determinCallback = null;
+				_isDetermining = false;
 			}
 		}
 		
 		protected Client(Connection connection, User owner, StoryScene storyScene, BattleScene battleScene) :
 			base(connection, owner) {
 			_connection.AddMessageReceiver(ClientInitMessage.MESSAGE_TYPE, this);
+			_connection.AddMessageReceiver(UserDeterminResultMessage.MESSAGE_TYPE, this);
 			_characterData = new CharacterData(connection, owner);
 			_storyScene = storyScene;
 			_battleScene = battleScene;
@@ -84,30 +96,66 @@ namespace GameLib.ClientComponents {
 			_connection.SendMessage(message);
 		}
 
+		public void RequestDetermin(string text, Action<int> result) {
+			if (_isDetermining) {
+				result(0);
+				return;
+			}
+			_determinCallback = result;
+			_isDetermining = true;
+			var message = new UserDeterminMessage();
+			message.text = text;
+			_connection.SendMessage(message);
+		}
 	}
 
 	public sealed class PlayerClient : Client {
 		public PlayerStoryScene PlayerStoryScene => (PlayerStoryScene)_storyScene;
 		public PlayerBattleScene PlayerBattleScene => (PlayerBattleScene)_battleScene;
-
+		
 		public PlayerClient(Connection connection, Player owner) :
 			base(connection, owner, new PlayerStoryScene(connection, owner), new PlayerBattleScene(connection, owner)) {
-		}
 
+		}
 	}
 
 	public sealed class DMClient : Client {
-		private readonly DMCheckDialog _dmCheckDialog;
+		private bool _isChecking = false;
+		private Action<bool> _resultCallback = null;
 
 		public DMStoryScene DMStoryScene => (DMStoryScene)_storyScene;
 		public DMBattleScene DMBattleScene => (DMBattleScene)_battleScene;
-		public DMCheckDialog DMCheckDialog => _dmCheckDialog;
+
+		public override void MessageReceived(Message message) {
+			base.MessageReceived(message);
+			var msg = message as DMCheckResultMessage;
+			if (msg != null && _resultCallback != null) {
+				_resultCallback(msg.result);
+			}
+			_resultCallback = null;
+			_isChecking = false;
+		}
 
 		public DMClient(Connection connection, DM owner) :
 			base(connection, owner, new DMStoryScene(connection, owner), new DMBattleScene(connection, owner)) {
-			_dmCheckDialog = new DMCheckDialog(connection, owner);
+			_connection.AddMessageReceiver(DMCheckResultMessage.MESSAGE_TYPE, this);
 		}
 
+		public void RequestCheck(User invoker, string text, Action<bool> result) {
+			if (_isChecking) {
+				result(false);
+				return;
+			}
+			if (invoker.IsDM) {
+				result(true);
+				return;
+			}
+			_resultCallback = result;
+			_isChecking = true;
+			var message = new DMCheckMessage();
+			message.text = text;
+			_connection.SendMessage(message);
+		}
 	}
 
 }

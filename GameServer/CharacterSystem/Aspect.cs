@@ -178,8 +178,10 @@ namespace GameLib.CharacterSystem {
 		private readonly JSAPI _apiObj;
 
 		private int _counteractLevel = 0;
+		private bool _mentalDamage = false;
 
 		public int CounteractLevel { get => _counteractLevel; set => _counteractLevel = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Counteract level is less than 0."); }
+		public bool MentalDamage { get => _mentalDamage; set => _mentalDamage = value; }
 
 		protected override string BaseID => "Consequence";
 

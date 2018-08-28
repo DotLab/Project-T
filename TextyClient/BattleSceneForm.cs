@@ -382,6 +382,14 @@ namespace TextyClient {
 						}
 					}
 					break;
+				case BattleSceneCheckNextoneMessage.MESSAGE_TYPE: {
+
+					}
+					break;
+				case BattleSceneEndCheckMessage.MESSAGE_TYPE: {
+
+					}
+					break;
 				case BattleSceneCheckerDisplaySkillReadyMessage.MESSAGE_TYPE: {
 						var msg = (BattleSceneCheckerDisplaySkillReadyMessage)message;
 						var gridObject = GetGridObject(msg.obj, out bool highland);
@@ -484,6 +492,24 @@ namespace TextyClient {
 							Program.mainForm.connectionUpdater.Enabled = false;
 							MessageBox.Show(completeMsg.extraMessage, "失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 							Program.mainForm.connectionUpdater.Enabled = true;
+							if (_checkingStateAsPassive == PassiveCheckingState.IDLE && _canActing && _initiativeState == InitiativeState.ACTING && completeMsg.isInitiative) {
+								_createAspectReady = _attackReady = _specialActionReady = false;
+								menuItemCreateAspect.Text = "创造优势";
+								menuItemAttack.Text = "攻击";
+								menuItemSpecialAction.Text = "特殊行动";
+								_selectionList.Clear();
+								_selectionList2.Clear();
+								selectionTypeLbl.Text = "";
+								selectionListBox.DataSource = _selectionList;
+								selectionTypeGroupPanel.Visible = false;
+								_isUsingSkill = false;
+								_usingSkillOrStuntID = null;
+								_selectedAffectCenter = null;
+								_isSelectingTarget = false;
+								confirmTargetBtn.Visible = false;
+								targetCountLbl.Visible = false;
+								_targets.Clear();
+							}
 						} else {
 							if (_checkingStateAsPassive == PassiveCheckingState.SELECT_SKILL_OR_STUNT && !completeMsg.isInitiative) {
 								_selectionList.Clear();
@@ -551,7 +577,9 @@ namespace TextyClient {
 							}
 						}
 						if (completeMsg.failure) {
+							Program.mainForm.connectionUpdater.Enabled = false;
 							MessageBox.Show(completeMsg.extraMessage, "失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+							Program.mainForm.connectionUpdater.Enabled = true;
 						}
 					}
 					break;
@@ -581,6 +609,8 @@ namespace TextyClient {
 			Program.connection.AddMessageReceiver(BattleSceneDisplayActableObjectMovingMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneDisplayTakeExtraMovePointMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneStartCheckMessage.MESSAGE_TYPE, this);
+			Program.connection.AddMessageReceiver(BattleSceneCheckNextoneMessage.MESSAGE_TYPE, this);
+			Program.connection.AddMessageReceiver(BattleSceneEndCheckMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneCheckerDisplaySkillReadyMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneCheckerDisplayUsingAspectMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneCheckerUpdateSumPointMessage.MESSAGE_TYPE, this);
@@ -715,7 +745,15 @@ namespace TextyClient {
 			if (_isUsingSkill && !_isSelectingTarget) {
 				_selectedAffectCenter = null;
 				if (newRow != -1 && newCol != -1) {
-					_selectedAffectCenter = _grids[newRow, newCol];
+					bool canUse = false;
+					if (_usingSkill.islinearUse) {
+						if (newRow == _actingObjRow && newCol == _actingObjCol && _usingSkill.useRange.InRange(0)) canUse = true;
+						else if ((_usingSkill.linearUseDirection & BattleMapDirection.POSITIVE_ROW) != 0 && newCol == _actingObjCol && _usingSkill.useRange.InRange(newRow - _actingObjRow)) canUse = true;
+						else if ((_usingSkill.linearUseDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && newCol == _actingObjCol && _usingSkill.useRange.InRange(_actingObjRow - newRow)) canUse = true;
+						else if ((_usingSkill.linearUseDirection & BattleMapDirection.POSITIVE_COL) != 0 && newRow == _actingObjRow && _usingSkill.useRange.InRange(newCol - _actingObjCol)) canUse = true;
+						else if ((_usingSkill.linearUseDirection & BattleMapDirection.NEGATIVE_COL) != 0 && newRow == _actingObjRow && _usingSkill.useRange.InRange(_actingObjCol - newCol)) canUse = true;
+					} else if (_usingSkill.useRange.InRange(Math.Abs(newRow - _actingObjRow) + Math.Abs(newCol - _actingObjCol))) canUse = true;
+					if (canUse) _selectedAffectCenter = _grids[newRow, newCol];
 				}
 			}
 		}
@@ -811,8 +849,8 @@ namespace TextyClient {
 			Graphics g = e.g;
 			g.Clear(Color.White);
 			if (_grids != null) {
-				var transpBlue = new SolidBrush(Color.FromArgb(80, 0, 0, 255));
 				var transpRed = new SolidBrush(Color.FromArgb(80, 255, 0, 0));
+				var transpYellow = new SolidBrush(Color.FromArgb(80, 255, 255, 0));
 				for (int row = 0; row < _rows; ++row) {
 					for (int col = 0; col < _cols; ++col) {
 						Grid grid = _grids[row, col];
@@ -830,39 +868,39 @@ namespace TextyClient {
 							if (_isUsingSkill && !_isSelectingTarget) {
 								if (_usingSkill.islinearUse) {
 									if (row == _actingObjRow && col == _actingObjCol && _usingSkill.useRange.InRange(0)) {
-										g.FillPolygon(transpBlue, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.POSITIVE_ROW) != 0 && col == _actingObjCol && _usingSkill.useRange.InRange(row - _actingObjRow)) {
-										g.FillPolygon(transpBlue, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && col == _actingObjCol && _usingSkill.useRange.InRange(_actingObjRow - row)) {
-										g.FillPolygon(transpBlue, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.POSITIVE_COL) != 0 && row == _actingObjRow && _usingSkill.useRange.InRange(col - _actingObjCol)) {
-										g.FillPolygon(transpBlue, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.NEGATIVE_COL) != 0 && row == _actingObjRow && _usingSkill.useRange.InRange(_actingObjCol - col)) {
-										g.FillPolygon(transpBlue, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									}
 								} else if (_usingSkill.useRange.InRange(Math.Abs(row - _actingObjRow) + Math.Abs(col - _actingObjCol))) {
-									g.FillPolygon(transpBlue, gridPoints);
+									g.FillPolygon(transpRed, gridPoints);
 								}
 							}
 							if (_isUsingSkill && _selectedAffectCenter != null) {
 								if (_usingSkill.islinearAffect) {
 									if (_usingSkill.affectRange.InRange(0)) {
-										g.FillPolygon(transpRed, gridPoints);
+										g.FillPolygon(transpYellow, gridPoints);
 									}
 									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0 && _usingSkill.affectRange.InRange(row - _selectedAffectCenter.row)) {
-										g.FillPolygon(transpRed, gridPoints);
+										g.FillPolygon(transpYellow, gridPoints);
 									}
 									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.row - row)) {
-										g.FillPolygon(transpRed, gridPoints);
+										g.FillPolygon(transpYellow, gridPoints);
 									}
 									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0 && _usingSkill.affectRange.InRange(col - _selectedAffectCenter.col)) {
-										g.FillPolygon(transpRed, gridPoints);
+										g.FillPolygon(transpYellow, gridPoints);
 									}
 									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.col - col)) {
-										g.FillPolygon(transpRed, gridPoints);
+										g.FillPolygon(transpYellow, gridPoints);
 									}
 								} else if (_usingSkill.affectRange.InRange(Math.Abs(row - _selectedAffectCenter.row) + Math.Abs(col - _selectedAffectCenter.col))) {
-									g.FillPolygon(transpRed, gridPoints);
+									g.FillPolygon(transpYellow, gridPoints);
 								}
 							}
 						}
@@ -902,39 +940,39 @@ namespace TextyClient {
 							if (_isUsingSkill && !_isSelectingTarget) {
 								if (_usingSkill.islinearUse) {
 									if (row == _actingObjRow && col == _actingObjCol && _usingSkill.useRange.InRange(0)) {
-										g.FillPolygon(transpBlue, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.POSITIVE_ROW) != 0 && col == _actingObjCol && _usingSkill.useRange.InRange(row - _actingObjRow)) {
-										g.FillPolygon(transpBlue, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && col == _actingObjCol && _usingSkill.useRange.InRange(_actingObjRow - row)) {
-										g.FillPolygon(transpBlue, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.POSITIVE_COL) != 0 && row == _actingObjRow && _usingSkill.useRange.InRange(col - _actingObjCol)) {
-										g.FillPolygon(transpBlue, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									} else if ((_usingSkill.linearUseDirection & BattleMapDirection.NEGATIVE_COL) != 0 && row == _actingObjRow && _usingSkill.useRange.InRange(_actingObjCol - col)) {
-										g.FillPolygon(transpBlue, gridPoints);
+										g.FillPolygon(transpRed, gridPoints);
 									}
 								} else if (_usingSkill.useRange.InRange(Math.Abs(row - _actingObjRow) + Math.Abs(col - _actingObjCol))) {
-									g.FillPolygon(transpBlue, gridPoints);
+									g.FillPolygon(transpRed, gridPoints);
 								}
 							}
 							if (_isUsingSkill && _selectedAffectCenter != null) {
 								if (_usingSkill.islinearAffect) {
 									if (_usingSkill.affectRange.InRange(0)) {
-										g.FillPolygon(transpRed, gridPoints);
+										g.FillPolygon(transpYellow, gridPoints);
 									}
 									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0 && _usingSkill.affectRange.InRange(row - _selectedAffectCenter.row)) {
-										g.FillPolygon(transpRed, gridPoints);
+										g.FillPolygon(transpYellow, gridPoints);
 									}
 									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.row - row)) {
-										g.FillPolygon(transpRed, gridPoints);
+										g.FillPolygon(transpYellow, gridPoints);
 									}
 									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0 && _usingSkill.affectRange.InRange(col - _selectedAffectCenter.col)) {
-										g.FillPolygon(transpRed, gridPoints);
+										g.FillPolygon(transpYellow, gridPoints);
 									}
 									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.col - col)) {
-										g.FillPolygon(transpRed, gridPoints);
+										g.FillPolygon(transpYellow, gridPoints);
 									}
 								} else if (_usingSkill.affectRange.InRange(Math.Abs(row - _selectedAffectCenter.row) + Math.Abs(col - _selectedAffectCenter.col))) {
-									g.FillPolygon(transpRed, gridPoints);
+									g.FillPolygon(transpYellow, gridPoints);
 								}
 							}
 						}

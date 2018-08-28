@@ -418,6 +418,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public string benefitCharacterID;
 		public int benefitTimes;
 		public int counteractLevel;
+		public bool mentalDamage;
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(characterID);
@@ -426,6 +427,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 			stream.WriteString(benefitCharacterID);
 			stream.WriteInt32(benefitTimes);
 			stream.WriteInt32(counteractLevel);
+			stream.WriteBoolean(mentalDamage);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
@@ -435,6 +437,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 			benefitCharacterID = stream.ReadString();
 			benefitTimes = stream.ReadInt32();
 			counteractLevel = stream.ReadInt32();
+			mentalDamage = stream.ReadBoolean();
 		}
 	}
 
@@ -592,7 +595,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public override void WriteTo(IDataOutputStream stream) { }
 	}
 
-	public sealed class DMCheckPanelShowMessage : Message {
+	public sealed class DMCheckMessage : Message {
 		public const int MESSAGE_TYPE = -36;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -606,17 +609,9 @@ namespace GameLib.Utilities.Network.ServerMessages {
 			text = stream.ReadString();
 		}
 	}
-
-	public sealed class DMCheckPanelHideMessage : Message {
-		public const int MESSAGE_TYPE = -37;
-		public override int MessageType => MESSAGE_TYPE;
-
-		public override void ReadFrom(IDataInputStream stream) { }
-		public override void WriteTo(IDataOutputStream stream) { }
-	}
-
+	
 	public sealed class DisplayDicePointsMessage : Message {
-		public const int MESSAGE_TYPE = -38;
+		public const int MESSAGE_TYPE = -37;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public string userID;
@@ -641,7 +636,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class StorySceneCheckerNotifyInitiativeSelectSkillOrStuntMessage : Message {
-		public const int MESSAGE_TYPE = -39;
+		public const int MESSAGE_TYPE = -38;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public string initiativeCharacterID;
@@ -662,7 +657,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class StorySceneCheckerNotifyPassiveSelectSkillOrStuntMessage : Message {
-		public const int MESSAGE_TYPE = -40;
+		public const int MESSAGE_TYPE = -39;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public string passiveCharacterID;
@@ -686,7 +681,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class CheckerSelectSkillOrStuntCompleteMessage : Message {
-		public const int MESSAGE_TYPE = -41;
+		public const int MESSAGE_TYPE = -40;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public bool isInitiative;
@@ -707,7 +702,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class StorySceneCheckerNotifySelectAspectMessage : Message {
-		public const int MESSAGE_TYPE = -42;
+		public const int MESSAGE_TYPE = -41;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public bool isInitiative;
@@ -725,7 +720,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class CheckerSelectAspectCompleteMessage : Message {
-		public const int MESSAGE_TYPE = -43;
+		public const int MESSAGE_TYPE = -42;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public bool over;
@@ -749,7 +744,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class StorySceneCheckerUpdateSumPointMessage : Message {
-		public const int MESSAGE_TYPE = -44;
+		public const int MESSAGE_TYPE = -43;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public bool isInitiative;
@@ -767,7 +762,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class StorySceneCheckerDisplaySkillReadyMessage : Message {
-		public const int MESSAGE_TYPE = -45;
+		public const int MESSAGE_TYPE = -44;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public bool isInitiative;
@@ -788,7 +783,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class StorySceneCheckerDisplayUsingAspectMessage : Message {
-		public const int MESSAGE_TYPE = -46;
+		public const int MESSAGE_TYPE = -45;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public bool isInitiative;
@@ -809,7 +804,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class StorySceneAddPlayerCharacterMessage : Message {
-		public const int MESSAGE_TYPE = -47;
+		public const int MESSAGE_TYPE = -46;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public int playerIndex;
@@ -830,7 +825,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class StorySceneRemovePlayerCharacterMessage : Message {
-		public const int MESSAGE_TYPE = -48;
+		public const int MESSAGE_TYPE = -47;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public int playerIndex;
@@ -848,7 +843,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleScenePushGridObjectMessage : Message {
-		public const int MESSAGE_TYPE = -49;
+		public const int MESSAGE_TYPE = -48;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public GridObjectData objData;
@@ -866,7 +861,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneRemoveGridObjectMessage : Message {
-		public const int MESSAGE_TYPE = -50;
+		public const int MESSAGE_TYPE = -49;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj gridObj;
@@ -881,7 +876,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneAddLadderObjectMessage : Message {
-		public const int MESSAGE_TYPE = -51;
+		public const int MESSAGE_TYPE = -50;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public LadderObjectData objData;
@@ -899,7 +894,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneRemoveLadderObjectMessage : Message {
-		public const int MESSAGE_TYPE = -52;
+		public const int MESSAGE_TYPE = -51;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj ladderObj;
@@ -914,7 +909,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneResetMessage : Message {
-		public const int MESSAGE_TYPE = -53;
+		public const int MESSAGE_TYPE = -52;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public int rows;
@@ -932,7 +927,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneSetActingOrderMessage : Message {
-		public const int MESSAGE_TYPE = -54;
+		public const int MESSAGE_TYPE = -53;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj[] objOrder;
@@ -954,7 +949,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneChangeTurnMessage : Message {
-		public const int MESSAGE_TYPE = -55;
+		public const int MESSAGE_TYPE = -54;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public bool canOperate;
@@ -972,7 +967,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage : Message {
-		public const int MESSAGE_TYPE = -56;
+		public const int MESSAGE_TYPE = -55;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj passiveObj;
@@ -996,7 +991,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneCheckerNotifySelectAspectMessage : Message {
-		public const int MESSAGE_TYPE = -57;
+		public const int MESSAGE_TYPE = -56;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public bool isInitiative;
@@ -1011,7 +1006,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneCheckerUpdateSumPointMessage : Message {
-		public const int MESSAGE_TYPE = -58;
+		public const int MESSAGE_TYPE = -57;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj obj;
@@ -1029,7 +1024,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneCheckerDisplaySkillReadyMessage : Message {
-		public const int MESSAGE_TYPE = -59;
+		public const int MESSAGE_TYPE = -58;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj obj;
@@ -1050,7 +1045,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneCheckerDisplayUsingAspectMessage : Message {
-		public const int MESSAGE_TYPE = -60;
+		public const int MESSAGE_TYPE = -59;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj userObj;
@@ -1071,7 +1066,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneMovePathInfoMessage : Message {
-		public const int MESSAGE_TYPE = -61;
+		public const int MESSAGE_TYPE = -60;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public struct ReachableGrid : IStreamable {
@@ -1117,7 +1112,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneDisplayActableObjectMovingMessage : Message {
-		public const int MESSAGE_TYPE = -62;
+		public const int MESSAGE_TYPE = -61;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj obj;
@@ -1138,7 +1133,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneGridObjectDataMessage : Message {
-		public const int MESSAGE_TYPE = -63;
+		public const int MESSAGE_TYPE = -62;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public GridObjectData objData;
@@ -1153,7 +1148,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneLadderObjectDataMessage : Message {
-		public const int MESSAGE_TYPE = -64;
+		public const int MESSAGE_TYPE = -63;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public LadderObjectData objData;
@@ -1168,7 +1163,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneDisplayTakeExtraMovePointMessage : Message {
-		public const int MESSAGE_TYPE = -65;
+		public const int MESSAGE_TYPE = -64;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj obj;
@@ -1189,7 +1184,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneUpdateActionPointMessage : Message {
-		public const int MESSAGE_TYPE = -66;
+		public const int MESSAGE_TYPE = -65;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj obj;
@@ -1207,7 +1202,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneObjectUsableSkillListMessage : Message {
-		public const int MESSAGE_TYPE = -67;
+		public const int MESSAGE_TYPE = -66;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public SkillTypeDescription[] skillTypes;
@@ -1229,7 +1224,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneObjectUsableStuntListMessage : Message {
-		public const int MESSAGE_TYPE = -68;
+		public const int MESSAGE_TYPE = -67;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public CharacterPropertyDescription[] stunts;
@@ -1251,7 +1246,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneCanTakeExtraMoveMessage : Message {
-		public const int MESSAGE_TYPE = -69;
+		public const int MESSAGE_TYPE = -68;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public bool result;
@@ -1266,7 +1261,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneUpdateGridInfoMessage : Message {
-		public const int MESSAGE_TYPE = -70;
+		public const int MESSAGE_TYPE = -69;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public int row;
@@ -1287,7 +1282,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 	
 	public sealed class BattleSceneUpdateMovePointMessage : Message {
-		public const int MESSAGE_TYPE = -71;
+		public const int MESSAGE_TYPE = -70;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj obj;
@@ -1305,7 +1300,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneStartCheckMessage : Message {
-		public const int MESSAGE_TYPE = -72;
+		public const int MESSAGE_TYPE = -71;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj initiativeObj;
@@ -1336,7 +1331,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneCheckNextoneMessage : Message {
-		public const int MESSAGE_TYPE = -73;
+		public const int MESSAGE_TYPE = -72;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public BattleSceneObj nextone;
@@ -1351,10 +1346,25 @@ namespace GameLib.Utilities.Network.ServerMessages {
 	}
 
 	public sealed class BattleSceneEndCheckMessage : Message {
-		public const int MESSAGE_TYPE = -74;
+		public const int MESSAGE_TYPE = -73;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public override void ReadFrom(IDataInputStream stream) { }
 		public override void WriteTo(IDataOutputStream stream) { }
+	}
+
+	public sealed class UserDeterminMessage : Message {
+		public const int MESSAGE_TYPE = -74;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public string text;
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteString(text);
+		}
+
+		public override void ReadFrom(IDataInputStream stream) {
+			text = stream.ReadString();
+		}
 	}
 }

@@ -19,10 +19,6 @@ namespace TextyClient {
 			messageLbl.Text = message;
 		}
 
-		private void DMCheckForm_FormClosed(object sender, FormClosedEventArgs e) {
-			SendResult(true);
-		}
-
 		private void YesBtn_Click(object sender, EventArgs e) {
 			SendResult(false);
 		}
@@ -35,6 +31,12 @@ namespace TextyClient {
 			var message = new DMCheckResultMessage();
 			message.result = !reject;
 			Program.connection.SendMessage(message);
+			this.Visible = false;
+		}
+
+		private void DMCheckForm_FormClosing(object sender, FormClosingEventArgs e) {
+			SendResult(true);
+			e.Cancel = true;
 		}
 	}
 }

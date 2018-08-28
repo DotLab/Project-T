@@ -9,24 +9,7 @@ using System.Collections.Generic;
 
 namespace GameLib.CharacterSystem {
 	public interface ICharacterProperty : IIdentifiable, IAttachable<Character> { }
-
-	public sealed class WrittenIgnoredCharacterPropertyList<T> : CharacterPropertyList<T> where T : class, ICharacterProperty {
-		public WrittenIgnoredCharacterPropertyList(Character owner, IEnumerable<T> properties) :
-			base(owner) {
-			if (properties != null) {
-				_container.AddRange(properties);
-			}
-		}
-
-		public override void Add(T item) { }
-		public override void AddRange(IEnumerable<T> items) { }
-		public override void Clear() { }
-		public override void Insert(int index, T item) { }
-		public override bool Remove(T item) { return false; }
-		public override void RemoveAt(int index) { }
-		public override void Reverse() { }
-	}
-
+	
 	public class CharacterPropertyList<T> : AttachableList<Character, T> where T : class, ICharacterProperty {
 		public CharacterPropertyList(Character owner) : base(owner) { }
 	}
@@ -121,6 +104,7 @@ namespace GameLib.CharacterSystem {
 
 			public IJSAPI<CharacterPropertyList<Stunt>> getStuntList() {
 				try {
+					if (_outer.Stunts == null) return null;
 					return (IJSAPI<CharacterPropertyList<Stunt>>)_outer.Stunts.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
@@ -130,6 +114,7 @@ namespace GameLib.CharacterSystem {
 
 			public IJSAPI<CharacterPropertyList<Extra>> getExtraList() {
 				try {
+					if (_outer.Extras == null) return null;
 					return (IJSAPI<CharacterPropertyList<Extra>>)_outer.Extras.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
@@ -139,6 +124,7 @@ namespace GameLib.CharacterSystem {
 
 			public IJSAPI<CharacterPropertyList<Consequence>> getConsequenceList() {
 				try {
+					if (_outer.Consequences == null) return null;
 					return (IJSAPI<CharacterPropertyList<Consequence>>)_outer.Consequences.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
@@ -286,6 +272,15 @@ namespace GameLib.CharacterSystem {
 		protected Player _controlPlayer = null;
 		protected bool _dead = false;
 
+		protected readonly List<Skill> _skills;
+		protected readonly CharacterPropertyList<Aspect> _aspects;
+		protected int _physicsStress = 0;
+		protected int _physicsStressMax = 0;
+		protected bool _physicsInvincible = false;
+		protected int _mentalStress = 0;
+		protected int _mentalStressMax = 0;
+		protected bool _mentalInvincible = false;
+
 		public string ID => _id;
 		public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
 		public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
@@ -294,6 +289,14 @@ namespace GameLib.CharacterSystem {
 		public Player ControlPlayer { get => _controlPlayer; set => _controlPlayer = value; }
 		public User Controller => _controlPlayer ?? (User)Game.DM;
 		public bool Dead => _dead;
+		
+		public CharacterPropertyList<Aspect> Aspects => _aspects;
+		public int PhysicsStress { get => _physicsStress; set => _physicsStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Physics stress is less than 0."); }
+		public int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max physics stress is less than 1."); }
+		public bool PhysicsInvincible { get => _physicsInvincible; set => _physicsInvincible = value; }
+		public int MentalStress { get => _mentalStress; set => _mentalStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Mental stress is less than 0."); }
+		public int MentalStressMax { get => _mentalStressMax; set => _mentalStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max mental stress is less than 1."); }
+		public bool MentalInvincible { get => _mentalInvincible; set => _mentalInvincible = value; }
 
 		public void SetBelong(Extra belong) {
 			_belong = belong;
@@ -302,25 +305,19 @@ namespace GameLib.CharacterSystem {
 		protected Character(string id, CharacterView view) {
 			_id = id ?? throw new ArgumentNullException(nameof(id));
 			_view = view ?? throw new ArgumentNullException(nameof(view));
+			_skills = new List<Skill>();
+			_aspects = new CharacterPropertyList<Aspect>(this);
 			_apiObj = new JSAPI(this);
 		}
 
-		protected abstract List<Skill> Skills { get; }
-		public abstract CharacterPropertyList<Aspect> Aspects { get; }
+		public abstract int RefreshPoint { get; set; }
+		public abstract int FatePoint { get; set; }
 		public abstract CharacterPropertyList<Stunt> Stunts { get; }
 		public abstract CharacterPropertyList<Extra> Extras { get; }
 		public abstract CharacterPropertyList<Consequence> Consequences { get; }
-		public abstract int RefreshPoint { get; set; }
-		public abstract int FatePoint { get; set; }
-		public abstract int PhysicsStress { get; set; }
-		public abstract int PhysicsStressMax { get; set; }
-		public abstract bool PhysicsInvincible { get; set; }
-		public abstract int MentalStress { get; set; }
-		public abstract int MentalStressMax { get; set; }
-		public abstract bool MentalInvincible { get; set; }
 		
 		public string GetSkillDescription(SkillType skillType) {
-			foreach (Skill skill in this.Skills) {
+			foreach (Skill skill in _skills) {
 				if (skill.SkillType == skillType) {
 					return skill.Description;
 				}
@@ -329,7 +326,7 @@ namespace GameLib.CharacterSystem {
 		}
 		
 		public void SetSkillDescription(SkillType skillType, string description) {
-			foreach (Skill skill in this.Skills) {
+			foreach (Skill skill in _skills) {
 				if (skill.SkillType == skillType) {
 					skill.Description = description;
 					return;
@@ -337,21 +334,23 @@ namespace GameLib.CharacterSystem {
 			}
 			Skill newSkill = new Skill(skillType);
 			newSkill.Description = description;
-			this.Skills.Add(newSkill);
+			_skills.Add(newSkill);
 		}
 
 		public SkillProperty GetSkillProperty(SkillType skillType) {
-			foreach (Skill skill in this.Skills) {
+			foreach (Skill skill in _skills) {
 				if (skill.SkillType == skillType) {
 					return skill.Property;
 				}
 			}
 			SkillProperty ret = skillType.Property;
 			if (skillType == SkillType.Shoot) {
-				foreach (Extra extra in this.Extras) {
-					if (extra.IsLongRangeWeapon) {
-						ret.canAttack = true;
-						break;
+				if (this.Extras != null) {
+					foreach (Extra extra in this.Extras) {
+						if (extra.IsLongRangeWeapon) {
+							ret.canAttack = true;
+							break;
+						}
 					}
 				}
 			}
@@ -359,7 +358,7 @@ namespace GameLib.CharacterSystem {
 		}
 
 		public void SetSkillProperty(SkillType skillType, SkillProperty property) {
-			foreach (Skill skill in this.Skills) {
+			foreach (Skill skill in _skills) {
 				if (skill.SkillType == skillType) {
 					skill.Property = property;
 					return;
@@ -367,7 +366,49 @@ namespace GameLib.CharacterSystem {
 			}
 			Skill newSkill = new Skill(skillType);
 			newSkill.Property = property;
-			this.Skills.Add(newSkill);
+			_skills.Add(newSkill);
+		}
+
+		public void Damage(int val, bool mental, Character whoCause, string causeMsg) {
+			if (val < 0) throw new ArgumentOutOfRangeException("Damage is less than 0.", nameof(val));
+			int count_level_2 = 0;
+			int count_level_4 = 0;
+			int count_level_6 = 0;
+			do {
+				if (this.Consequences != null) {
+					foreach (var consequence in this.Consequences) {
+						if (consequence.CounteractLevel == 2) ++count_level_2;
+						else if (consequence.CounteractLevel == 4) ++count_level_4;
+						else if (consequence.CounteractLevel == 6) ++count_level_6;
+					}
+					if (val <= 2 && count_level_2 < 2) {
+						var slight = new Consequence();
+						slight.Name = whoCause.Name + " " + causeMsg;
+						slight.CounteractLevel = 2;
+						slight.MentalDamage = mental;
+						this.Consequences.Add(slight);
+					} else if (val <= 4 && count_level_4 < 1) {
+						var medium = new Consequence();
+						medium.Name = whoCause.Name + " " + causeMsg;
+						medium.CounteractLevel = 4;
+						medium.MentalDamage = mental;
+						this.Consequences.Add(medium);
+					} else if (val <= 6 && count_level_6 < 1) {
+						var serious = new Consequence();
+						serious.Name = whoCause.Name + " " + causeMsg;
+						serious.PersistenceType = PersistenceType.Fixed;
+						serious.CounteractLevel = 6;
+						serious.MentalDamage = mental;
+						this.Consequences.Add(serious);
+					} else break;
+					return;
+				}
+			} while (false);
+			if (mental) {
+				_mentalStress += val;
+			} else {
+				_physicsStress += val;
+			}
 		}
 
 		public void MarkDead() {
@@ -382,102 +423,62 @@ namespace GameLib.CharacterSystem {
 	}
 
 	public sealed class TemporaryCharacter : Character {
-		private static readonly WrittenIgnoredCharacterPropertyList<Stunt> _stunts = new WrittenIgnoredCharacterPropertyList<Stunt>(null, null);
-		private static readonly WrittenIgnoredCharacterPropertyList<Extra> _extras = new WrittenIgnoredCharacterPropertyList<Extra>(null, null);
-		private static readonly WrittenIgnoredCharacterPropertyList<Consequence> _consequences = new WrittenIgnoredCharacterPropertyList<Consequence>(null, null);
-
-		private readonly CharacterPropertyList<Aspect> _aspects;
-		private readonly List<Skill> _skills;
-		private int _physicsStress = 0;
-		private int _physicsStressMax = 0;
-		private bool _physicsInvincible = false;
-		private int _mentalStress = 0;
-		private int _mentalStressMax = 0;
-		private bool _mentalInvincible = false;
-
-		protected override List<Skill> Skills => _skills;
-		public override CharacterPropertyList<Aspect> Aspects => _aspects;
-		public override int PhysicsStress { get => _physicsStress; set => _physicsStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Physics stress is less than 0."); }
-		public override int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max physics stress is less than 1."); }
-		public override bool PhysicsInvincible { get => _physicsInvincible; set => _physicsInvincible = value; }
-		public override int MentalStress { get => _mentalStress; set => _mentalStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Mental stress is less than 0."); }
-		public override int MentalStressMax { get => _mentalStressMax; set => _mentalStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max mental stress is less than 1."); }
-		public override bool MentalInvincible { get => _mentalInvincible; set => _mentalInvincible = value; }
-
-		public override CharacterPropertyList<Stunt> Stunts => _stunts;
 		public override int RefreshPoint { get => 0; set { } }
 		public override int FatePoint { get => 0; set { } }
-		public override CharacterPropertyList<Extra> Extras => _extras;
-		public override CharacterPropertyList<Consequence> Consequences => _consequences;
+		public override CharacterPropertyList<Stunt> Stunts => null;
+		public override CharacterPropertyList<Extra> Extras => null;
+		public override CharacterPropertyList<Consequence> Consequences => null;
 
 		public TemporaryCharacter(string id, CharacterView view) :
 			base(id, view) {
-			_aspects = new CharacterPropertyList<Aspect>(this);
-			_skills = new List<Skill>();
+
 		}
 
 		public TemporaryCharacter(string id, TemporaryCharacter template) :
-			base(id, template.View) {
-			this.Name = template.Name;
-			this.Description = template.Description;
-			foreach (Aspect aspect in template.Aspects) {
-				Aspect clone = new Aspect();
-				clone.Name = aspect.Name;
-				clone.Description = aspect.Description;
-				clone.PersistenceType = aspect.PersistenceType;
-				this.Aspects.Add(clone);
+			base(id, template._view) {
+			_name = template._name;
+			_description = template._description;
+			_controlPlayer = template._controlPlayer;
+			_dead = template._dead;
+			foreach (Aspect aspect in template._aspects) {
+				Aspect clone = new Aspect {
+					Name = aspect.Name,
+					Description = aspect.Description,
+					PersistenceType = aspect.PersistenceType
+				};
+				_aspects.Add(clone);
 			}
-			foreach (Skill skill in template.Skills) {
-				Skill clone = new Skill(skill.SkillType);
-				clone.Name = skill.Name;
-				clone.Description = skill.Description;
-				clone.Property = skill.Property;
-				this.Skills.Add(skill);
+			foreach (Skill skill in template._skills) {
+				Skill clone = new Skill(skill.SkillType) {
+					Name = skill.Name,
+					Description = skill.Description,
+					Property = skill.Property
+				};
+				_skills.Add(skill);
 			}
-			this.PhysicsStress = template.PhysicsStress;
-			this.PhysicsStressMax = template.PhysicsStressMax;
-			this.MentalStress = template.MentalStress;
-			this.MentalStressMax = template.MentalStressMax;
+			_physicsStress = template._physicsStress;
+			_physicsStressMax = template._physicsStressMax;
+			_physicsInvincible = template._physicsInvincible;
+			_mentalStress = template._mentalStress;
+			_mentalStressMax = template._mentalStressMax;
+			_mentalInvincible = template._mentalInvincible;
 		}
 	}
 
 	public sealed class CommonCharacter : Character {
-		private static readonly WrittenIgnoredCharacterPropertyList<Consequence> _consequences = new WrittenIgnoredCharacterPropertyList<Consequence>(null, null);
-
-		private readonly CharacterPropertyList<Aspect> _aspects;
-		private readonly List<Skill> _skills;
-		private int _physicsStress = 0;
-		private int _physicsStressMax = 0;
-		private bool _physicsInvincible = false;
-		private int _mentalStress = 0;
-		private int _mentalStressMax = 0;
-		private bool _mentalInvincible = false;
-
 		private int _refreshPoint = 0;
 		private int _fatePoint = 0;
 		private readonly CharacterPropertyList<Stunt> _stunts;
 		private readonly CharacterPropertyList<Extra> _extras;
-
-		protected override List<Skill> Skills => _skills;
-		public override CharacterPropertyList<Aspect> Aspects => _aspects;
-		public override int PhysicsStress { get => _physicsStress; set => _physicsStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Physics stress is less than 0."); }
-		public override int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max physics stress is less than 1."); }
-		public override bool PhysicsInvincible { get => _physicsInvincible; set => _physicsInvincible = value; }
-		public override int MentalStress { get => _mentalStress; set => _mentalStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Mental stress is less than 0."); }
-		public override int MentalStressMax { get => _mentalStressMax; set => _mentalStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max mental stress is less than 1."); }
-		public override bool MentalInvincible { get => _mentalInvincible; set => _mentalInvincible = value; }
-
-		public override CharacterPropertyList<Stunt> Stunts => _stunts;
-		public override CharacterPropertyList<Extra> Extras => _extras;
+		
 		public override int RefreshPoint { get => _refreshPoint; set => _refreshPoint = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Refresh point is less than 1."); }
 		public override int FatePoint { get => _fatePoint; set => _fatePoint = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Fate point is less than 0."); }
-
-		public override CharacterPropertyList<Consequence> Consequences => _consequences;
+		public override CharacterPropertyList<Stunt> Stunts => _stunts;
+		public override CharacterPropertyList<Extra> Extras => _extras;
+		public override CharacterPropertyList<Consequence> Consequences => null;
 
 		public CommonCharacter(string id, CharacterView view) :
 			base(id, view) {
-			_aspects = new CharacterPropertyList<Aspect>(this);
-			_skills = new List<Skill>();
 			_stunts = new CharacterPropertyList<Stunt>(this);
 			_extras = new CharacterPropertyList<Extra>(this);
 		}
@@ -485,42 +486,20 @@ namespace GameLib.CharacterSystem {
 	}
 
 	public sealed class KeyCharacter : Character {
-		private readonly CharacterPropertyList<Aspect> _aspects;
-		private readonly List<Skill> _skills;
-		private int _physicsStress = 0;
-		private int _physicsStressMax = 0;
-		private bool _physicsInvincible = false;
-		private int _mentalStress = 0;
-		private int _mentalStressMax = 0;
-		private bool _mentalInvincible = false;
-
 		private int _refreshPoint = 0;
 		private int _fatePoint = 0;
 		private readonly CharacterPropertyList<Stunt> _stunts;
 		private readonly CharacterPropertyList<Extra> _extras;
-
 		private readonly CharacterPropertyList<Consequence> _consequences;
 
-		protected override List<Skill> Skills => _skills;
-		public override CharacterPropertyList<Aspect> Aspects => _aspects;
-		public override int PhysicsStress { get => _physicsStress; set => _physicsStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Physics stress is less than 0."); }
-		public override int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max physics stress is less than 1."); }
-		public override bool PhysicsInvincible { get => _physicsInvincible; set => _physicsInvincible = value; }
-		public override int MentalStress { get => _mentalStress; set => _mentalStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Mental stress is less than 0."); }
-		public override int MentalStressMax { get => _mentalStressMax; set => _mentalStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max mental stress is less than 1."); }
-		public override bool MentalInvincible { get => _mentalInvincible; set => _mentalInvincible = value; }
-
-		public override CharacterPropertyList<Stunt> Stunts => _stunts;
-		public override CharacterPropertyList<Extra> Extras => _extras;
 		public override int RefreshPoint { get => _refreshPoint; set => _refreshPoint = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Refresh point is less than 1."); }
 		public override int FatePoint { get => _fatePoint; set => _fatePoint = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Fate point is less than 0."); }
-
+		public override CharacterPropertyList<Stunt> Stunts => _stunts;
+		public override CharacterPropertyList<Extra> Extras => _extras;
 		public override CharacterPropertyList<Consequence> Consequences => _consequences;
-
+		
 		public KeyCharacter(string id, CharacterView view) :
 			base(id, view) {
-			_aspects = new CharacterPropertyList<Aspect>(this);
-			_skills = new List<Skill>();
 			_stunts = new CharacterPropertyList<Stunt>(this);
 			_extras = new CharacterPropertyList<Extra>(this);
 			_consequences = new CharacterPropertyList<Consequence>(this);
@@ -616,6 +595,7 @@ namespace GameLib.CharacterSystem {
 		}
 
 		public Character FindItemRecursivelyByID(Character owner, string itemID) {
+			if (owner.Extras == null) return null;
 			foreach (Extra extra in owner.Extras) {
 				if (extra.Item.ID == itemID) {
 					return extra.Item;

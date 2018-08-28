@@ -202,33 +202,33 @@ namespace GameLib.Container {
 			switch (direction) {
 				case BattleMapDirection.POSITIVE_ROW: {
 						Grid anotherGrid = _battleMap[row + 1, col];
-						grid.SetLadder(BattleMapDirection.POSITIVE_ROW, ladderObject);
+						grid.SetLadderRef(BattleMapDirection.POSITIVE_ROW, ladderObject);
 						ladderObject.SetFirstGridRef(grid);
-						anotherGrid.SetLadder(BattleMapDirection.NEGATIVE_ROW, ladderObject);
+						anotherGrid.SetLadderRef(BattleMapDirection.NEGATIVE_ROW, ladderObject);
 						ladderObject.SetSecondGridRef(anotherGrid);
 					}
 					break;
 				case BattleMapDirection.POSITIVE_COL: {
 						Grid anotherGrid = _battleMap[row, col + 1];
-						grid.SetLadder(BattleMapDirection.POSITIVE_COL, ladderObject);
+						grid.SetLadderRef(BattleMapDirection.POSITIVE_COL, ladderObject);
 						ladderObject.SetFirstGridRef(grid);
-						anotherGrid.SetLadder(BattleMapDirection.NEGATIVE_COL, ladderObject);
+						anotherGrid.SetLadderRef(BattleMapDirection.NEGATIVE_COL, ladderObject);
 						ladderObject.SetSecondGridRef(anotherGrid);
 					}
 					break;
 				case BattleMapDirection.NEGATIVE_ROW: {
 						Grid anotherGrid = _battleMap[row - 1, col];
-						grid.SetLadder(BattleMapDirection.NEGATIVE_ROW, ladderObject);
+						grid.SetLadderRef(BattleMapDirection.NEGATIVE_ROW, ladderObject);
 						ladderObject.SetFirstGridRef(grid);
-						anotherGrid.SetLadder(BattleMapDirection.POSITIVE_ROW, ladderObject);
+						anotherGrid.SetLadderRef(BattleMapDirection.POSITIVE_ROW, ladderObject);
 						ladderObject.SetSecondGridRef(anotherGrid);
 					}
 					break;
 				case BattleMapDirection.NEGATIVE_COL: {
 						Grid anotherGrid = _battleMap[row, col - 1];
-						grid.SetLadder(BattleMapDirection.NEGATIVE_COL, ladderObject);
+						grid.SetLadderRef(BattleMapDirection.NEGATIVE_COL, ladderObject);
 						ladderObject.SetFirstGridRef(grid);
-						anotherGrid.SetLadder(BattleMapDirection.POSITIVE_COL, ladderObject);
+						anotherGrid.SetLadderRef(BattleMapDirection.POSITIVE_COL, ladderObject);
 						ladderObject.SetSecondGridRef(anotherGrid);
 					}
 					break;
@@ -257,8 +257,8 @@ namespace GameLib.Container {
 						ladderObject = grid.PositiveRowLadder;
 						ladderObject.SetFirstGridRef(null);
 						ladderObject.SetSecondGridRef(null);
-						grid.SetLadder(BattleMapDirection.POSITIVE_ROW, null);
-						anotherGrid.SetLadder(BattleMapDirection.NEGATIVE_ROW, null);
+						grid.SetLadderRef(BattleMapDirection.POSITIVE_ROW, null);
+						anotherGrid.SetLadderRef(BattleMapDirection.NEGATIVE_ROW, null);
 					}
 					break;
 				case BattleMapDirection.POSITIVE_COL: {
@@ -266,8 +266,8 @@ namespace GameLib.Container {
 						ladderObject = grid.PositiveColLadder;
 						ladderObject.SetFirstGridRef(null);
 						ladderObject.SetSecondGridRef(null);
-						grid.SetLadder(BattleMapDirection.POSITIVE_COL, null);
-						anotherGrid.SetLadder(BattleMapDirection.NEGATIVE_COL, null);
+						grid.SetLadderRef(BattleMapDirection.POSITIVE_COL, null);
+						anotherGrid.SetLadderRef(BattleMapDirection.NEGATIVE_COL, null);
 					}
 					break;
 				case BattleMapDirection.NEGATIVE_ROW: {
@@ -275,8 +275,8 @@ namespace GameLib.Container {
 						ladderObject = grid.NegativeRowLadder;
 						ladderObject.SetFirstGridRef(null);
 						ladderObject.SetSecondGridRef(null);
-						grid.SetLadder(BattleMapDirection.NEGATIVE_ROW, null);
-						anotherGrid.SetLadder(BattleMapDirection.POSITIVE_ROW, null);
+						grid.SetLadderRef(BattleMapDirection.NEGATIVE_ROW, null);
+						anotherGrid.SetLadderRef(BattleMapDirection.POSITIVE_ROW, null);
 					}
 					break;
 				case BattleMapDirection.NEGATIVE_COL: {
@@ -284,8 +284,8 @@ namespace GameLib.Container {
 						ladderObject = grid.NegativeColLadder;
 						ladderObject.SetFirstGridRef(null);
 						ladderObject.SetSecondGridRef(null);
-						grid.SetLadder(BattleMapDirection.NEGATIVE_COL, null);
-						anotherGrid.SetLadder(BattleMapDirection.POSITIVE_COL, null);
+						grid.SetLadderRef(BattleMapDirection.NEGATIVE_COL, null);
+						anotherGrid.SetLadderRef(BattleMapDirection.POSITIVE_COL, null);
 					}
 					break;
 				default:
@@ -302,15 +302,15 @@ namespace GameLib.Container {
 		public bool RemoveLadderObject(LadderObject ladderObject) {
 			if (ladderObject == null) throw new ArgumentNullException(nameof(ladderObject));
 			if (!_objList.Contains(ladderObject)) return false;
-			if (ladderObject.GridRef.PositiveRowLadder == ladderObject) ladderObject.GridRef.SetLadder(BattleMapDirection.POSITIVE_ROW, null);
-			else if (ladderObject.GridRef.PositiveColLadder == ladderObject) ladderObject.GridRef.SetLadder(BattleMapDirection.POSITIVE_COL, null);
-			else if (ladderObject.GridRef.NegativeRowLadder == ladderObject) ladderObject.GridRef.SetLadder(BattleMapDirection.NEGATIVE_ROW, null);
-			else if (ladderObject.GridRef.NegativeColLadder == ladderObject) ladderObject.GridRef.SetLadder(BattleMapDirection.POSITIVE_COL, null);
+			if (ladderObject.GridRef.PositiveRowLadder == ladderObject) ladderObject.GridRef.SetLadderRef(BattleMapDirection.POSITIVE_ROW, null);
+			else if (ladderObject.GridRef.PositiveColLadder == ladderObject) ladderObject.GridRef.SetLadderRef(BattleMapDirection.POSITIVE_COL, null);
+			else if (ladderObject.GridRef.NegativeRowLadder == ladderObject) ladderObject.GridRef.SetLadderRef(BattleMapDirection.NEGATIVE_ROW, null);
+			else if (ladderObject.GridRef.NegativeColLadder == ladderObject) ladderObject.GridRef.SetLadderRef(BattleMapDirection.POSITIVE_COL, null);
 			else return false;
-			if (ladderObject.SecondGridRef.PositiveRowLadder == ladderObject) ladderObject.SecondGridRef.SetLadder(BattleMapDirection.POSITIVE_ROW, null);
-			else if (ladderObject.SecondGridRef.PositiveColLadder == ladderObject) ladderObject.SecondGridRef.SetLadder(BattleMapDirection.POSITIVE_COL, null);
-			else if (ladderObject.SecondGridRef.NegativeRowLadder == ladderObject) ladderObject.SecondGridRef.SetLadder(BattleMapDirection.NEGATIVE_ROW, null);
-			else if (ladderObject.SecondGridRef.NegativeColLadder == ladderObject) ladderObject.SecondGridRef.SetLadder(BattleMapDirection.NEGATIVE_COL, null);
+			if (ladderObject.SecondGridRef.PositiveRowLadder == ladderObject) ladderObject.SecondGridRef.SetLadderRef(BattleMapDirection.POSITIVE_ROW, null);
+			else if (ladderObject.SecondGridRef.PositiveColLadder == ladderObject) ladderObject.SecondGridRef.SetLadderRef(BattleMapDirection.POSITIVE_COL, null);
+			else if (ladderObject.SecondGridRef.NegativeRowLadder == ladderObject) ladderObject.SecondGridRef.SetLadderRef(BattleMapDirection.NEGATIVE_ROW, null);
+			else if (ladderObject.SecondGridRef.NegativeColLadder == ladderObject) ladderObject.SecondGridRef.SetLadderRef(BattleMapDirection.NEGATIVE_COL, null);
 			else return false;
 			ladderObject.SetFirstGridRef(null);
 			ladderObject.SetSecondGridRef(null);
@@ -432,108 +432,14 @@ namespace GameLib.Container {
 			this.NextPassiveCheck();
 		}
 
-		private void OnceInitiativeResult(SkillChecker.CheckResult result) {
-			if (_checkingAction == CharacterAction.CREATE_ASPECT) {
-				switch (result) {
-					case SkillChecker.CheckResult.TIE: {
-							var boost = new Aspect();
-							boost.PersistenceType = PersistenceType.Temporary;
-							
-							_currentPassive.CharacterRef.Aspects.Add(boost);
-						}
-						break;
-					case SkillChecker.CheckResult.SUCCEED:
-						break;
-					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
-						break;
-					default:
-						break;
-				}
-			} else if (_checkingAction == CharacterAction.ATTACK) {
-				switch (result) {
-					case SkillChecker.CheckResult.FAIL:
-
-						break;
-					case SkillChecker.CheckResult.TIE:
-						break;
-					case SkillChecker.CheckResult.SUCCEED:
-						break;
-					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
-						break;
-					default:
-						return;
-				}
-			} else if (_checkingAction == CharacterAction.HINDER) {
-				switch (result) {
-					case SkillChecker.CheckResult.FAIL:
-
-						break;
-					case SkillChecker.CheckResult.TIE:
-						break;
-					case SkillChecker.CheckResult.SUCCEED:
-						break;
-					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
-						break;
-					default:
-						return;
-				}
-			}
-		}
-
-		private void OncePassiveResult(SkillChecker.CheckResult result) {
-			if (_checkingAction == CharacterAction.CREATE_ASPECT) {
-				switch (result) {
-					case SkillChecker.CheckResult.FAIL:
-
-						break;
-					case SkillChecker.CheckResult.TIE:
-						break;
-					case SkillChecker.CheckResult.SUCCEED:
-						break;
-					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
-						break;
-					default:
-						return;
-				}
-			} else if (_checkingAction == CharacterAction.ATTACK) {
-				switch (result) {
-					case SkillChecker.CheckResult.FAIL:
-
-						break;
-					case SkillChecker.CheckResult.TIE:
-						break;
-					case SkillChecker.CheckResult.SUCCEED:
-						break;
-					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
-						break;
-					default:
-						return;
-				}
-			} else if (_checkingAction == CharacterAction.HINDER) {
-				switch (result) {
-					case SkillChecker.CheckResult.FAIL:
-
-						break;
-					case SkillChecker.CheckResult.TIE:
-						break;
-					case SkillChecker.CheckResult.SUCCEED:
-						break;
-					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
-						break;
-					default:
-						return;
-				}
-			}
-		}
-
-		private void OnceCheckOver() {
-
-		}
-
 		public void NextPassiveCheck() {
 			if (!_isChecking) throw new InvalidOperationException("It's not in checking state.");
 			if (_passives.Count <= 0) {
 				_isChecking = false;
+				foreach (Player player in Game.Players) {
+					player.Client.BattleScene.EndCheck();
+				}
+				Game.DM.Client.BattleScene.EndCheck();
 				return;
 			}
 			_currentPassive = _passives[_passives.Count - 1];
@@ -543,14 +449,142 @@ namespace GameLib.Container {
 			SkillChecker.Instance.InitiativeRollDice(new int[] { _initiativeRollPoint });
 			SkillChecker.Instance.InitiativeExtraPoint = _initiativeFixedExtraPoint;
 			SkillChecker.Instance.InitiativeSkillSelectionOver();
-			int sumPoint = SkillChecker.Instance.InitiativePoint;
+			int sumPoint = SkillChecker.Instance.GetInitiativePoint();
 			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.DisplaySkillReady(_initiative, _initiativeSkillType, _initiativeSkillBigone);
 				player.Client.BattleScene.UpdateSumPoint(_initiative, sumPoint);
+				player.Client.BattleScene.CheckNextone(_currentPassive);
 			}
 			Game.DM.Client.BattleScene.DisplaySkillReady(_initiative, _initiativeSkillType, _initiativeSkillBigone);
 			Game.DM.Client.BattleScene.UpdateSumPoint(_initiative, sumPoint);
+			Game.DM.Client.BattleScene.CheckNextone(_currentPassive);
 			_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectSkillOrStunt(_checkingAction, _currentPassive, _initiative, _initiativeSkillType);
+		}
+
+		private void OnceInitiativeResult(SkillChecker.CheckResult result, int delta) {
+			if (_checkingAction == CharacterAction.CREATE_ASPECT) {
+				switch (result) {
+					case SkillChecker.CheckResult.TIE: {
+							var boost = new Aspect();
+							boost.PersistenceType = PersistenceType.Temporary;
+							boost.Name = "受到" + _initiative.CharacterRef.Name + "的" + _initiativeSkillType.Name + "影响";
+							boost.Benefit = _initiative.CharacterRef;
+							boost.BenefitTimes = 1;
+							_currentPassive.CharacterRef.Aspects.Add(boost);
+						}
+						break;
+					case SkillChecker.CheckResult.SUCCEED: {
+							var aspect = new Aspect();
+							aspect.PersistenceType = PersistenceType.Common;
+							aspect.Name = "受到" + _initiative.CharacterRef.Name + "的" + _initiativeSkillType.Name + "影响";
+							aspect.Benefit = _initiative.CharacterRef;
+							aspect.BenefitTimes = 1;
+							_currentPassive.CharacterRef.Aspects.Add(aspect);
+						}
+						break;
+					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE: {
+							var aspect = new Aspect();
+							aspect.PersistenceType = PersistenceType.Common;
+							aspect.Name = "受到" + _initiative.CharacterRef.Name + "的" + _initiativeSkillType.Name + "影响";
+							aspect.Benefit = _initiative.CharacterRef;
+							aspect.BenefitTimes = 2;
+							_currentPassive.CharacterRef.Aspects.Add(aspect);
+						}
+						break;
+					default:
+						break;
+				}
+			} else if (_checkingAction == CharacterAction.ATTACK) {
+				switch (result) {
+					case SkillChecker.CheckResult.TIE: {
+							var boost = new Aspect();
+							boost.PersistenceType = PersistenceType.Temporary;
+							boost.Name = "受到" + _initiative.CharacterRef.Name + "的" + _initiativeSkillType.Name + "攻击";
+							boost.Benefit = _initiative.CharacterRef;
+							boost.BenefitTimes = 1;
+							_currentPassive.CharacterRef.Aspects.Add(boost);
+						}
+						break;
+					case SkillChecker.CheckResult.SUCCEED: {
+							var skillProperty = _initiative.CharacterRef.GetSkillProperty(_initiativeSkillType);
+							_currentPassive.CharacterRef.Damage(delta, skillProperty.damageMental, _initiative.CharacterRef, "使用" + _initiativeSkillType.Name + "发动攻击");
+						}
+						break;
+					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE: {
+							_initiative.CharacterRef.Controller.Client.RequestDetermin("降低一点伤害来换取一个增益吗？", determin => {
+								var skillProperty = _initiative.CharacterRef.GetSkillProperty(_initiativeSkillType);
+								int damage = delta;
+								if (determin == 0) {
+									var boost = new Aspect();
+									boost.PersistenceType = PersistenceType.Temporary;
+									boost.Name = "受到" + _initiative.CharacterRef.Name + "的" + _initiativeSkillType.Name + "攻击";
+									boost.Benefit = _initiative.CharacterRef;
+									boost.BenefitTimes = 1;
+									_currentPassive.CharacterRef.Aspects.Add(boost);
+									damage -= 1;
+								}
+								_currentPassive.CharacterRef.Damage(damage, skillProperty.damageMental, _initiative.CharacterRef, "使用" + _initiativeSkillType.Name + "发动攻击");
+							});
+						}
+						break;
+					default:
+						break;
+				}
+			} else if (_checkingAction == CharacterAction.HINDER) {
+				switch (result) {
+					case SkillChecker.CheckResult.FAIL:
+						break;
+					case SkillChecker.CheckResult.TIE:
+						break;
+					case SkillChecker.CheckResult.SUCCEED:
+						break;
+					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
+						break;
+					default:
+						break;
+				}
+			}
+		}
+
+		private void OncePassiveResult(SkillChecker.CheckResult result, int delta) {
+			if (_checkingAction == CharacterAction.CREATE_ASPECT) {
+				switch (result) {
+					case SkillChecker.CheckResult.SUCCEED:
+						break;
+					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
+						break;
+					default:
+						break;
+				}
+			} else if (_checkingAction == CharacterAction.ATTACK) {
+				switch (result) {
+					case SkillChecker.CheckResult.SUCCEED:
+						break;
+					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
+						break;
+					default:
+						break;
+				}
+			} else if (_checkingAction == CharacterAction.HINDER) {
+				switch (result) {
+					case SkillChecker.CheckResult.FAIL:
+						break;
+					case SkillChecker.CheckResult.TIE:
+						break;
+					case SkillChecker.CheckResult.SUCCEED:
+						break;
+					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
+						break;
+					default:
+						break;
+				}
+			}
+		}
+
+		private void OnceCheckOver() {
+			// ...
+			this.Update();
+			this.NextPassiveCheck();
 		}
 
 		private void CurrentPassiveApplySkill(SkillType skillType, bool bigone, int[] fixedDicePoints) {
@@ -559,11 +593,11 @@ namespace GameLib.Container {
 			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.DisplayDicePoints(_currentPassive.CharacterRef.Controller, dicePoints);
 				player.Client.BattleScene.DisplaySkillReady(_currentPassive, skillType, bigone);
-				player.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.PassivePoint);
+				player.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.GetPassivePoint());
 			}
 			Game.DM.Client.BattleScene.DisplayDicePoints(_currentPassive.CharacterRef.Controller, dicePoints);
 			Game.DM.Client.BattleScene.DisplaySkillReady(_currentPassive, skillType, bigone);
-			Game.DM.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.PassivePoint);
+			Game.DM.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.GetPassivePoint());
 		}
 
 		public bool CanCurrentPassiveUseSkillOrStunt(SkillProperty skillProperty) {
@@ -587,7 +621,7 @@ namespace GameLib.Container {
 					SkillChecker.Instance.PassiveSkillSelectionOver();
 					_initiative.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectAspect();
 				} else {
-					Game.DM.DMClient.DMCheckDialog.RequestCheck(_currentPassive.CharacterRef.Controller,
+					Game.DM.DMClient.RequestCheck(_currentPassive.CharacterRef.Controller,
 						SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + skillType.Name + ",可以吗？",
 						result => {
 							if (result) {
@@ -609,7 +643,7 @@ namespace GameLib.Container {
 			var skillProperty = stunt.SkillProperty;
 			if (!SkillChecker.CanPassiveUseSkillOrStunt(skillProperty, _checkingAction)) throw new InvalidOperationException("Cannot use this stunt.");
 			if (stunt.NeedDMCheck) {
-				Game.DM.DMClient.DMCheckDialog.RequestCheck(_currentPassive.CharacterRef.Controller,
+				Game.DM.DMClient.RequestCheck(_currentPassive.CharacterRef.Controller,
 					SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + stunt.Name + ",可以吗？",
 					result => {
 						if (result) {
@@ -636,17 +670,17 @@ namespace GameLib.Container {
 				player.Client.BattleScene.DisplayUsingAspect(_initiative, ownerGridObject, aspect);
 			}
 			Game.DM.Client.BattleScene.DisplayUsingAspect(_initiative, ownerGridObject, aspect);
-			Game.DM.DMClient.DMCheckDialog.RequestCheck(_initiative.CharacterRef.Controller,
+			Game.DM.DMClient.RequestCheck(_initiative.CharacterRef.Controller,
 				SkillChecker.Instance.Initiative.Name + "想使用" + aspect.Belong.Name + "的特征“" + aspect.Name + "”可以吗？",
 				result => {
 					if (result) {
 						int[] rerollPoints = SkillChecker.Instance.InitiativeUseAspect(aspect, reroll);
 						foreach (Player player in Game.Players) {
 							if (reroll) player.Client.BattleScene.DisplayDicePoints(_initiative.CharacterRef.Controller, rerollPoints);
-							player.Client.BattleScene.UpdateSumPoint(_initiative, SkillChecker.Instance.InitiativePoint);
+							player.Client.BattleScene.UpdateSumPoint(_initiative, SkillChecker.Instance.GetInitiativePoint());
 						}
 						if (reroll) Game.DM.Client.BattleScene.DisplayDicePoints(_initiative.CharacterRef.Controller, rerollPoints);
-						Game.DM.Client.BattleScene.UpdateSumPoint(_initiative, SkillChecker.Instance.InitiativePoint);
+						Game.DM.Client.BattleScene.UpdateSumPoint(_initiative, SkillChecker.Instance.GetInitiativePoint());
 						_initiative.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectAspectComplete();
 					} else {
 						_initiative.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectAspectFailure("DM拒绝了你选择的特征");
@@ -672,17 +706,17 @@ namespace GameLib.Container {
 				player.Client.BattleScene.DisplayUsingAspect(_currentPassive, ownerGridObject, aspect);
 			}
 			Game.DM.Client.BattleScene.DisplayUsingAspect(_currentPassive, ownerGridObject, aspect);
-			Game.DM.DMClient.DMCheckDialog.RequestCheck(_currentPassive.CharacterRef.Controller,
+			Game.DM.DMClient.RequestCheck(_currentPassive.CharacterRef.Controller,
 				SkillChecker.Instance.Passive.Name + "想使用" + aspect.Belong.Name + "的特征“" + aspect.Name + "”可以吗？",
 				result => {
 					if (result) {
 						int[] rerollPoints = SkillChecker.Instance.PassiveUseAspect(aspect, reroll);
 						foreach (Player player in Game.Players) {
 							if (reroll) player.Client.BattleScene.DisplayDicePoints(_currentPassive.CharacterRef.Controller, rerollPoints);
-							player.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.PassivePoint);
+							player.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.GetPassivePoint());
 						}
 						if (reroll) Game.DM.Client.BattleScene.DisplayDicePoints(_currentPassive.CharacterRef.Controller, rerollPoints);
-						Game.DM.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.PassivePoint);
+						Game.DM.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.GetPassivePoint());
 						_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectAspectComplete();
 					} else {
 						_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectAspectFailure("DM拒绝了你选择的特征");
@@ -716,8 +750,8 @@ namespace GameLib.Container.BattleComponent {
 		}
 
 		public string ID => _characterRef.ID;
-		public string Name { get => _characterRef.Name; set { } }
-		public string Description { get => _characterRef.Description; set { } }
+		public string Name { get => _characterRef.Name; set => _characterRef.Name = value; }
+		public string Description { get => _characterRef.Description; set => _characterRef.Description = value; }
 		public Character CharacterRef => _characterRef;
 		public Grid GridRef => _gridRef;
 		public abstract bool IsTerrain { get; }
@@ -1329,7 +1363,7 @@ namespace GameLib.Container.BattleComponent {
 			ActionSecurityFilter(ref skillProperty, ref action, ref centerRow, ref centerCol, ref targets);
 			if (!force) {
 				if (action == CharacterAction.CREATE_ASPECT) {
-					Game.DM.DMClient.DMCheckDialog.RequestCheck(this.CharacterRef.Controller,
+					Game.DM.DMClient.RequestCheck(this.CharacterRef.Controller,
 						this.CharacterRef.Name + "想使用" + skillType.Name + ",可以吗？",
 						result => {
 							if (result) {
@@ -1362,7 +1396,7 @@ namespace GameLib.Container.BattleComponent {
 			var skillProperty = stunt.SkillProperty;
 			ActionSecurityFilter(ref skillProperty, ref action, ref centerRow, ref centerCol, ref targets);
 			if (stunt.NeedDMCheck) {
-				Game.DM.DMClient.DMCheckDialog.RequestCheck(this.CharacterRef.Controller,
+				Game.DM.DMClient.RequestCheck(this.CharacterRef.Controller,
 					this.CharacterRef.Name + "想使用" + stunt.Name + ",可以吗？",
 					result => {
 						if (result) {
@@ -1459,7 +1493,7 @@ namespace GameLib.Container.BattleComponent {
 			}
 		}
 
-		public void SetLadder(BattleMapDirection direction, LadderObject ladderRef) {
+		public void SetLadderRef(BattleMapDirection direction, LadderObject ladderRef) {
 			switch (direction) {
 				case BattleMapDirection.POSITIVE_ROW:
 					_positiveRowLadder = ladderRef;

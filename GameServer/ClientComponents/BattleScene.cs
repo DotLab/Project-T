@@ -70,9 +70,11 @@ namespace GameLib.ClientComponents {
 							if (reqMsg.stunt) {
 								var resp = new BattleSceneObjectUsableStuntListMessage();
 								var candoList = new List<Stunt>();
-								foreach (var stunt in container.CurrentActable.CharacterRef.Stunts) {
-									if (container.CurrentActable.CanUseSkillOrStunt(stunt.SkillProperty, reqMsg.action)) {
-										candoList.Add(stunt);
+								if (container.CurrentActable.CharacterRef != null) {
+									foreach (var stunt in container.CurrentActable.CharacterRef.Stunts) {
+										if (container.CurrentActable.CanUseSkillOrStunt(stunt.SkillProperty, reqMsg.action)) {
+											candoList.Add(stunt);
+										}
 									}
 								}
 								resp.stunts = new CharacterPropertyDescription[candoList.Count];
@@ -101,9 +103,11 @@ namespace GameLib.ClientComponents {
 							if (reqMsg.stunt) {
 								var resp = new BattleSceneObjectUsableStuntListMessage();
 								var candoList = new List<Stunt>();
-								foreach (var stunt in container.CurrentPassive.CharacterRef.Stunts) {
-									if (container.CanCurrentPassiveUseSkillOrStunt(stunt.SkillProperty)) {
-										candoList.Add(stunt);
+								if (container.CurrentPassive.CharacterRef.Stunts != null) {
+									foreach (var stunt in container.CurrentPassive.CharacterRef.Stunts) {
+										if (container.CanCurrentPassiveUseSkillOrStunt(stunt.SkillProperty)) {
+											candoList.Add(stunt);
+										}
 									}
 								}
 								resp.stunts = new CharacterPropertyDescription[candoList.Count];

@@ -69,7 +69,7 @@
 			this.MinimizeBox = false;
 			this.Name = "DMCheckForm";
 			this.Text = "DM确认";
-			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.DMCheckForm_FormClosed);
+			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.DMCheckForm_FormClosing);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 

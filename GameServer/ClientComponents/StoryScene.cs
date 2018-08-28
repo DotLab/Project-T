@@ -29,7 +29,7 @@ namespace GameLib.ClientComponents {
 
 		public override void MessageReceived(Message message) {
 			try {
-				if (!_isUsing || _position == ClientPosition.OBSERVER || Game.DM.DMClient.DMCheckDialog.IsChecking) return;
+				if (!_isUsing || _position == ClientPosition.OBSERVER) return;
 				if (message.MessageType == CheckerSkillSelectedMessage.MESSAGE_TYPE) {
 					CheckerSkillSelectedMessage skillSelectedMessage = (CheckerSkillSelectedMessage)message;
 					if (SkillType.SkillTypes.TryGetValue(skillSelectedMessage.skillTypeID, out SkillType skillType)) {

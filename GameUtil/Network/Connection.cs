@@ -83,10 +83,8 @@ namespace GameLib.Utilities.Network {
 					return new StorySceneCheckerPanelShowMessage();
 				case StorySceneCheckerPanelHideMessage.MESSAGE_TYPE:
 					return new StorySceneCheckerPanelHideMessage();
-				case DMCheckPanelShowMessage.MESSAGE_TYPE:
-					return new DMCheckPanelShowMessage();
-				case DMCheckPanelHideMessage.MESSAGE_TYPE:
-					return new DMCheckPanelHideMessage();
+				case DMCheckMessage.MESSAGE_TYPE:
+					return new DMCheckMessage();
 				case DisplayDicePointsMessage.MESSAGE_TYPE:
 					return new DisplayDicePointsMessage();
 				case StorySceneCheckerNotifyInitiativeSelectSkillOrStuntMessage.MESSAGE_TYPE:
@@ -161,6 +159,8 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneCheckNextoneMessage();
 				case BattleSceneEndCheckMessage.MESSAGE_TYPE:
 					return new BattleSceneEndCheckMessage();
+				case UserDeterminMessage.MESSAGE_TYPE:
+					return new UserDeterminMessage();
 
 				// client message
 				case ClientInitMessage.MESSAGE_TYPE:
@@ -221,6 +221,8 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneGetCanExtraMoveMessage();
 				case BattleSceneTurnOverMessage.MESSAGE_TYPE:
 					return new BattleSceneTurnOverMessage();
+				case UserDeterminResultMessage.MESSAGE_TYPE:
+					return new UserDeterminResultMessage();
 
 				default:
 					throw new NotImplementedException();
@@ -316,7 +318,7 @@ namespace GameLib.Utilities.Network {
 		}
 
 		protected void OnEventCaught(NetworkEventCaughtEventArgs args) {
-			EventCaught?.Invoke(this, args);
+			if (EventCaught != null) EventCaught(this, args);
 		}
 
 		public event EventHandler<NetworkEventCaughtEventArgs> EventCaught; // multiple threads would invoke

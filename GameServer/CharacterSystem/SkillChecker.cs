@@ -18,7 +18,7 @@ namespace GameLib.CharacterSystem {
 			PASSIVE_SKILL_OR_STUNT,
 			INITIATIVE_ASPECT,
 			PASSIVE_ASPECT,
-			WAITING_FOR_END
+			WAIT_FOR_ENDCHECK
 		}
 
 		private static Range FAIL;
@@ -95,8 +95,8 @@ namespace GameLib.CharacterSystem {
 		private Character _initiative;
 		private Character _passive;
 		private CharacterAction _action;
-		private Action<CheckResult> _initiativeCallback;
-		private Action<CheckResult> _passiveCallback;
+		private Action<CheckResult, int> _initiativeCallback;
+		private Action<CheckResult, int> _passiveCallback;
 		private Action _checkOverCallback;
 
 		private SkillType _initiativeSkillType;
@@ -120,9 +120,6 @@ namespace GameLib.CharacterSystem {
 
 		public int InitiativeExtraPoint { get => _initiativeExtraPoint; set => _initiativeExtraPoint = value; }
 		public int PassiveExtraPoint { get => _passiveExtraPoint; set => _passiveExtraPoint = value; }
-
-		public int InitiativePoint => (_initiativeSkillType != null ? _initiative.GetSkillProperty(_initiativeSkillType).level : 0) + _initiativeRollPoint + _initiativeExtraPoint;
-		public int PassivePoint => (_initiativeSkillType != null ? _initiative.GetSkillProperty(_initiativeSkillType).level : 0) + _passiveRollPoint + _passiveExtraPoint;
 
 		public CheckerState State => _state;
 
@@ -160,10 +157,18 @@ namespace GameLib.CharacterSystem {
 			if (resistTable.TryGetValue(resist, out List<SkillType> initiativeSkills)) return initiativeSkills.Contains(initiativeUsing);
 			else return false;
 		}
-		
+
+		public int GetInitiativePoint() {
+			return (_initiativeSkillType != null ? _initiative.GetSkillProperty(_initiativeSkillType).level : 0) + _initiativeRollPoint + _initiativeExtraPoint;
+		}
+
+		public int GetPassivePoint() {
+			return (_initiativeSkillType != null ? _initiative.GetSkillProperty(_initiativeSkillType).level : 0) + _passiveRollPoint + _passiveExtraPoint;
+		}
+
 		public void StartCheck(
 			Character initiative, Character passive, CharacterAction action,
-			Action<CheckResult> initiativeCallback, Action<CheckResult> passiveCallback,
+			Action<CheckResult, int> initiativeCallback, Action<CheckResult, int> passiveCallback,
 			Action checkOverCallback = null
 			) {
 			if (_state != CheckerState.IDLE) throw new InvalidOperationException("Already in checking state.");
@@ -182,19 +187,19 @@ namespace GameLib.CharacterSystem {
 			_state = CheckerState.INITIATIVE_SKILL_OR_STUNT;
 		}
 
-		public void ForceEndCheck(CheckResult initiativeResult, CheckResult passiveResult) {
+		public void ForceEndCheck(CheckResult initiativeResult, CheckResult passiveResult, int deltaPointOnInitiativeSide) {
 			if (_state == CheckerState.IDLE) throw new InvalidOperationException("Skill checking is not working.");
-			_initiativeCallback(initiativeResult);
-			_passiveCallback(passiveResult);
+			_initiativeCallback(initiativeResult, deltaPointOnInitiativeSide);
+			_passiveCallback(passiveResult, -deltaPointOnInitiativeSide);
 			_state = CheckerState.IDLE;
-			_checkOverCallback?.Invoke();
+			if (_checkOverCallback != null) _checkOverCallback();
 		}
 
 		public void EndCheck() {
-			if (_state != CheckerState.WAITING_FOR_END) throw new InvalidOperationException("Cannot make checking over.");
+			if (_state != CheckerState.WAIT_FOR_ENDCHECK) throw new InvalidOperationException("Cannot make checking over.");
 			CheckResult initiativeResult;
 			CheckResult passiveResult;
-			int delta = this.InitiativePoint - this.PassivePoint;
+			int delta = this.GetInitiativePoint() - this.GetPassivePoint();
 			if (FAIL.InRange(delta)) {
 				initiativeResult = CheckResult.FAIL;
 				if (SUCCEED_WITH_STYLE.InRange(-delta)) {
@@ -215,10 +220,10 @@ namespace GameLib.CharacterSystem {
 				initiativeResult = CheckResult.TIE;
 				passiveResult = CheckResult.TIE;
 			}
-			_initiativeCallback(initiativeResult);
-			_passiveCallback(passiveResult);
+			_initiativeCallback(initiativeResult, delta);
+			_passiveCallback(passiveResult, -delta);
 			_state = CheckerState.IDLE;
-			_checkOverCallback?.Invoke();
+			if (_checkOverCallback != null) _checkOverCallback();
 		}
 
 		public void InitiativeSelectSkill(SkillType skillType) {
@@ -257,12 +262,13 @@ namespace GameLib.CharacterSystem {
 		public int[] InitiativeUseAspect(Aspect aspect, bool reroll) {
 			if (_state != CheckerState.INITIATIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
 			if (aspect.Benefit != _initiative && _initiative.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
-			if (aspect.Benefit != null && aspect.Benefit != _initiative) {
+			if (aspect.Benefit != null && aspect.Benefit != _initiative && aspect.BenefitTimes > 0) {
 				++aspect.Benefit.FatePoint;
 			} else if (aspect.Benefit == null) {
 				++_passive.FatePoint;
 			}
-			if (aspect.Benefit != _initiative) --_initiative.FatePoint;
+			if (aspect.Benefit != _initiative || aspect.BenefitTimes <= 0) --_initiative.FatePoint;
+			else --aspect.BenefitTimes;
 			if (reroll) return this.InitiativeRollDice();
 			else {
 				_initiativeExtraPoint += 2;
@@ -291,7 +297,7 @@ namespace GameLib.CharacterSystem {
 
 		public void PassiveAspectSelectionOver() {
 			if (_state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
-			_state = CheckerState.WAITING_FOR_END;
+			_state = CheckerState.WAIT_FOR_ENDCHECK;
 		}
 
 		public bool CheckPassiveAspectUsable(Aspect aspect, out string msg) {
@@ -306,12 +312,13 @@ namespace GameLib.CharacterSystem {
 		public int[] PassiveUseAspect(Aspect aspect, bool reroll) {
 			if (_state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
 			if (aspect.Benefit != _passive && _passive.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
-			if (aspect.Benefit != null && aspect.Benefit != _passive) {
+			if (aspect.Benefit != null && aspect.Benefit != _passive && aspect.BenefitTimes > 0) {
 				++aspect.Benefit.FatePoint;
 			} else if (aspect.Benefit == null) {
 				++_initiative.FatePoint;
 			}
-			if (aspect.Benefit != _passive) --_passive.FatePoint;
+			if (aspect.Benefit != _passive || aspect.BenefitTimes <= 0) --_passive.FatePoint;
+			else --aspect.BenefitTimes;
 			if (reroll) return this.PassiveRollDice();
 			else {
 				_passiveExtraPoint += 2;

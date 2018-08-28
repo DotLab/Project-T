@@ -164,21 +164,33 @@ namespace GameLib.ClientComponents {
 					break;
 				case GetCharacterDataMessage.DataType.CONSEQUENCES:
 					message = new CharacterConsequencesDescriptionMessage();
-					message.properties = new CharacterPropertyDescription[character.Consequences.Count];
-					for (int i = 0; i < character.Consequences.Count; ++i)
-						message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.Consequences[i]);
+					if (character.Consequences == null) {
+						message.properties = new CharacterPropertyDescription[0];
+					} else {
+						message.properties = new CharacterPropertyDescription[character.Consequences.Count];
+						for (int i = 0; i < character.Consequences.Count; ++i)
+							message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.Consequences[i]);
+					}
 					break;
 				case GetCharacterDataMessage.DataType.EXTRAS:
 					message = new CharacterExtrasDescriptionMessage();
-					message.properties = new CharacterPropertyDescription[character.Extras.Count];
-					for (int i = 0; i < character.Extras.Count; ++i)
-						message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.Extras[i]);
+					if (character.Extras == null) {
+						message.properties = new CharacterPropertyDescription[0];
+					} else {
+						message.properties = new CharacterPropertyDescription[character.Extras.Count];
+						for (int i = 0; i < character.Extras.Count; ++i)
+							message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.Extras[i]);
+					}
 					break;
 				case GetCharacterDataMessage.DataType.STUNTS:
 					message = new CharacterStuntsDescriptionMessage();
-					message.properties = new CharacterPropertyDescription[character.Stunts.Count];
-					for (int i = 0; i < character.Stunts.Count; ++i)
-						message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.Stunts[i]);
+					if (character.Stunts == null) {
+						message.properties = new CharacterPropertyDescription[0];
+					} else {
+						message.properties = new CharacterPropertyDescription[character.Stunts.Count];
+						for (int i = 0; i < character.Stunts.Count; ++i)
+							message.properties[i] = StreamableFactory.CreateCharacterPropertyDescription(character.Stunts[i]);
+					}
 					break;
 				default:
 					return null;
@@ -205,6 +217,7 @@ namespace GameLib.ClientComponents {
 			message.benefitCharacterID = consequence.Benefit == null ? "" : consequence.Benefit.ID;
 			message.benefitTimes = consequence.BenefitTimes;
 			message.counteractLevel = consequence.CounteractLevel;
+			message.mentalDamage = consequence.MentalDamage;
 			return message;
 		}
 

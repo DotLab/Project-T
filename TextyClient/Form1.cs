@@ -29,28 +29,16 @@ namespace TextyClient {
 
 			_isDM = isDM;
 			if (isDM) {
-				Program.connection.AddMessageReceiver(DMCheckPanelShowMessage.MESSAGE_TYPE, this);
-				Program.connection.AddMessageReceiver(DMCheckPanelHideMessage.MESSAGE_TYPE, this);
+				Program.connection.AddMessageReceiver(DMCheckMessage.MESSAGE_TYPE, this);
 			}
 		}
 
 		public void MessageReceived(GameLib.Utilities.Network.Message message) {
 			if (_isDM) {
-				switch (message.MessageType) {
-					case DMCheckPanelShowMessage.MESSAGE_TYPE: {
-							var msg = (DMCheckPanelShowMessage)message;
-							_dmCheckForm.SetMessage(msg.text);
-							_dmCheckForm.Visible = true;
-							_dmCheckForm.Activate();
-						}
-						break;
-					case DMCheckPanelHideMessage.MESSAGE_TYPE: {
-							_dmCheckForm.Visible = false;
-						}
-						break;
-					default:
-						break;
-				}
+				var msg = (DMCheckMessage)message;
+				_dmCheckForm.SetMessage(msg.text);
+				_dmCheckForm.Visible = true;
+				_dmCheckForm.Activate();
 			}
 		}
 

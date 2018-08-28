@@ -476,4 +476,19 @@ namespace GameLib.Utilities.Network.ClientMessages {
 		public override void ReadFrom(IDataInputStream stream) { }
 		public override void WriteTo(IDataOutputStream stream) { }
 	}
+
+	public sealed class UserDeterminResultMessage : Message {
+		public const int MESSAGE_TYPE = 30;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public int result;
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteInt32(result);
+		}
+
+		public override void ReadFrom(IDataInputStream stream) {
+			result = stream.ReadInt32();
+		}
+	}
 }

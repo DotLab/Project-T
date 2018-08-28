@@ -15,7 +15,7 @@
 	public struct SkillProperty {
 		public static readonly SkillProperty INIT = new SkillProperty {
 			level = 0,
-			canAttack = false, canDefend = false,
+			canAttack = false, damageMental = false, canDefend = false,
 			actionPointCost = 1,
 			useRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
 			affectRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
@@ -28,6 +28,7 @@
 
 		public int level;
 		public bool canAttack;
+		public bool damageMental;
 		public bool canDefend;
 		public int actionPointCost;
 		public Range useRange;
