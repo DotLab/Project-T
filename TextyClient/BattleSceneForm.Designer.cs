@@ -66,7 +66,6 @@
 			this.mouseGridPosLbl = new System.Windows.Forms.Label();
 			this.roundInfoListBox = new System.Windows.Forms.ListBox();
 			this.label2 = new System.Windows.Forms.Label();
-			this.checkingStateLbl = new System.Windows.Forms.Label();
 			this.groupBox1.SuspendLayout();
 			this.battleSceneMenuStrip.SuspendLayout();
 			this.groupBox2.SuspendLayout();
@@ -213,7 +212,6 @@
 			// 
 			// groupBox2
 			// 
-			this.groupBox2.Controls.Add(this.checkingStateLbl);
 			this.groupBox2.Controls.Add(this.targetCountLbl);
 			this.groupBox2.Controls.Add(this.roundInfoLbl);
 			this.groupBox2.Controls.Add(this.roundInfoPanel);
@@ -436,14 +434,6 @@
 			this.label2.TabIndex = 6;
 			this.label2.Text = "行动顺序";
 			// 
-			// checkingStateLbl
-			// 
-			this.checkingStateLbl.AutoSize = true;
-			this.checkingStateLbl.Location = new System.Drawing.Point(6, 116);
-			this.checkingStateLbl.Name = "checkingStateLbl";
-			this.checkingStateLbl.Size = new System.Drawing.Size(0, 12);
-			this.checkingStateLbl.TabIndex = 32;
-			// 
 			// BattleSceneForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -505,6 +495,5 @@
 		private System.Windows.Forms.Label label4;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.Label targetCountLbl;
-		private System.Windows.Forms.Label checkingStateLbl;
 	}
 }

@@ -1050,18 +1050,18 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public BattleSceneObj userObj;
 		public BattleSceneObj aspectOwnerObj;
-		public string aspectID;
+		public CharacterPropertyDescription aspect;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			userObj.ReadFrom(stream);
 			aspectOwnerObj.ReadFrom(stream);
-			aspectID = stream.ReadString();
+			aspect.ReadFrom(stream);
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
 			userObj.WriteTo(stream);
 			aspectOwnerObj.WriteTo(stream);
-			stream.WriteString(aspectID);
+			aspect.WriteTo(stream);
 		}
 	}
 
@@ -1365,6 +1365,42 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public override void ReadFrom(IDataInputStream stream) {
 			text = stream.ReadString();
+		}
+	}
+
+	public sealed class CheckerCheckResultMessage : Message {
+		public const int MESSAGE_TYPE = -75;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public CheckResult initiative;
+		public CheckResult passive;
+		public int delta;
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteByte((byte)initiative);
+			stream.WriteByte((byte)passive);
+			stream.WriteInt32(delta);
+		}
+
+		public override void ReadFrom(IDataInputStream stream) {
+			initiative = (CheckResult)stream.ReadByte();
+			passive = (CheckResult)stream.ReadByte();
+			delta = stream.ReadInt32();
+		}
+	}
+
+	public sealed class BattleSceneStuntTargetSelectableMessage : Message {
+		public const int MESSAGE_TYPE = -76;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public bool result;
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteBoolean(result);
+		}
+
+		public override void ReadFrom(IDataInputStream stream) {
+			result = stream.ReadBoolean();
 		}
 	}
 }

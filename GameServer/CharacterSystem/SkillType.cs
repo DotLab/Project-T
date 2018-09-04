@@ -3,6 +3,12 @@ using System;
 using System.Collections.Generic;
 
 namespace GameLib.CharacterSystem {
+	public struct SkillSituation {
+		public bool canAttack;
+		public bool damageMental;
+		public bool canDefend;
+	}
+
 	public sealed class SkillType : IEquatable<SkillType> {
 		public static readonly SkillType Athletics = new SkillType("Athletics", "运动");
 		public static readonly SkillType Burglary = new SkillType("Burglary", "盗窃");
@@ -27,14 +33,14 @@ namespace GameLib.CharacterSystem {
 		public static Dictionary<string, SkillType> SkillTypes => skillTypes;
 
 		static SkillType() {
-			Athletics._property.canDefend = true;
-			Fight._property.canAttack = true;
-			Fight._property.canDefend = true;
+			Athletics._situation.canDefend = true;
+			Fight._situation.canAttack = true;
+			Fight._situation.canDefend = true;
 			Fight._property.useRange = new Range() { low = 0, lowOpen = false, high = 1, highOpen = false };
-			Physique._property.canDefend = true;
-			Provoke._property.canAttack = true;
+			Physique._situation.canDefend = true;
+			Provoke._situation.canAttack = true;
 			Provoke._property.useRange = new Range() { low = 0, lowOpen = false, high = 4, highOpen = false };
-			Will._property.canDefend = true;
+			Will._situation.canDefend = true;
 			skillTypes.Add(Athletics.ID, Athletics);
 			skillTypes.Add(Burglary.ID, Burglary);
 			skillTypes.Add(Contacts.ID, Contacts);
@@ -58,10 +64,12 @@ namespace GameLib.CharacterSystem {
 		private readonly string _id;
 		private readonly string _name;
 		private SkillProperty _property;
+		private SkillSituation _situation;
 
 		public string ID => _id;
 		public string Name => _name;
 		public SkillProperty Property => _property;
+		public SkillSituation Situation => _situation;
 
 		private SkillType(string id, string name) {
 			_id = id ?? throw new ArgumentNullException(nameof(id));

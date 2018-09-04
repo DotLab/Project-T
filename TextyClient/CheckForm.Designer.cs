@@ -1,5 +1,5 @@
 ﻿namespace TextyClient {
-	partial class DMCheckForm {
+	partial class CheckForm {
 		/// <summary>
 		/// Required designer variable.
 		/// </summary>
@@ -57,7 +57,7 @@
 			this.NoBtn.UseVisualStyleBackColor = true;
 			this.NoBtn.Click += new System.EventHandler(this.NoBtn_Click);
 			// 
-			// DMCheckForm
+			// CheckForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -67,9 +67,9 @@
 			this.Controls.Add(this.messageLbl);
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
-			this.Name = "DMCheckForm";
-			this.Text = "DM确认";
-			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.DMCheckForm_FormClosing);
+			this.Name = "CheckForm";
+			this.Text = "确认";
+			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.CheckForm_FormClosing);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 

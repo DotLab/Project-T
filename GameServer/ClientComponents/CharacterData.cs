@@ -38,26 +38,15 @@ namespace GameLib.ClientComponents {
 						break;
 					case GetAspectDataMessage.MESSAGE_TYPE: {
 							var aspectDataMessage = (GetAspectDataMessage)request;
-							Character character = CharacterManager.Instance.FindCharacterByID(aspectDataMessage.characterID);
-							string aspectID = aspectDataMessage.aspectID;
-							foreach (Aspect aspect in character.Aspects) {
-								if (aspect.ID == aspectID) {
-									resp = GetAspectData(aspect);
-									break;
-								}
-							}
+							var character = CharacterManager.Instance.FindCharacterByID(aspectDataMessage.characterID);
+							resp = GetAspectData(character.FindAspectByID(aspectDataMessage.aspectID));
 						}
 						break;
 					case GetConsequenceDataMessage.MESSAGE_TYPE: {
 							var consequenceDataMessage = (GetConsequenceDataMessage)request;
 							var character = CharacterManager.Instance.FindCharacterByID(consequenceDataMessage.characterID);
-							string consequenceID = consequenceDataMessage.consequenceID;
-							foreach (Consequence consequence in character.Aspects) {
-								if (consequence.ID == consequenceID) {
-									resp = GetConsequenceData(consequence);
-									break;
-								}
-							}
+							var consequence = character.FindConsequenceByID(consequenceDataMessage.consequenceID);
+							if (consequence != null) resp = GetConsequenceData(consequence);
 						}
 						break;
 					case GetSkillDataMessage.MESSAGE_TYPE: {
@@ -69,25 +58,15 @@ namespace GameLib.ClientComponents {
 					case GetStuntDataMessage.MESSAGE_TYPE: {
 							var stuntDataMessage = (GetStuntDataMessage)request;
 							var character = CharacterManager.Instance.FindCharacterByID(stuntDataMessage.characterID);
-							string stuntID = stuntDataMessage.stuntID;
-							foreach (Stunt stunt in character.Stunts) {
-								if (stunt.ID == stuntID) {
-									resp = GetStuntData(stunt);
-									break;
-								}
-							}
+							var stunt = character.FindStuntByID(stuntDataMessage.stuntID);
+							if (stunt != null) resp = GetStuntData(stunt);
 						}
 						break;
 					case GetExtraDataMessage.MESSAGE_TYPE: {
 							var extraItemDataMessage = (GetExtraDataMessage)request;
 							var character = CharacterManager.Instance.FindCharacterByID(extraItemDataMessage.characterID);
-							string extraID = extraItemDataMessage.extraID;
-							foreach (Extra extra in character.Extras) {
-								if (extra.ID == extraID) {
-									resp = GetExtraData(extra);
-									break;
-								}
-							}
+							var extra = character.FindExtraByID(extraItemDataMessage.extraID);
+							if (extra != null) resp = GetExtraData(extra);
 						}
 						break;
 					case GetDirectResistSkillsMessage.MESSAGE_TYPE: {

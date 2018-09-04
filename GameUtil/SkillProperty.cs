@@ -12,24 +12,27 @@
 		HINDER
 	}
 
+	public enum CheckResult {
+		FAIL,
+		TIE,
+		SUCCEED,
+		SUCCEED_WITH_STYLE
+	}
+
 	public struct SkillProperty {
 		public static readonly SkillProperty INIT = new SkillProperty {
 			level = 0,
-			canAttack = false, damageMental = false, canDefend = false,
 			actionPointCost = 1,
 			useRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
 			affectRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
 			islinearUse = false,
 			islinearAffect = false,
-			linearAffectDirection = BattleMapDirection.POSITIVE_ROW & BattleMapDirection.POSITIVE_COL & BattleMapDirection.NEGATIVE_ROW & BattleMapDirection.NEGATIVE_COL,
-			linearUseDirection = BattleMapDirection.POSITIVE_ROW & BattleMapDirection.POSITIVE_COL & BattleMapDirection.NEGATIVE_ROW & BattleMapDirection.NEGATIVE_COL,
+			linearAffectDirection = BattleMapDirection.POSITIVE_ROW | BattleMapDirection.POSITIVE_COL | BattleMapDirection.NEGATIVE_ROW | BattleMapDirection.NEGATIVE_COL,
+			linearUseDirection = BattleMapDirection.POSITIVE_ROW | BattleMapDirection.POSITIVE_COL | BattleMapDirection.NEGATIVE_ROW | BattleMapDirection.NEGATIVE_COL,
 			targetCount = 1
 		};
 
 		public int level;
-		public bool canAttack;
-		public bool damageMental;
-		public bool canDefend;
 		public int actionPointCost;
 		public Range useRange;
 		public bool islinearUse;

@@ -28,44 +28,43 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.gameScene = new TextyClient.GameScene();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.SuspendLayout();
-            // 
-            // gameScene
-            // 
-            this.gameScene.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.gameScene.Location = new System.Drawing.Point(0, 0);
-            this.gameScene.Name = "gameScene";
-            this.gameScene.Size = new System.Drawing.Size(150, 129);
-            this.gameScene.TabIndex = 0;
-            this.gameScene.ViewerRectangleLeft = 0;
-            this.gameScene.ViewerRectangleLeftTop = new System.Drawing.Point(0, 0);
-            this.gameScene.ViewerRectangleTop = 0;
-            // 
-            // textBox1
-            // 
-            this.textBox1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.textBox1.Location = new System.Drawing.Point(0, 129);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(150, 21);
-            this.textBox1.TabIndex = 1;
-            // 
-            // AdvancedConsole
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.gameScene);
-            this.Controls.Add(this.textBox1);
-            this.Name = "AdvancedConsole";
-            this.ResumeLayout(false);
-            this.PerformLayout();
+			this.inputTbx = new System.Windows.Forms.TextBox();
+			this.outputTbx = new System.Windows.Forms.TextBox();
+			this.SuspendLayout();
+			// 
+			// inputTbx
+			// 
+			this.inputTbx.Dock = System.Windows.Forms.DockStyle.Bottom;
+			this.inputTbx.Location = new System.Drawing.Point(0, 129);
+			this.inputTbx.Name = "inputTbx";
+			this.inputTbx.Size = new System.Drawing.Size(150, 21);
+			this.inputTbx.TabIndex = 1;
+			this.inputTbx.KeyDown += new System.Windows.Forms.KeyEventHandler(this.inputTbx_KeyDown);
+			// 
+			// outputTbx
+			// 
+			this.outputTbx.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.outputTbx.Location = new System.Drawing.Point(0, 0);
+			this.outputTbx.Multiline = true;
+			this.outputTbx.Name = "outputTbx";
+			this.outputTbx.ReadOnly = true;
+			this.outputTbx.Size = new System.Drawing.Size(150, 129);
+			this.outputTbx.TabIndex = 2;
+			// 
+			// AdvancedConsole
+			// 
+			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
+			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.Controls.Add(this.outputTbx);
+			this.Controls.Add(this.inputTbx);
+			this.Name = "AdvancedConsole";
+			this.ResumeLayout(false);
+			this.PerformLayout();
 
         }
 
         #endregion
-
-        private GameScene gameScene;
-        private System.Windows.Forms.TextBox textBox1;
-    }
+        private System.Windows.Forms.TextBox inputTbx;
+		private System.Windows.Forms.TextBox outputTbx;
+	}
 }

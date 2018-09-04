@@ -428,7 +428,7 @@ namespace GameLib.Utilities.Network.ClientMessages {
 		}
 	}
 
-	public sealed class BattleSceneGetInitiativeUsableSkillOrStuntMessage : Message {
+	public sealed class BattleSceneGetInitiativeUsableSkillOrStuntListMessage : Message {
 		public const int MESSAGE_TYPE = 26;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -446,7 +446,7 @@ namespace GameLib.Utilities.Network.ClientMessages {
 		}
 	}
 
-	public sealed class BattleSceneGetPassiveUsableSkillOrStuntMessage : Message {
+	public sealed class BattleSceneGetPassiveUsableSkillOrStuntListMessage : Message {
 		public const int MESSAGE_TYPE = 27;
 		public override int MessageType => MESSAGE_TYPE;
 		
@@ -489,6 +489,27 @@ namespace GameLib.Utilities.Network.ClientMessages {
 
 		public override void ReadFrom(IDataInputStream stream) {
 			result = stream.ReadInt32();
+		}
+	}
+
+	public sealed class BattleSceneGetStuntTargetSelectableMessage : Message {
+		public const int MESSAGE_TYPE = 31;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public string targetID;
+		public string stuntID;
+		public CharacterAction action;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			targetID = stream.ReadString();
+			stuntID = stream.ReadString();
+			action = (CharacterAction)stream.ReadByte();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteString(targetID);
+			stream.WriteString(stuntID);
+			stream.WriteByte((byte)action);
 		}
 	}
 }

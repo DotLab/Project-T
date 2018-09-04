@@ -40,7 +40,7 @@ namespace GameLib.ClientComponents {
 							var reqMsg = (BattleSceneGetGridObjectDataMessage)request;
 							var resp = new BattleSceneGridObjectDataMessage();
 							var gridObject = BattleSceneContainer.Instance.FindObject(reqMsg.objID) as GridObject;
-							if (gridObject == null) throw new InvalidOperationException("Invalid object id.");
+							if (gridObject == null) return null;
 							resp.objData = StreamableFactory.CreateBattleSceneGridObjData(gridObject);
 							return resp;
 						}
@@ -48,7 +48,7 @@ namespace GameLib.ClientComponents {
 							var reqMsg = (BattleSceneGetLadderObjectDataMessage)request;
 							var resp = new BattleSceneLadderObjectDataMessage();
 							var ladderObject = BattleSceneContainer.Instance.FindObject(reqMsg.objID) as LadderObject;
-							if (ladderObject == null) throw new InvalidOperationException("Invalid object id.");
+							if (ladderObject == null) return null;
 							resp.objData = StreamableFactory.CreateBattleSceneLadderObjData(ladderObject);
 							return resp;
 						}
@@ -64,15 +64,15 @@ namespace GameLib.ClientComponents {
 							resp.result = container.CurrentActable.CanTakeExtraMove();
 							return resp;
 						}
-					case BattleSceneGetInitiativeUsableSkillOrStuntMessage.MESSAGE_TYPE: {
+					case BattleSceneGetInitiativeUsableSkillOrStuntListMessage.MESSAGE_TYPE: {
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) break;
-							var reqMsg = (BattleSceneGetInitiativeUsableSkillOrStuntMessage)request;
+							var reqMsg = (BattleSceneGetInitiativeUsableSkillOrStuntListMessage)request;
 							if (reqMsg.stunt) {
 								var resp = new BattleSceneObjectUsableStuntListMessage();
 								var candoList = new List<Stunt>();
-								if (container.CurrentActable.CharacterRef != null) {
+								if (container.CurrentActable.CharacterRef.Stunts != null) {
 									foreach (var stunt in container.CurrentActable.CharacterRef.Stunts) {
-										if (container.CurrentActable.CanUseSkillOrStunt(stunt.SkillProperty, reqMsg.action)) {
+										if (container.CurrentActable.IsActionPointEnough(stunt.SkillProperty)) {
 											candoList.Add(stunt);
 										}
 									}
@@ -86,7 +86,9 @@ namespace GameLib.ClientComponents {
 								var resp = new BattleSceneObjectUsableSkillListMessage();
 								var candoList = new List<SkillType>();
 								foreach (var skillType in SkillType.SkillTypes) {
-									if (container.CurrentActable.CanUseSkillOrStunt(container.CurrentActable.CharacterRef.GetSkillProperty(skillType.Value), reqMsg.action)) {
+									var skillProperty = container.CurrentActable.CharacterRef.GetSkillProperty(skillType.Value);
+									if (container.CurrentActable.CanUseSkill(skillType.Value, reqMsg.action)
+										&& container.CurrentActable.IsActionPointEnough(skillProperty)) {
 										candoList.Add(skillType.Value);
 									}
 								}
@@ -97,15 +99,26 @@ namespace GameLib.ClientComponents {
 								return resp;
 							}
 						}
-					case BattleSceneGetPassiveUsableSkillOrStuntMessage.MESSAGE_TYPE: {
+					case BattleSceneGetStuntTargetSelectableMessage.MESSAGE_TYPE: {
+							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) break;
+							var reqMsg = (BattleSceneGetStuntTargetSelectableMessage)request;
+							var target = container.FindObject(reqMsg.targetID);
+							var stunt = container.CurrentActable.CharacterRef.FindStuntByID(reqMsg.stuntID);
+							if (target != null && stunt != null) {
+								var resp = new BattleSceneStuntTargetSelectableMessage();
+								resp.result = container.CurrentActable.CanUseStunt(target, stunt, reqMsg.action);
+								return resp;
+							} else break;
+						}
+					case BattleSceneGetPassiveUsableSkillOrStuntListMessage.MESSAGE_TYPE: {
 							if (!container.IsChecking || container.CurrentPassive.CharacterRef.Controller != _owner) break;
-							var reqMsg = (BattleSceneGetPassiveUsableSkillOrStuntMessage)request;
+							var reqMsg = (BattleSceneGetPassiveUsableSkillOrStuntListMessage)request;
 							if (reqMsg.stunt) {
 								var resp = new BattleSceneObjectUsableStuntListMessage();
 								var candoList = new List<Stunt>();
 								if (container.CurrentPassive.CharacterRef.Stunts != null) {
 									foreach (var stunt in container.CurrentPassive.CharacterRef.Stunts) {
-										if (container.CanCurrentPassiveUseSkillOrStunt(stunt.SkillProperty)) {
+										if (container.CanCurrentPassiveUseStunt(stunt)) {
 											candoList.Add(stunt);
 										}
 									}
@@ -119,7 +132,7 @@ namespace GameLib.ClientComponents {
 								var resp = new BattleSceneObjectUsableSkillListMessage();
 								var candoList = new List<SkillType>();
 								foreach (var skillType in SkillType.SkillTypes) {
-									if (container.CanCurrentPassiveUseSkillOrStunt(container.CurrentActable.CharacterRef.GetSkillProperty(skillType.Value))) {
+									if (container.CanCurrentPassiveUseSkill(skillType.Value)) {
 										candoList.Add(skillType.Value);
 									}
 								}
@@ -148,26 +161,23 @@ namespace GameLib.ClientComponents {
 				switch (message.MessageType) {
 					case BattleSceneActableObjectMoveMessage.MESSAGE_TYPE: {
 							var msg = (BattleSceneActableObjectMoveMessage)message;
+							if (container.IsChecking) return;
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) return;
 							container.CurrentActable.MoveTo(msg.dstRow, msg.dstCol, msg.dstHighland);
 						}
 						break;
 					case BattleSceneTakeExtraMovePointMessage.MESSAGE_TYPE: {
+							if (container.IsChecking) return;
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) return;
 							container.CurrentActable.TakeExtraMove();
 						}
 						break;
 					case BattleSceneActableObjectDoActionMessage.MESSAGE_TYPE: {
+							if (container.IsChecking) return;
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) return;
 							var msg = (BattleSceneActableObjectDoActionMessage)message;
 							if (msg.isStunt) {
-								Stunt selectedStunt = null;
-								foreach (var stunt in container.CurrentActable.CharacterRef.Stunts) {
-									if (stunt.ID == msg.skillTypeOrStuntID) {
-										selectedStunt = stunt;
-										break;
-									}
-								}
+								Stunt selectedStunt = container.CurrentActable.CharacterRef.FindStuntByID(msg.skillTypeOrStuntID);
 								List<SceneObject> targets = new List<SceneObject>();
 								foreach (var msgTarget in msg.targets) {
 									var target = container.FindObject(msgTarget);
@@ -189,6 +199,7 @@ namespace GameLib.ClientComponents {
 						}
 						break;
 					case BattleSceneActableObjectDoSpecialActionMessage.MESSAGE_TYPE: {
+							if (container.IsChecking) return;
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) return;
 
 						}
@@ -213,12 +224,8 @@ namespace GameLib.ClientComponents {
 							if (!container.IsChecking) return;
 							if (SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL_OR_STUNT
 								&& container.CurrentPassive.CharacterRef.Controller == _owner) {
-								foreach (var stunt in container.CurrentPassive.CharacterRef.Stunts) {
-									if (stunt.ID == msg.stuntID) {
-										container.CurrentPassiveUseStunt(stunt);
-										break;
-									}
-								}
+								var stunt = container.CurrentPassive.CharacterRef.FindStuntByID(msg.stuntID);
+								if (stunt != null) container.CurrentPassiveUseStunt(stunt);
 							}
 						}
 						break;
@@ -228,21 +235,13 @@ namespace GameLib.ClientComponents {
 							if (SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_ASPECT
 								&& container.Initiative.CharacterRef.Controller == _owner) {
 								var gridObj = container.FindObject(msg.characterID);
-								foreach (var aspect in gridObj.CharacterRef.Aspects) {
-									if (aspect.ID == msg.aspectID) {
-										container.InitiativeSelectAspect(aspect, msg.reroll);
-										break;
-									}
-								}
+								var aspect = gridObj.CharacterRef.FindAspectByID(msg.aspectID);
+								container.InitiativeSelectAspect(aspect, msg.reroll);
 							} else if (SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_ASPECT
 								  && container.CurrentPassive.CharacterRef.Controller == _owner) {
 								var gridObj = container.FindObject(msg.characterID);
-								foreach (var aspect in gridObj.CharacterRef.Aspects) {
-									if (aspect.ID == msg.aspectID) {
-										container.CurrentPassiveSelectAspect(aspect, msg.reroll);
-										break;
-									}
-								}
+								var aspect = gridObj.CharacterRef.FindAspectByID(msg.aspectID);
+								container.CurrentPassiveSelectAspect(aspect, msg.reroll);
 							}
 						}
 						break;
@@ -278,8 +277,9 @@ namespace GameLib.ClientComponents {
 			connection.SetRequestHandler(BattleSceneGetLadderObjectDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetActableObjectMovePathInfoMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetCanExtraMoveMessage.MESSAGE_TYPE, this);
-			connection.SetRequestHandler(BattleSceneGetInitiativeUsableSkillOrStuntMessage.MESSAGE_TYPE, this);
-			connection.SetRequestHandler(BattleSceneGetPassiveUsableSkillOrStuntMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(BattleSceneGetInitiativeUsableSkillOrStuntListMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(BattleSceneGetStuntTargetSelectableMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(BattleSceneGetPassiveUsableSkillOrStuntListMessage.MESSAGE_TYPE, this);
 
 			connection.AddMessageReceiver(BattleSceneActableObjectMoveMessage.MESSAGE_TYPE, this);
 			connection.AddMessageReceiver(BattleSceneTakeExtraMovePointMessage.MESSAGE_TYPE, this);
@@ -521,7 +521,7 @@ namespace GameLib.ClientComponents {
 			var message = new BattleSceneCheckerDisplayUsingAspectMessage();
 			message.userObj = StreamableFactory.CreateBattleSceneObj(userSceneObject);
 			message.aspectOwnerObj = StreamableFactory.CreateBattleSceneObj(ownerSceneObject);
-			message.aspectID = aspect.ID;
+			message.aspect = StreamableFactory.CreateCharacterPropertyDescription(aspect);
 			_connection.SendMessage(message);
 		}
 
@@ -550,7 +550,7 @@ namespace GameLib.ClientComponents {
 			message.newActionPoint = actable.ActionPoint;
 			_connection.SendMessage(message);
 		}
-		
+
 		public void UpdateMovePoint(ActableGridObject actable) {
 			if (!_isUsing) return;
 			var message = new BattleSceneUpdateMovePointMessage();
@@ -572,6 +572,14 @@ namespace GameLib.ClientComponents {
 			foreach (var target in targets) {
 				message.targets[i++] = StreamableFactory.CreateBattleSceneObj(target);
 			}
+			_connection.SendMessage(message);
+		}
+
+		public void DisplayCheckResult(CheckResult initiative, CheckResult passive, int delta) {
+			var message = new CheckerCheckResultMessage();
+			message.initiative = initiative;
+			message.passive = passive;
+			message.delta = delta;
 			_connection.SendMessage(message);
 		}
 

@@ -194,9 +194,9 @@ namespace GameLib.Container {
 
 		public void StartCheck(
 			Character initiative, Character passive, CharacterAction action,
-			Action<SkillChecker.CheckResult, int> initiativeCallback, Action<SkillChecker.CheckResult, int> passiveCallback
+			Action<CheckResult, CheckResult, int> checkOverCallback
 			) {
-			SkillChecker.Instance.StartCheck(initiative, passive, action, initiativeCallback, passiveCallback);
+			SkillChecker.Instance.StartCheck(initiative, passive, action, checkOverCallback);
 			foreach (Player player in Game.Players) {
 				if (initiative.Controller == player) player.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.INITIATIVE);
 				else if (passive.Controller == player) player.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.PASSIVE);
@@ -207,8 +207,8 @@ namespace GameLib.Container {
 			else Game.DM.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.OBSERVER);
 		}
 
-		public void ForceEndCheck(SkillChecker.CheckResult initiativeResult, SkillChecker.CheckResult passiveResult, int deltaPointOnInitiativeSide) {
-			SkillChecker.Instance.ForceEndCheck(initiativeResult, passiveResult, deltaPointOnInitiativeSide);
+		public void ForceEndCheck(CheckResult initiativeResult, CheckResult passiveResult, int delta) {
+			SkillChecker.Instance.ForceEndCheck(initiativeResult, passiveResult, delta);
 			foreach (Player player in Game.Players) {
 				if (SkillChecker.Instance.Initiative.Controller == player) player.Client.StoryScene.SkillCheckPanel.Close();
 				else if (SkillChecker.Instance.Passive.Controller == player) player.Client.StoryScene.SkillCheckPanel.Close();

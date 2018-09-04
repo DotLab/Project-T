@@ -97,7 +97,7 @@ namespace GameLib.CharacterSystem {
 		private string _name = "";
 		private string _description = "";
 		private Character _belong = null;
-		private Func<Character, Character, CharacterAction, SkillType, SkillType, bool, bool> _condition = null;
+		private Func<Character, Character, CharacterAction, SkillType, bool, bool> _condition = null; // initiative, passive, action, initiativeSkillType, isInitiativeUsing
 		private InitiativeEffect _initiativeEffect;
 		private readonly StuntPropertyList<PassiveEffect> _passiveEffects;
 		private SkillType _boundSkillType;
@@ -123,7 +123,7 @@ namespace GameLib.CharacterSystem {
 		public override string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
 		public override string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
 		public Character Belong => _belong;
-		public Func<Character, Character, CharacterAction, SkillType, SkillType, bool, bool> Condition { get => _condition; set => _condition = value; }
+		public Func<Character, Character, CharacterAction, SkillType, bool, bool> Condition { get => _condition; set => _condition = value; }
 		public InitiativeEffect Effect {
 			get => _initiativeEffect;
 			set {

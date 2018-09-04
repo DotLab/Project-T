@@ -116,12 +116,10 @@ namespace GameLib.Container {
 		}
 
 		public SceneObject FindObject(string id) {
-			if (_objList.TryGetValue(id, out SceneObject gridObject)) {
-				return gridObject;
-			}
+			if (_objList.TryGetValue(id, out SceneObject gridObject)) return gridObject;
 			return null;
 		}
-		
+
 		public void PushGridObject(int row, int col, bool highland, GridObject gridObject) {
 			if (_objList.Contains(gridObject)) throw new ArgumentException("This object is already added to scene.", nameof(gridObject));
 			List<GridObject> land;
@@ -435,16 +433,16 @@ namespace GameLib.Container {
 		public void NextPassiveCheck() {
 			if (!_isChecking) throw new InvalidOperationException("It's not in checking state.");
 			if (_passives.Count <= 0) {
-				_isChecking = false;
 				foreach (Player player in Game.Players) {
 					player.Client.BattleScene.EndCheck();
 				}
 				Game.DM.Client.BattleScene.EndCheck();
+				_isChecking = false;
 				return;
 			}
 			_currentPassive = _passives[_passives.Count - 1];
 			_passives.RemoveAt(_passives.Count - 1);
-			SkillChecker.Instance.StartCheck(_initiative.CharacterRef, _currentPassive.CharacterRef, _checkingAction, this.OnceInitiativeResult, this.OncePassiveResult, this.OnceCheckOver);
+			SkillChecker.Instance.StartCheck(_initiative.CharacterRef, _currentPassive.CharacterRef, _checkingAction, this.OnceCheckOver);
 			SkillChecker.Instance.InitiativeSelectSkill(_initiativeSkillType);
 			SkillChecker.Instance.InitiativeRollDice(new int[] { _initiativeRollPoint });
 			SkillChecker.Instance.InitiativeExtraPoint = _initiativeFixedExtraPoint;
@@ -461,10 +459,15 @@ namespace GameLib.Container {
 			_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectSkillOrStunt(_checkingAction, _currentPassive, _initiative, _initiativeSkillType);
 		}
 
-		private void OnceInitiativeResult(SkillChecker.CheckResult result, int delta) {
+		private void OnceCheckOver(CheckResult initiativeResult, CheckResult passiveResult, int delta) {
+			foreach (Player player in Game.Players) {
+				player.Client.BattleScene.DisplayCheckResult(initiativeResult, passiveResult, delta);
+			}
+			Game.DM.Client.BattleScene.DisplayCheckResult(initiativeResult, passiveResult, delta);
+
 			if (_checkingAction == CharacterAction.CREATE_ASPECT) {
-				switch (result) {
-					case SkillChecker.CheckResult.TIE: {
+				switch (initiativeResult) {
+					case CheckResult.TIE: {
 							var boost = new Aspect();
 							boost.PersistenceType = PersistenceType.Temporary;
 							boost.Name = "受到" + _initiative.CharacterRef.Name + "的" + _initiativeSkillType.Name + "影响";
@@ -473,7 +476,7 @@ namespace GameLib.Container {
 							_currentPassive.CharacterRef.Aspects.Add(boost);
 						}
 						break;
-					case SkillChecker.CheckResult.SUCCEED: {
+					case CheckResult.SUCCEED: {
 							var aspect = new Aspect();
 							aspect.PersistenceType = PersistenceType.Common;
 							aspect.Name = "受到" + _initiative.CharacterRef.Name + "的" + _initiativeSkillType.Name + "影响";
@@ -482,7 +485,7 @@ namespace GameLib.Container {
 							_currentPassive.CharacterRef.Aspects.Add(aspect);
 						}
 						break;
-					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE: {
+					case CheckResult.SUCCEED_WITH_STYLE: {
 							var aspect = new Aspect();
 							aspect.PersistenceType = PersistenceType.Common;
 							aspect.Name = "受到" + _initiative.CharacterRef.Name + "的" + _initiativeSkillType.Name + "影响";
@@ -495,8 +498,8 @@ namespace GameLib.Container {
 						break;
 				}
 			} else if (_checkingAction == CharacterAction.ATTACK) {
-				switch (result) {
-					case SkillChecker.CheckResult.TIE: {
+				switch (initiativeResult) {
+					case CheckResult.TIE: {
 							var boost = new Aspect();
 							boost.PersistenceType = PersistenceType.Temporary;
 							boost.Name = "受到" + _initiative.CharacterRef.Name + "的" + _initiativeSkillType.Name + "攻击";
@@ -505,14 +508,14 @@ namespace GameLib.Container {
 							_currentPassive.CharacterRef.Aspects.Add(boost);
 						}
 						break;
-					case SkillChecker.CheckResult.SUCCEED: {
-							var skillProperty = _initiative.CharacterRef.GetSkillProperty(_initiativeSkillType);
-							_currentPassive.CharacterRef.Damage(delta, skillProperty.damageMental, _initiative.CharacterRef, "使用" + _initiativeSkillType.Name + "发动攻击");
+					case CheckResult.SUCCEED: {
+							var skillSituation = _initiative.CharacterRef.GetSkillSituation(_initiativeSkillType);
+							_currentPassive.CharacterRef.Damage(delta, skillSituation.damageMental, _initiative.CharacterRef, "使用" + _initiativeSkillType.Name + "发动攻击");
 						}
 						break;
-					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE: {
+					case CheckResult.SUCCEED_WITH_STYLE: {
 							_initiative.CharacterRef.Controller.Client.RequestDetermin("降低一点伤害来换取一个增益吗？", determin => {
-								var skillProperty = _initiative.CharacterRef.GetSkillProperty(_initiativeSkillType);
+								var skillSituation = _initiative.CharacterRef.GetSkillSituation(_initiativeSkillType);
 								int damage = delta;
 								if (determin == 0) {
 									var boost = new Aspect();
@@ -523,7 +526,7 @@ namespace GameLib.Container {
 									_currentPassive.CharacterRef.Aspects.Add(boost);
 									damage -= 1;
 								}
-								_currentPassive.CharacterRef.Damage(damage, skillProperty.damageMental, _initiative.CharacterRef, "使用" + _initiativeSkillType.Name + "发动攻击");
+								_currentPassive.CharacterRef.Damage(damage, skillSituation.damageMental, _initiative.CharacterRef, "使用" + _initiativeSkillType.Name + "发动攻击");
 							});
 						}
 						break;
@@ -531,58 +534,20 @@ namespace GameLib.Container {
 						break;
 				}
 			} else if (_checkingAction == CharacterAction.HINDER) {
-				switch (result) {
-					case SkillChecker.CheckResult.FAIL:
+				switch (initiativeResult) {
+					case CheckResult.FAIL:
 						break;
-					case SkillChecker.CheckResult.TIE:
+					case CheckResult.TIE:
 						break;
-					case SkillChecker.CheckResult.SUCCEED:
+					case CheckResult.SUCCEED:
 						break;
-					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
-						break;
-					default:
-						break;
-				}
-			}
-		}
-
-		private void OncePassiveResult(SkillChecker.CheckResult result, int delta) {
-			if (_checkingAction == CharacterAction.CREATE_ASPECT) {
-				switch (result) {
-					case SkillChecker.CheckResult.SUCCEED:
-						break;
-					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
-						break;
-					default:
-						break;
-				}
-			} else if (_checkingAction == CharacterAction.ATTACK) {
-				switch (result) {
-					case SkillChecker.CheckResult.SUCCEED:
-						break;
-					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
-						break;
-					default:
-						break;
-				}
-			} else if (_checkingAction == CharacterAction.HINDER) {
-				switch (result) {
-					case SkillChecker.CheckResult.FAIL:
-						break;
-					case SkillChecker.CheckResult.TIE:
-						break;
-					case SkillChecker.CheckResult.SUCCEED:
-						break;
-					case SkillChecker.CheckResult.SUCCEED_WITH_STYLE:
+					case CheckResult.SUCCEED_WITH_STYLE:
 						break;
 					default:
 						break;
 				}
 			}
-		}
 
-		private void OnceCheckOver() {
-			// ...
 			this.Update();
 			this.NextPassiveCheck();
 		}
@@ -600,15 +565,19 @@ namespace GameLib.Container {
 			Game.DM.Client.BattleScene.UpdateSumPoint(_currentPassive, SkillChecker.Instance.GetPassivePoint());
 		}
 
-		public bool CanCurrentPassiveUseSkillOrStunt(SkillProperty skillProperty) {
-			if (!SkillChecker.CanPassiveUseSkillOrStunt(skillProperty, _checkingAction)) return false;
-			return true;
+		public bool CanCurrentPassiveUseSkill(SkillType skillType) {
+			if (skillType == null) throw new ArgumentNullException(nameof(skillType));
+			return SkillChecker.CanPassiveUseSkill(_currentPassive.CharacterRef, _checkingAction, skillType);
+		}
+
+		public bool CanCurrentPassiveUseStunt(Stunt stunt) {
+			if (stunt == null) throw new ArgumentNullException(nameof(stunt));
+			return SkillChecker.CanPassiveUseStunt(_initiative.CharacterRef, _currentPassive.CharacterRef, _checkingAction, _initiativeSkillType, stunt);
 		}
 
 		public void CurrentPassiveUseSkill(SkillType skillType, bool force = false, bool bigone = false, int[] fixedDicePoints = null) {
 			if (skillType == null) throw new ArgumentNullException(nameof(skillType));
-			var skillProperty = _currentPassive.CharacterRef.GetSkillProperty(skillType);
-			if (!SkillChecker.CanPassiveUseSkillOrStunt(skillProperty, _checkingAction)) throw new InvalidOperationException("Cannot use this skill.");
+			if (!CanCurrentPassiveUseSkill(skillType)) throw new InvalidOperationException("Cannot use this skill.");
 			if (force) {
 				this.CurrentPassiveApplySkill(skillType, bigone, fixedDicePoints);
 				_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectSkillOrStuntComplete();
@@ -640,8 +609,7 @@ namespace GameLib.Container {
 		public void CurrentPassiveUseStunt(Stunt stunt) {
 			if (stunt == null) throw new ArgumentNullException(nameof(stunt));
 			if (stunt.Belong != SkillChecker.Instance.Passive) throw new ArgumentException("This stunt is not belong to passive character.", nameof(stunt));
-			var skillProperty = stunt.SkillProperty;
-			if (!SkillChecker.CanPassiveUseSkillOrStunt(skillProperty, _checkingAction)) throw new InvalidOperationException("Cannot use this stunt.");
+			if (!CanCurrentPassiveUseStunt(stunt)) throw new InvalidOperationException("Cannot use this stunt.");
 			if (stunt.NeedDMCheck) {
 				Game.DM.DMClient.RequestCheck(_currentPassive.CharacterRef.Controller,
 					SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + stunt.Name + ",可以吗？",
@@ -835,10 +803,10 @@ namespace GameLib.Container.BattleComponent {
 		}
 		#endregion
 		private readonly JSAPI _apiObj;
-		
+
 		private Grid _secondGridRef;
 		private BattleMapDirection _directionOnFirstGrid;
-		
+
 		public Grid SecondGridRef => _secondGridRef;
 		public override bool IsTerrain => true;
 		public BattleMapDirection DirectionOnFirstGrid => _directionOnFirstGrid;
@@ -1112,7 +1080,7 @@ namespace GameLib.Container.BattleComponent {
 		private int _actionPointMax = 0;
 		private bool _movable = false;
 		private int _movePoint = 0;
-		
+
 		public int ActionPriority { get => _actionPriority; set => _actionPriority = value; }
 		public int ActionPoint { get => _actionPoint; set => _actionPoint = value; }
 		public int ActionPointMax { get => _actionPointMax; set => _actionPointMax = value; }
@@ -1257,22 +1225,33 @@ namespace GameLib.Container.BattleComponent {
 				Move(moveDirections[i], moveStairways[i]);
 			}
 		}
-
-		public bool CanUseSkillOrStunt(SkillProperty skillProperty, CharacterAction action) {
-			if (!SkillChecker.CanInitiativeUseSkillOrStunt(skillProperty, action)) return false;
-			if (this.ActionPoint >= this.ActionPointMax) return true;
-			if (this.ActionPoint - skillProperty.actionPointCost < 0) return false;
+		
+		public bool IsActionPointEnough(SkillProperty skillProperty) {
+			if (this.ActionPoint < this.ActionPointMax && this.ActionPoint - skillProperty.actionPointCost < 0) return false;
 			return true;
 		}
 
-		private void ActionSecurityFilter(ref SkillProperty skillProperty, ref CharacterAction action, ref int centerRow, ref int centerCol, ref IEnumerable<SceneObject> targets) {
+		public bool CanUseSkill(SkillType skillType, CharacterAction action) {
+			if (skillType == null) throw new ArgumentNullException(nameof(skillType));
+			return SkillChecker.CanInitiativeUseSkill(this.CharacterRef, action, skillType);
+		}
+
+		public bool CanUseStunt(SceneObject target, Stunt stunt, CharacterAction action) {
+			if (target == null) throw new ArgumentNullException(nameof(target));
+			if (stunt == null) throw new ArgumentNullException(nameof(stunt));
+			return SkillChecker.CanInitiativeUseStunt(this.CharacterRef, target.CharacterRef, action, stunt);
+		}
+		
+		private void SkillCheckFilter(ref SkillType skillType, ref CharacterAction action, ref int centerRow, ref int centerCol, ref IEnumerable<SceneObject> targets) {
 			if (centerRow >= BattleSceneContainer.Instance.BattleMap.Rows || centerRow < 0)
 				throw new ArgumentOutOfRangeException(nameof(centerRow));
 			if (centerCol >= BattleSceneContainer.Instance.BattleMap.Cols || centerCol < 0)
 				throw new ArgumentOutOfRangeException(nameof(centerCol));
 
-			if (!SkillChecker.CanInitiativeUseSkillOrStunt(skillProperty, action)) throw new InvalidOperationException("Cannot use this skill/stunt.");
-			if (this.ActionPoint < this.ActionPointMax && this.ActionPoint - skillProperty.actionPointCost < 0) throw new InvalidOperationException("Action point is not enough.");
+			var skillProperty = this.CharacterRef.GetSkillProperty(skillType);
+
+			if (!CanUseSkill(skillType, action)) throw new InvalidOperationException("Cannot use this skill.");
+			if (!IsActionPointEnough(skillProperty)) throw new InvalidOperationException("Action point is not enough.");
 
 			if (skillProperty.islinearUse) {
 				do {
@@ -1286,7 +1265,7 @@ namespace GameLib.Container.BattleComponent {
 			} else if (skillProperty.useRange.OutOfRange(Math.Abs(centerRow - this.GridRef.PosRow) + Math.Abs(centerCol - this.GridRef.PosCol))) throw new InvalidOperationException("Cannot use this skill/stunt at the specified position.");
 
 			if (skillProperty.targetCount == -1) {
-				List<GridObject> areaTargets = new List<GridObject>();
+				var areaTargets = new List<SceneObject>();
 				if (skillProperty.islinearAffect) {
 					if (skillProperty.affectRange.InRange(0)) {
 						areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, centerCol].Lowland);
@@ -1327,7 +1306,7 @@ namespace GameLib.Container.BattleComponent {
 				} else {
 					for (int row = 0; row < BattleSceneContainer.Instance.BattleMap.Rows; ++row) {
 						for (int col = 0; col < BattleSceneContainer.Instance.BattleMap.Cols; ++col) {
-							if (skillProperty.affectRange.InRange(Math.Abs(centerRow - centerRow) + Math.Abs(centerCol - centerCol))) {
+							if (skillProperty.affectRange.InRange(Math.Abs(row - centerRow) + Math.Abs(col - centerCol))) {
 								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, col].Lowland);
 								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, col].Highland);
 							}
@@ -1357,10 +1336,111 @@ namespace GameLib.Container.BattleComponent {
 			}
 		}
 
+		private void StuntCheckFilter(ref Stunt stunt, ref CharacterAction action, ref int centerRow, ref int centerCol, ref IEnumerable<SceneObject> targets) {
+			if (stunt.Belong != this.CharacterRef) throw new ArgumentException("This stunt is not belong to the character.", nameof(stunt));
+
+			if (centerRow >= BattleSceneContainer.Instance.BattleMap.Rows || centerRow < 0)
+				throw new ArgumentOutOfRangeException(nameof(centerRow));
+			if (centerCol >= BattleSceneContainer.Instance.BattleMap.Cols || centerCol < 0)
+				throw new ArgumentOutOfRangeException(nameof(centerCol));
+
+			var skillProperty = stunt.SkillProperty;
+			if (!IsActionPointEnough(skillProperty)) throw new InvalidOperationException("Action point is not enough.");
+
+			if (skillProperty.islinearUse) {
+				do {
+					if (centerRow == this.GridRef.PosRow && centerCol == this.GridRef.PosCol && skillProperty.useRange.InRange(0)) break;
+					if ((skillProperty.linearUseDirection & BattleMapDirection.POSITIVE_ROW) != 0 && centerCol == this.GridRef.PosCol && skillProperty.useRange.InRange(centerRow - this.GridRef.PosRow)) break;
+					if ((skillProperty.linearUseDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && centerCol == this.GridRef.PosCol && skillProperty.useRange.InRange(this.GridRef.PosRow - centerRow)) break;
+					if ((skillProperty.linearUseDirection & BattleMapDirection.POSITIVE_COL) != 0 && centerRow == this.GridRef.PosRow && skillProperty.useRange.InRange(centerCol - this.GridRef.PosCol)) break;
+					if ((skillProperty.linearUseDirection & BattleMapDirection.NEGATIVE_COL) != 0 && centerRow == this.GridRef.PosRow && skillProperty.useRange.InRange(this.GridRef.PosCol - centerCol)) break;
+					throw new InvalidOperationException("Cannot use this skill/stunt at the specified position.");
+				} while (false);
+			} else if (skillProperty.useRange.OutOfRange(Math.Abs(centerRow - this.GridRef.PosRow) + Math.Abs(centerCol - this.GridRef.PosCol))) throw new InvalidOperationException("Cannot use this skill/stunt at the specified position.");
+
+			if (skillProperty.targetCount == -1) {
+				var areaTargets = new List<SceneObject>();
+				if (skillProperty.islinearAffect) {
+					if (skillProperty.affectRange.InRange(0)) {
+						areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, centerCol].Lowland);
+						areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, centerCol].Highland);
+					}
+					if ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0) {
+						for (int row = centerRow + 1; row < BattleSceneContainer.Instance.BattleMap.Rows; ++row) {
+							if (skillProperty.affectRange.InRange(row - centerRow)) {
+								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, centerCol].Lowland);
+								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, centerCol].Highland);
+							}
+						}
+					}
+					if ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0) {
+						for (int row = centerRow - 1; row >= 0; --row) {
+							if (skillProperty.affectRange.InRange(centerRow - row)) {
+								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, centerCol].Lowland);
+								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, centerCol].Highland);
+							}
+						}
+					}
+					if ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0) {
+						for (int col = centerCol + 1; col < BattleSceneContainer.Instance.BattleMap.Cols; ++col) {
+							if (skillProperty.affectRange.InRange(col - centerCol)) {
+								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, col].Lowland);
+								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, col].Highland);
+							}
+						}
+					}
+					if ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0) {
+						for (int col = centerCol - 1; col >= 0; --col) {
+							if (skillProperty.affectRange.InRange(centerCol - col)) {
+								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, col].Lowland);
+								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, col].Highland);
+							}
+						}
+					}
+				} else {
+					for (int row = 0; row < BattleSceneContainer.Instance.BattleMap.Rows; ++row) {
+						for (int col = 0; col < BattleSceneContainer.Instance.BattleMap.Cols; ++col) {
+							if (skillProperty.affectRange.InRange(Math.Abs(row - centerRow) + Math.Abs(col - centerCol))) {
+								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, col].Lowland);
+								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, col].Highland);
+							}
+						}
+					}
+				}
+				var filteredTargets = new List<SceneObject>();
+				foreach (var areaTarget in areaTargets) {
+					if (CanUseStunt(areaTarget, stunt, action)) {
+						filteredTargets.Add(areaTarget);
+					}
+				}
+				targets = filteredTargets;
+			} else {
+				if (targets == null) throw new ArgumentNullException(nameof(targets));
+				int count = 0;
+				foreach (GridObject target in targets) {
+					if (target == null) throw new ArgumentNullException(nameof(target));
+					if (!CanUseStunt(target, stunt, action)) throw new InvalidOperationException("Cannot use this stunt.");
+					int row = target.GridRef.PosRow;
+					int col = target.GridRef.PosCol;
+					if (skillProperty.islinearAffect) {
+						do {
+							if ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0 && col == centerCol && skillProperty.affectRange.InRange(row - centerRow)) break;
+							if ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && col == centerCol && skillProperty.affectRange.InRange(centerRow - row)) break;
+							if ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0 && row == centerRow && skillProperty.affectRange.InRange(col - centerCol)) break;
+							if ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0 && row == centerRow && skillProperty.affectRange.InRange(centerCol - col)) break;
+							throw new InvalidOperationException("Target is not in range!");
+						} while (false);
+					} else if (skillProperty.affectRange.OutOfRange(Math.Abs(row - centerRow) + Math.Abs(col - centerCol))) throw new InvalidOperationException("Target is not in range!");
+					++count;
+				}
+				if (count > skillProperty.targetCount) throw new InvalidOperationException("Targets count is more than limit!");
+			}
+		}
+
 		public void UseSkill(SkillType skillType, CharacterAction action, int centerRow, int centerCol, IEnumerable<SceneObject> targets, bool force = false) {
 			if (skillType == null) throw new ArgumentNullException(nameof(skillType));
+			SkillCheckFilter(ref skillType, ref action, ref centerRow, ref centerCol, ref targets);
 			var skillProperty = this.CharacterRef.GetSkillProperty(skillType);
-			ActionSecurityFilter(ref skillProperty, ref action, ref centerRow, ref centerCol, ref targets);
 			if (!force) {
 				if (action == CharacterAction.CREATE_ASPECT) {
 					Game.DM.DMClient.RequestCheck(this.CharacterRef.Controller,
@@ -1389,12 +1469,11 @@ namespace GameLib.Container.BattleComponent {
 			Game.DM.Client.BattleScene.UpdateActionPoint(this);
 			BattleSceneContainer.Instance.StartCheck(this, targets, action, skillType);
 		}
-		
+
 		public void UseStunt(Stunt stunt, CharacterAction action, int centerRow, int centerCol, IEnumerable<SceneObject> targets) {
 			if (stunt == null) throw new ArgumentNullException(nameof(stunt));
-			if (stunt.Belong != this.CharacterRef) throw new ArgumentException("This stunt is not belong to the character.", nameof(stunt));
+			StuntCheckFilter(ref stunt, ref action, ref centerRow, ref centerCol, ref targets);
 			var skillProperty = stunt.SkillProperty;
-			ActionSecurityFilter(ref skillProperty, ref action, ref centerRow, ref centerCol, ref targets);
 			if (stunt.NeedDMCheck) {
 				Game.DM.DMClient.RequestCheck(this.CharacterRef.Controller,
 					this.CharacterRef.Name + "想使用" + stunt.Name + ",可以吗？",

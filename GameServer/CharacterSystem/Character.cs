@@ -249,37 +249,39 @@ namespace GameLib.CharacterSystem {
 		private readonly JSAPI _apiObj;
 		
 		protected sealed class Skill : IDescribable {
-			private string _description = "";
-			private SkillType _skillType;
+			private readonly SkillType _skillType;
 			private SkillProperty _property;
+			private SkillSituation _situation;
 
 			public string Name { get => _skillType.Name; set { } }
-			public string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
-			public SkillType SkillType { get => _skillType; set => _skillType = value ?? throw new ArgumentNullException(nameof(value)); }
+			public string Description { get => ""; set { } }
+			public SkillType SkillType => _skillType;
 			public SkillProperty Property { get => _property; set => _property = value; }
+			public SkillSituation Situation { get => _situation; set => _situation = value; }
 
 			public Skill(SkillType skillType) {
 				_skillType = skillType ?? throw new ArgumentNullException(nameof(skillType));
 				_property = skillType.Property;
+				_situation = skillType.Situation;
 			}
 		}
 
-		protected readonly string _id;
-		protected string _name = "";
-		protected string _description = "";
-		protected Extra _belong = null;
-		protected readonly CharacterView _view;
-		protected Player _controlPlayer = null;
-		protected bool _dead = false;
+		private readonly string _id;
+		private string _name = "";
+		private string _description = "";
+		private Extra _belong = null;
+		private readonly CharacterView _view;
+		private Player _controlPlayer = null;
+		private bool _dead = false;
 
 		protected readonly List<Skill> _skills;
-		protected readonly CharacterPropertyList<Aspect> _aspects;
-		protected int _physicsStress = 0;
-		protected int _physicsStressMax = 0;
-		protected bool _physicsInvincible = false;
-		protected int _mentalStress = 0;
-		protected int _mentalStressMax = 0;
-		protected bool _mentalInvincible = false;
+		private readonly CharacterPropertyList<Aspect> _aspects;
+		private int _physicsStress = 0;
+		private int _physicsStressMax = 0;
+		private bool _physicsInvincible = false;
+		private int _mentalStress = 0;
+		private int _mentalStressMax = 0;
+		private bool _mentalInvincible = false;
 
 		public string ID => _id;
 		public string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
@@ -316,37 +318,16 @@ namespace GameLib.CharacterSystem {
 		public abstract CharacterPropertyList<Extra> Extras { get; }
 		public abstract CharacterPropertyList<Consequence> Consequences { get; }
 		
-		public string GetSkillDescription(SkillType skillType) {
-			foreach (Skill skill in _skills) {
+		public SkillSituation GetSkillSituation(SkillType skillType) {
+			foreach (var skill in _skills) {
 				if (skill.SkillType == skillType) {
-					return skill.Description;
+					return skill.Situation;
 				}
 			}
-			return "";
-		}
-		
-		public void SetSkillDescription(SkillType skillType, string description) {
-			foreach (Skill skill in _skills) {
-				if (skill.SkillType == skillType) {
-					skill.Description = description;
-					return;
-				}
-			}
-			Skill newSkill = new Skill(skillType);
-			newSkill.Description = description;
-			_skills.Add(newSkill);
-		}
-
-		public SkillProperty GetSkillProperty(SkillType skillType) {
-			foreach (Skill skill in _skills) {
-				if (skill.SkillType == skillType) {
-					return skill.Property;
-				}
-			}
-			SkillProperty ret = skillType.Property;
+			var ret = skillType.Situation;
 			if (skillType == SkillType.Shoot) {
 				if (this.Extras != null) {
-					foreach (Extra extra in this.Extras) {
+					foreach (var extra in this.Extras) {
 						if (extra.IsLongRangeWeapon) {
 							ret.canAttack = true;
 							break;
@@ -357,14 +338,35 @@ namespace GameLib.CharacterSystem {
 			return ret;
 		}
 
+		public void SetSkillSituation(SkillType skillType, SkillSituation situation) {
+			foreach (var skill in _skills) {
+				if (skill.SkillType == skillType) {
+					skill.Situation = situation;
+					return;
+				}
+			}
+			var newSkill = new Skill(skillType);
+			newSkill.Situation = situation;
+			_skills.Add(newSkill);
+		}
+		
+		public SkillProperty GetSkillProperty(SkillType skillType) {
+			foreach (var skill in _skills) {
+				if (skill.SkillType == skillType) {
+					return skill.Property;
+				}
+			}
+			return skillType.Property;
+		}
+
 		public void SetSkillProperty(SkillType skillType, SkillProperty property) {
-			foreach (Skill skill in _skills) {
+			foreach (var skill in _skills) {
 				if (skill.SkillType == skillType) {
 					skill.Property = property;
 					return;
 				}
 			}
-			Skill newSkill = new Skill(skillType);
+			var newSkill = new Skill(skillType);
 			newSkill.Property = property;
 			_skills.Add(newSkill);
 		}
@@ -415,6 +417,48 @@ namespace GameLib.CharacterSystem {
 			_dead = true;
 		}
 
+		public Aspect FindAspectByID(string id) {
+			foreach (var aspect in this.Aspects) {
+				if (aspect.ID == id) {
+					return aspect;
+				}
+			}
+			return null;
+		}
+
+		public Stunt FindStuntByID(string id) {
+			if (this.Stunts != null) {
+				foreach (var stunt in this.Stunts) {
+					if (stunt.ID == id) {
+						return stunt;
+					}
+				}
+			}
+			return null;
+		}
+
+		public Extra FindExtraByID(string id) {
+			if (this.Extras != null) {
+				foreach (var extra in this.Extras) {
+					if (extra.ID == id) {
+						return extra;
+					}
+				}
+			}
+			return null;
+		}
+
+		public Consequence FindConsequenceByID(string id) {
+			if (this.Consequences != null) {
+				foreach (var consequence in this.Consequences) {
+					if (consequence.ID == id) {
+						return consequence;
+					}
+				}
+			}
+			return null;
+		}
+
 		public IJSContext GetContext() {
 			return _apiObj;
 		}
@@ -435,33 +479,32 @@ namespace GameLib.CharacterSystem {
 		}
 
 		public TemporaryCharacter(string id, TemporaryCharacter template) :
-			base(id, template._view) {
-			_name = template._name;
-			_description = template._description;
-			_controlPlayer = template._controlPlayer;
-			_dead = template._dead;
-			foreach (Aspect aspect in template._aspects) {
+			base(id, template.View) {
+			this.Name = template.Name;
+			this.Description = template.Description;
+			this.ControlPlayer = template.ControlPlayer;
+			foreach (Aspect aspect in template.Aspects) {
 				Aspect clone = new Aspect {
 					Name = aspect.Name,
 					Description = aspect.Description,
 					PersistenceType = aspect.PersistenceType
 				};
-				_aspects.Add(clone);
+				this.Aspects.Add(clone);
 			}
 			foreach (Skill skill in template._skills) {
 				Skill clone = new Skill(skill.SkillType) {
 					Name = skill.Name,
-					Description = skill.Description,
-					Property = skill.Property
+					Property = skill.Property,
+					Situation = skill.Situation
 				};
 				_skills.Add(skill);
 			}
-			_physicsStress = template._physicsStress;
-			_physicsStressMax = template._physicsStressMax;
-			_physicsInvincible = template._physicsInvincible;
-			_mentalStress = template._mentalStress;
-			_mentalStressMax = template._mentalStressMax;
-			_mentalInvincible = template._mentalInvincible;
+			this.PhysicsStress = template.PhysicsStress;
+			this.PhysicsStressMax = template.PhysicsStressMax;
+			this.PhysicsInvincible = template.PhysicsInvincible;
+			this.MentalStress = template.MentalStress;
+			this.MentalStressMax = template.MentalStressMax;
+			this.MentalInvincible = template.MentalInvincible;
 		}
 	}
 
@@ -596,13 +639,11 @@ namespace GameLib.CharacterSystem {
 
 		public Character FindItemRecursivelyByID(Character owner, string itemID) {
 			if (owner.Extras == null) return null;
-			foreach (Extra extra in owner.Extras) {
-				if (extra.Item.ID == itemID) {
-					return extra.Item;
-				} else {
-					Character item = this.FindItemRecursivelyByID(extra.Item, itemID);
-					if (item != null) return item;
-				}
+			var extra = owner.FindExtraByID(itemID);
+			if (extra != null) return extra.Item;
+			else {
+				Character item = this.FindItemRecursivelyByID(extra.Item, itemID);
+				if (item != null) return item;
 			}
 			return null;
 		}

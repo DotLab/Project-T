@@ -76,9 +76,6 @@ namespace GameLib.Utilities.Network.Streamable {
 
 		public static void WriteSkillProperty(IDataOutputStream stream, SkillProperty property) {
 			stream.WriteInt32(property.level);
-			stream.WriteBoolean(property.canAttack);
-			stream.WriteBoolean(property.damageMental);
-			stream.WriteBoolean(property.canDefend);
 			stream.WriteInt32(property.actionPointCost);
 			WriteRange(stream, property.useRange);
 			stream.WriteBoolean(property.islinearUse);
@@ -158,9 +155,6 @@ namespace GameLib.Utilities.Network.Streamable {
 		public static SkillProperty ReadSkillProperty(IDataInputStream stream) {
 			var ret = new SkillProperty();
 			ret.level = stream.ReadInt32();
-			ret.canAttack = stream.ReadBoolean();
-			ret.damageMental = stream.ReadBoolean();
-			ret.canDefend = stream.ReadBoolean();
 			ret.actionPointCost = stream.ReadInt32();
 			ret.useRange = ReadRange(stream);
 			ret.islinearUse = stream.ReadBoolean();

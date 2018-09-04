@@ -43,12 +43,7 @@ namespace GameLib.ClientComponents {
 					CheckerAspectSelectedMessage aspectSelectedMessage = (CheckerAspectSelectedMessage)message;
 					Character character = CharacterManager.Instance.FindCharacterOrItemRecursivelyByID(aspectSelectedMessage.characterID);
 					if (character != null) {
-						foreach (Aspect aspect in character.Aspects) {
-							if (aspect.ID == aspectSelectedMessage.aspectID) {
-								result = aspect;
-								break;
-							}
-						}
+						result = character.FindAspectByID(aspectSelectedMessage.aspectID);
 					}
 					this.OnSelectAspects(result, aspectSelectedMessage.reroll);
 				}
@@ -67,19 +62,11 @@ namespace GameLib.ClientComponents {
 
 		private void OnSelectStunt(string stuntID) {
 			if (_position == ClientPosition.INITIATIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_SKILL_OR_STUNT) {
-				foreach (Stunt stunt in SkillChecker.Instance.Initiative.Stunts) {
-					if (stunt.ID == stuntID) {
-						StorySceneContainer.Instance.InitiativeUseStunt(stunt);
-						break;
-					}
-				}
+				var stunt = SkillChecker.Instance.Initiative.FindStuntByID(stuntID);
+				StorySceneContainer.Instance.InitiativeUseStunt(stunt);
 			} else if (_position == ClientPosition.PASSIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL_OR_STUNT) {
-				foreach (Stunt stunt in SkillChecker.Instance.Passive.Stunts) {
-					if (stunt.ID == stuntID) {
-						StorySceneContainer.Instance.PassiveUseStunt(stunt);
-						break;
-					}
-				}
+				var stunt = SkillChecker.Instance.Passive.FindStuntByID(stuntID);
+				StorySceneContainer.Instance.PassiveUseStunt(stunt);
 			}
 		}
 

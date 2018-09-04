@@ -88,7 +88,15 @@ namespace TextyClient {
 				var resp = result as CharacterConsequencesDescriptionMessage;
 				if (resp != null) {
 					foreach (var consequence in resp.properties) {
-						this.consequenceListBox.Items.Add(consequence.describable.name);
+						var req2 = new GetConsequenceDataMessage();
+						req2.characterID = resp.characterID;
+						req2.consequenceID = consequence.propertyID;
+						Program.connection.Request(req2, result2 => {
+							var resp2 = result2 as ConsequenceDataMessage;
+							if (resp2 != null) {
+								this.consequenceListBox.Items.Add(consequence.describable.name + " 伤痕槽-" + resp2.counteractLevel);
+							}
+						});
 					}
 				}
 			});

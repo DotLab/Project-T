@@ -10,8 +10,12 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace TextyClient {
-	public partial class DMCheckForm : Form {
-		public DMCheckForm() {
+	public partial class CheckForm : Form {
+		private bool _dmCheck = false;
+
+		public bool DMCheck { get => _dmCheck; set => _dmCheck = value; }
+
+		public CheckForm() {
 			InitializeComponent();
 		}
 
@@ -28,13 +32,19 @@ namespace TextyClient {
 		}
 
 		private void SendResult(bool reject) {
-			var message = new DMCheckResultMessage();
-			message.result = !reject;
-			Program.connection.SendMessage(message);
+			if (_dmCheck) {
+				var message = new DMCheckResultMessage();
+				message.result = !reject;
+				Program.connection.SendMessage(message);
+			} else {
+				var message = new UserDeterminResultMessage();
+				message.result = reject ? 1 : 0;
+				Program.connection.SendMessage(message);
+			}
 			this.Visible = false;
 		}
 
-		private void DMCheckForm_FormClosing(object sender, FormClosingEventArgs e) {
+		private void CheckForm_FormClosing(object sender, FormClosingEventArgs e) {
 			SendResult(true);
 			e.Cancel = true;
 		}

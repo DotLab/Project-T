@@ -70,7 +70,7 @@ namespace TestConsoleApp {
 			skillProperty.level = 1;
 			brught_jackson.SetSkillProperty(SkillType.Stealth, skillProperty);
 
-			
+
 			var ranbo = player2characters[0] = new KeyCharacter("PlayerRanbo", new CharacterView() { battle = "蓝波", story = "蓝波" });
 			ranbo.Name = "蓝波";
 			ranbo.Description = "从小就备受欺负的蓝波，坚信一身强健的肌肉可以保护自己，长大后成为了亚特兰大市民中心内的健身房教练，出生于美国中部州的他对政府极度不信任。";
@@ -149,7 +149,7 @@ namespace TestConsoleApp {
 			skillProperty = lily.GetSkillProperty(SkillType.Notice);
 			skillProperty.level = 1;
 			lily.SetSkillProperty(SkillType.Notice, skillProperty);
-			
+
 
 			Player[] players = new Player[2];
 			players[0] = new Player("Player1", "Player1", player1Connection, 1, player1characters);

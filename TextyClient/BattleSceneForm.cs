@@ -14,9 +14,6 @@ namespace TextyClient {
 		private abstract class BattleSceneObject {
 			public readonly string id;
 			public readonly CharacterView view;
-			public string state;
-			public bool showCheckPoint;
-			public int checkPoint;
 
 			public abstract bool Actable { get; }
 			public abstract bool Movable { get; }
@@ -27,7 +24,7 @@ namespace TextyClient {
 			}
 
 			public override string ToString() {
-				return view.battle + " " + state + (showCheckPoint ? ", " + checkPoint : "");
+				return view.battle;
 			}
 		}
 
@@ -35,7 +32,7 @@ namespace TextyClient {
 			public BattleMapDirection direction;
 			public bool actable;
 			public bool movable;
-			
+
 			public override bool Actable => actable;
 			public override bool Movable => movable;
 
@@ -149,9 +146,13 @@ namespace TextyClient {
 		private bool _isSelectingTarget = false;
 		private readonly BindingList<BattleSceneObject> _targets = new BindingList<BattleSceneObject>();
 
+		private bool _isChecking = false;
+		private ReachablePlace _currentCheckPlace = null;
+		private GridObject _currentPassiveObj = null;
 		private List<ReachablePlace> _targetPlaces = null;
 
 		public void MessageReceived(GameLib.Utilities.Network.Message message) {
+			var printer = Program.mainForm.AdvancedConsole.TextBoxPrinter;
 			switch (message.MessageType) {
 				case ShowSceneMessage.MESSAGE_TYPE: {
 						var msg = (ShowSceneMessage)message;
@@ -171,9 +172,7 @@ namespace TextyClient {
 							sum += point;
 						}
 						dicePointsLbl += "共计: " + sum;
-						Program.mainForm.connectionUpdater.Enabled = false;
-						MessageBox.Show(dicePointsLbl, "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-						Program.mainForm.connectionUpdater.Enabled = true;
+						printer.WriteLine(dicePointsLbl);
 					}
 					break;
 				case BattleSceneResetMessage.MESSAGE_TYPE: {
@@ -374,20 +373,46 @@ namespace TextyClient {
 					break;
 				case BattleSceneStartCheckMessage.MESSAGE_TYPE: {
 						var msg = (BattleSceneStartCheckMessage)message;
-						var gridObject = GetGridObject(msg.initiativeObj, out bool highland);
-						checkingStateLbl.Text = gridObject.ToString() + "发起了行动！";
+						var initiativeObject = GetGridObject(msg.initiativeObj, out bool highland);
 						_targetPlaces = new List<ReachablePlace>();
+						printer.Write(initiativeObject + " 对 ");
 						foreach (var target in msg.targets) {
-							_targetPlaces.Add(new ReachablePlace() { row = target.row, col = target.col, highland = highland });
+							var passiveObject = GetGridObject(target, out bool targetHighland);
+							printer.Write(passiveObject + " ");
+							_targetPlaces.Add(new ReachablePlace() { row = target.row, col = target.col, highland = targetHighland });
 						}
+						printer.WriteLine("使用 " + msg.initiativeSkillType.name + " 进行" + msg.action);
+						printer.WriteLine("检定开始");
+						_isChecking = true;
+					}
+					break;
+				case CheckerCheckResultMessage.MESSAGE_TYPE: {
+						var msg = (CheckerCheckResultMessage)message;
+						var initiativeObj = GetGridObject(_actingObjRow, _actingObjCol, _actingObjID, out bool highland);
+						printer.WriteLine(initiativeObj + " 结果为 " + msg.initiative + "， " + _currentPassiveObj + " 结果为 " + msg.passive + "，成功度为" + Math.Abs(msg.delta));
 					}
 					break;
 				case BattleSceneCheckNextoneMessage.MESSAGE_TYPE: {
-
+						var msg = (BattleSceneCheckNextoneMessage)message;
+						if (_currentCheckPlace != null) _targetPlaces.Remove(_currentCheckPlace);
+						var obj = GetGridObject(msg.nextone, out bool highland);
+						_currentPassiveObj = obj;
+						printer.WriteLine("轮到" + obj + "进行被动检定");
+						foreach (var targetPlace in _targetPlaces) {
+							if (targetPlace.row == msg.nextone.row && targetPlace.col == msg.nextone.col && targetPlace.highland == highland) {
+								_currentCheckPlace = targetPlace;
+								break;
+							}
+						}
 					}
 					break;
 				case BattleSceneEndCheckMessage.MESSAGE_TYPE: {
-
+						if (_currentCheckPlace != null) _targetPlaces.Remove(_currentCheckPlace);
+						_currentPassiveObj = null;
+						_currentCheckPlace = null;
+						_targetPlaces = null;
+						printer.WriteLine("检定结束");
+						_isChecking = false;
 					}
 					break;
 				case BattleSceneCheckerDisplaySkillReadyMessage.MESSAGE_TYPE: {
@@ -395,27 +420,29 @@ namespace TextyClient {
 						var gridObject = GetGridObject(msg.obj, out bool highland);
 						foreach (var skillType in Program.skillTypes) {
 							if (skillType.propertyID == msg.skillTypeID) {
-								gridObject.state = "使用 " + skillType.name;
+								printer.WriteLine(gridObject + " 将要使用 " + skillType.name);
 								break;
 							}
 						}
 					}
 					break;
 				case BattleSceneCheckerDisplayUsingAspectMessage.MESSAGE_TYPE: {
-
+						var msg = (BattleSceneCheckerDisplayUsingAspectMessage)message;
+						var userObj = GetGridObject(msg.userObj, out bool h1);
+						var ownerObj = GetGridObject(msg.aspectOwnerObj, out bool h2);
+						printer.WriteLine(userObj + " 声明 " + ownerObj + " 的 " + msg.aspect.describable.name + " 是对自己有利的");
 					}
 					break;
 				case BattleSceneCheckerUpdateSumPointMessage.MESSAGE_TYPE: {
 						var msg = (BattleSceneCheckerUpdateSumPointMessage)message;
 						var gridObject = GetGridObject(msg.obj, out bool highland);
-						gridObject.checkPoint = msg.point;
-						gridObject.showCheckPoint = true;
+						printer.WriteLine(gridObject + " 的点数总和为：" + msg.point);
 					}
 					break;
 				case BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage.MESSAGE_TYPE: {
 						if (_checkingStateAsPassive != PassiveCheckingState.IDLE) return;
 						var selectSkillMsg = (BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage)message;
-						var getUsableActionRequest = new BattleSceneGetPassiveUsableSkillOrStuntMessage() { stunt = false };
+						var getUsableActionRequest = new BattleSceneGetPassiveUsableSkillOrStuntListMessage() { stunt = false };
 						var getDirectResistRequest = new GetDirectResistSkillsMessage() {
 							actionType = selectSkillMsg.action,
 							initiativeSkillTypeID = selectSkillMsg.initiativeSkillType.id
@@ -481,17 +508,13 @@ namespace TextyClient {
 								}
 							}
 						});
-						Program.mainForm.connectionUpdater.Enabled = false;
-						MessageBox.Show("进行被动对抗", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-						Program.mainForm.connectionUpdater.Enabled = true;
+						printer.WriteLine("进行被动对抗");
 					}
 					break;
 				case CheckerSelectSkillOrStuntCompleteMessage.MESSAGE_TYPE: {
 						var completeMsg = (CheckerSelectSkillOrStuntCompleteMessage)message;
 						if (completeMsg.failure) {
-							Program.mainForm.connectionUpdater.Enabled = false;
-							MessageBox.Show(completeMsg.extraMessage, "失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-							Program.mainForm.connectionUpdater.Enabled = true;
+							printer.WriteLine("失败" + completeMsg.extraMessage);
 							if (_checkingStateAsPassive == PassiveCheckingState.IDLE && _canActing && _initiativeState == InitiativeState.ACTING && completeMsg.isInitiative) {
 								_createAspectReady = _attackReady = _specialActionReady = false;
 								menuItemCreateAspect.Text = "创造优势";
@@ -509,6 +532,7 @@ namespace TextyClient {
 								confirmTargetBtn.Visible = false;
 								targetCountLbl.Visible = false;
 								_targets.Clear();
+								menuItemConfirmGrid.Text = "确认位置";
 							}
 						} else {
 							if (_checkingStateAsPassive == PassiveCheckingState.SELECT_SKILL_OR_STUNT && !completeMsg.isInitiative) {
@@ -536,6 +560,7 @@ namespace TextyClient {
 									confirmTargetBtn.Visible = false;
 									targetCountLbl.Visible = false;
 									_targets.Clear();
+									menuItemConfirmGrid.Text = "确认位置";
 								}
 							}
 						}
@@ -554,9 +579,7 @@ namespace TextyClient {
 						selectionTypeLbl.Text = "特征选择";
 						selectionListBox.DataSource = _selectionList;
 						selectAspectOverBtn.Visible = true;
-						Program.mainForm.connectionUpdater.Enabled = false;
-						MessageBox.Show("选择特征", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-						Program.mainForm.connectionUpdater.Enabled = true;
+						printer.WriteLine("选择特征");
 					}
 					break;
 				case CheckerSelectAspectCompleteMessage.MESSAGE_TYPE: {
@@ -577,9 +600,7 @@ namespace TextyClient {
 							}
 						}
 						if (completeMsg.failure) {
-							Program.mainForm.connectionUpdater.Enabled = false;
-							MessageBox.Show(completeMsg.extraMessage, "失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-							Program.mainForm.connectionUpdater.Enabled = true;
+							printer.WriteLine("失败" + completeMsg.extraMessage);
 						}
 					}
 					break;
@@ -609,6 +630,7 @@ namespace TextyClient {
 			Program.connection.AddMessageReceiver(BattleSceneDisplayActableObjectMovingMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneDisplayTakeExtraMovePointMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneStartCheckMessage.MESSAGE_TYPE, this);
+			Program.connection.AddMessageReceiver(CheckerCheckResultMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneCheckNextoneMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneEndCheckMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneCheckerDisplaySkillReadyMessage.MESSAGE_TYPE, this);
@@ -618,8 +640,6 @@ namespace TextyClient {
 			Program.connection.AddMessageReceiver(CheckerSelectSkillOrStuntCompleteMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneCheckerNotifySelectAspectMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(CheckerSelectAspectCompleteMessage.MESSAGE_TYPE, this);
-
-			Program.connection.SendMessage(new ClientInitMessage());
 		}
 
 		private BattleSceneObject GetSelectedObject() {
@@ -884,19 +904,23 @@ namespace TextyClient {
 							}
 							if (_isUsingSkill && _selectedAffectCenter != null) {
 								if (_usingSkill.islinearAffect) {
-									if (_usingSkill.affectRange.InRange(0)) {
+									if (row == _selectedAffectCenter.row && col == _selectedAffectCenter.col && _usingSkill.affectRange.InRange(0)) {
 										g.FillPolygon(transpYellow, gridPoints);
 									}
-									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0 && _usingSkill.affectRange.InRange(row - _selectedAffectCenter.row)) {
+									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0
+										&& col == _selectedAffectCenter.col && _usingSkill.affectRange.InRange(row - _selectedAffectCenter.row)) {
 										g.FillPolygon(transpYellow, gridPoints);
 									}
-									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.row - row)) {
+									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0
+										&& col == _selectedAffectCenter.col && _usingSkill.affectRange.InRange(_selectedAffectCenter.row - row)) {
 										g.FillPolygon(transpYellow, gridPoints);
 									}
-									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0 && _usingSkill.affectRange.InRange(col - _selectedAffectCenter.col)) {
+									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0
+										&& row == _selectedAffectCenter.row && _usingSkill.affectRange.InRange(col - _selectedAffectCenter.col)) {
 										g.FillPolygon(transpYellow, gridPoints);
 									}
-									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.col - col)) {
+									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0
+										&& row == _selectedAffectCenter.row && _usingSkill.affectRange.InRange(_selectedAffectCenter.col - col)) {
 										g.FillPolygon(transpYellow, gridPoints);
 									}
 								} else if (_usingSkill.affectRange.InRange(Math.Abs(row - _selectedAffectCenter.row) + Math.Abs(col - _selectedAffectCenter.col))) {
@@ -956,19 +980,23 @@ namespace TextyClient {
 							}
 							if (_isUsingSkill && _selectedAffectCenter != null) {
 								if (_usingSkill.islinearAffect) {
-									if (_usingSkill.affectRange.InRange(0)) {
+									if (row == _selectedAffectCenter.row && col == _selectedAffectCenter.col && _usingSkill.affectRange.InRange(0)) {
 										g.FillPolygon(transpYellow, gridPoints);
 									}
-									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0 && _usingSkill.affectRange.InRange(row - _selectedAffectCenter.row)) {
+									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0
+										&& col == _selectedAffectCenter.col && _usingSkill.affectRange.InRange(row - _selectedAffectCenter.row)) {
 										g.FillPolygon(transpYellow, gridPoints);
 									}
-									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.row - row)) {
+									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0
+										&& col == _selectedAffectCenter.col && _usingSkill.affectRange.InRange(_selectedAffectCenter.row - row)) {
 										g.FillPolygon(transpYellow, gridPoints);
 									}
-									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0 && _usingSkill.affectRange.InRange(col - _selectedAffectCenter.col)) {
+									if ((_usingSkill.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0
+										&& row == _selectedAffectCenter.row && _usingSkill.affectRange.InRange(col - _selectedAffectCenter.col)) {
 										g.FillPolygon(transpYellow, gridPoints);
 									}
-									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0 && _usingSkill.affectRange.InRange(_selectedAffectCenter.col - col)) {
+									if ((_usingSkill.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0
+										&& row == _selectedAffectCenter.row && _usingSkill.affectRange.InRange(_selectedAffectCenter.col - col)) {
 										g.FillPolygon(transpYellow, gridPoints);
 									}
 								} else if (_usingSkill.affectRange.InRange(Math.Abs(row - _selectedAffectCenter.row) + Math.Abs(col - _selectedAffectCenter.col))) {
@@ -1081,6 +1109,36 @@ namespace TextyClient {
 						}
 						g.FillPolygon(b, gridPoints);
 					}
+				}
+			}
+			if (_currentCheckPlace != null) {
+				var b = new SolidBrush(Color.FromArgb(80, 255, 255, 0));
+				if (!_currentCheckPlace.highland) {
+					PointF[] gridPoints = new PointF[4]{
+							new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (_currentCheckPlace.col - _currentCheckPlace.row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (_currentCheckPlace.row + _currentCheckPlace.col) * DIAMOND_LENGTH / 2.0f),
+							new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (_currentCheckPlace.col - _currentCheckPlace.row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (_currentCheckPlace.row + _currentCheckPlace.col + 1) * DIAMOND_LENGTH / 2.0f),
+							new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (_currentCheckPlace.col - _currentCheckPlace.row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (_currentCheckPlace.row + _currentCheckPlace.col + 2) * DIAMOND_LENGTH / 2.0f),
+							new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (_currentCheckPlace.col - _currentCheckPlace.row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 2.0f + (_currentCheckPlace.row + _currentCheckPlace.col + 1) * DIAMOND_LENGTH / 2.0f)
+						};
+					g.FillPolygon(b, gridPoints);
+				} else {
+					PointF[] gridPoints;
+					if (_grids[_currentCheckPlace.row, _currentCheckPlace.col].isMiddleLand) {
+						gridPoints = new PointF[4] {
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (_currentCheckPlace.col - _currentCheckPlace.row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (_currentCheckPlace.row + _currentCheckPlace.col) * DIAMOND_LENGTH / 2.0f),
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (_currentCheckPlace.col - _currentCheckPlace.row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (_currentCheckPlace.row + _currentCheckPlace.col + 1) * DIAMOND_LENGTH / 2.0f),
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (_currentCheckPlace.col - _currentCheckPlace.row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (_currentCheckPlace.row + _currentCheckPlace.col + 2) * DIAMOND_LENGTH / 2.0f),
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (_currentCheckPlace.col - _currentCheckPlace.row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), DIAMOND_LENGTH / 4.0f + (_currentCheckPlace.row + _currentCheckPlace.col + 1) * DIAMOND_LENGTH / 2.0f)
+							};
+					} else {
+						gridPoints = new PointF[4] {
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (_currentCheckPlace.col - _currentCheckPlace.row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (_currentCheckPlace.row + _currentCheckPlace.col) * DIAMOND_LENGTH / 2.0f),
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (_currentCheckPlace.col - _currentCheckPlace.row + 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (_currentCheckPlace.row + _currentCheckPlace.col + 1) * DIAMOND_LENGTH / 2.0f),
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (_currentCheckPlace.col - _currentCheckPlace.row) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (_currentCheckPlace.row + _currentCheckPlace.col + 2) * DIAMOND_LENGTH / 2.0f),
+								new PointF(DIAMOND_LENGTH * _rows / 2.0f * (float)Math.Sqrt(3.0f) + (_currentCheckPlace.col - _currentCheckPlace.row - 1) * DIAMOND_LENGTH / 2.0f * (float)Math.Sqrt(3.0f), (_currentCheckPlace.row + _currentCheckPlace.col + 1) * DIAMOND_LENGTH / 2.0f)
+							};
+					}
+					g.FillPolygon(b, gridPoints);
 				}
 			}
 			if (_selectedRow != -1 && _selectedCol != -1) {
@@ -1208,17 +1266,19 @@ namespace TextyClient {
 				menuItemConfirmGrid.Enabled = true;
 			}
 			menuItemMove.Enabled = menuItemExtraMovePoint.Enabled = menuItemCreateAspect.Enabled = menuItemAttack.Enabled = menuItemSpecialAction.Enabled = menuItemRoundOver.Enabled = false;
-			if (_movePathInfo != null) {
-				menuItemMove.Enabled = menuItemConfirmGrid.Enabled = true;
-			} else if (_createAspectReady) {
-				menuItemCreateAspect.Enabled = true;
-			} else if (_attackReady) {
-				menuItemAttack.Enabled = true;
-			} else if (_specialActionReady) {
-				menuItemSpecialAction.Enabled = true;
-			} else if (_canActing && sceneObject.id == _actingObjID && sceneObject.Actable) {
-				menuItemCreateAspect.Enabled = menuItemAttack.Enabled = menuItemSpecialAction.Enabled = menuItemRoundOver.Enabled = true;
-				if (sceneObject.Movable) menuItemMove.Enabled = menuItemExtraMovePoint.Enabled = true;
+			if (!_isChecking) {
+				if (_movePathInfo != null) {
+					menuItemMove.Enabled = menuItemConfirmGrid.Enabled = true;
+				} else if (_createAspectReady) {
+					menuItemCreateAspect.Enabled = true;
+				} else if (_attackReady) {
+					menuItemAttack.Enabled = true;
+				} else if (_specialActionReady) {
+					menuItemSpecialAction.Enabled = true;
+				} else if (_canActing && sceneObject.id == _actingObjID && sceneObject.Actable) {
+					menuItemCreateAspect.Enabled = menuItemAttack.Enabled = menuItemSpecialAction.Enabled = menuItemRoundOver.Enabled = true;
+					if (sceneObject.Movable) menuItemMove.Enabled = menuItemExtraMovePoint.Enabled = true;
+				}
 			}
 		}
 
@@ -1279,9 +1339,7 @@ namespace TextyClient {
 						var message = new BattleSceneTakeExtraMovePointMessage();
 						Program.connection.SendMessage(message);
 					} else {
-						Program.mainForm.connectionUpdater.Enabled = false;
-						MessageBox.Show("行动点不足", "失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-						Program.mainForm.connectionUpdater.Enabled = true;
+						Program.mainForm.AdvancedConsole.TextBoxPrinter.WriteLine("行动点不足");
 					}
 				}
 			});
@@ -1305,7 +1363,7 @@ namespace TextyClient {
 				stuntRbn.Checked = false;
 				selectionTypeLbl.Text = "技能选择";
 				selectionListBox.DataSource = _selectionList;
-				var request = new BattleSceneGetInitiativeUsableSkillOrStuntMessage();
+				var request = new BattleSceneGetInitiativeUsableSkillOrStuntListMessage();
 				request.action = CharacterAction.CREATE_ASPECT;
 				request.stunt = false;
 				Program.connection.Request(request, result => {
@@ -1353,7 +1411,7 @@ namespace TextyClient {
 				stuntRbn.Checked = false;
 				selectionTypeLbl.Text = "技能选择";
 				selectionListBox.DataSource = _selectionList;
-				var request = new BattleSceneGetInitiativeUsableSkillOrStuntMessage();
+				var request = new BattleSceneGetInitiativeUsableSkillOrStuntListMessage();
 				request.action = CharacterAction.ATTACK;
 				request.stunt = false;
 				Program.connection.Request(request, result => {
@@ -1576,8 +1634,27 @@ namespace TextyClient {
 			foreach (var target in _targets) {
 				if (target.id == selectedObject.id) return;
 			}
-			_targets.Add(selectedObject);
-			targetCountLbl.Text = "(" + _targets.Count + "/" + _usingSkill.targetCount + ")";
+			if (stuntRbn.Checked) {
+				var req = new BattleSceneGetStuntTargetSelectableMessage();
+				if (_createAspectReady) req.action = CharacterAction.CREATE_ASPECT;
+				else if (_attackReady) req.action = CharacterAction.ATTACK;
+				req.stuntID = _usingSkillOrStuntID;
+				req.targetID = selectedObject.id;
+				Program.connection.Request(req, result => {
+					var resp = result as BattleSceneStuntTargetSelectableMessage;
+					if (resp != null) {
+						if (resp.result) {
+							_targets.Add(selectedObject);
+							targetCountLbl.Text = "(" + _targets.Count + "/" + _usingSkill.targetCount + ")";
+						} else {
+							Program.mainForm.AdvancedConsole.TextBoxPrinter.WriteLine("这个角色不可作为目标");
+						}
+					}
+				});
+			} else {
+				_targets.Add(selectedObject);
+				targetCountLbl.Text = "(" + _targets.Count + "/" + _usingSkill.targetCount + ")";
+			}
 		}
 
 		private void stuntRbn_CheckedChanged(object sender, EventArgs e) {

@@ -161,6 +161,10 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneEndCheckMessage();
 				case UserDeterminMessage.MESSAGE_TYPE:
 					return new UserDeterminMessage();
+				case CheckerCheckResultMessage.MESSAGE_TYPE:
+					return new CheckerCheckResultMessage();
+				case BattleSceneStuntTargetSelectableMessage.MESSAGE_TYPE:
+					return new BattleSceneStuntTargetSelectableMessage();
 
 				// client message
 				case ClientInitMessage.MESSAGE_TYPE:
@@ -213,16 +217,18 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneGetGridObjectDataMessage();
 				case BattleSceneGetLadderObjectDataMessage.MESSAGE_TYPE:
 					return new BattleSceneGetLadderObjectDataMessage();
-				case BattleSceneGetInitiativeUsableSkillOrStuntMessage.MESSAGE_TYPE:
-					return new BattleSceneGetInitiativeUsableSkillOrStuntMessage();
-				case BattleSceneGetPassiveUsableSkillOrStuntMessage.MESSAGE_TYPE:
-					return new BattleSceneGetPassiveUsableSkillOrStuntMessage();
+				case BattleSceneGetInitiativeUsableSkillOrStuntListMessage.MESSAGE_TYPE:
+					return new BattleSceneGetInitiativeUsableSkillOrStuntListMessage();
+				case BattleSceneGetPassiveUsableSkillOrStuntListMessage.MESSAGE_TYPE:
+					return new BattleSceneGetPassiveUsableSkillOrStuntListMessage();
 				case BattleSceneGetCanExtraMoveMessage.MESSAGE_TYPE:
 					return new BattleSceneGetCanExtraMoveMessage();
 				case BattleSceneTurnOverMessage.MESSAGE_TYPE:
 					return new BattleSceneTurnOverMessage();
 				case UserDeterminResultMessage.MESSAGE_TYPE:
 					return new UserDeterminResultMessage();
+				case BattleSceneGetStuntTargetSelectableMessage.MESSAGE_TYPE:
+					return new BattleSceneGetStuntTargetSelectableMessage();
 
 				default:
 					throw new NotImplementedException();
