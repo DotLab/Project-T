@@ -20,7 +20,7 @@ namespace GameLib.ClientComponents {
 			connection.SetRequestHandler(GetCharacterDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetAspectDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetConsequenceDataMessage.MESSAGE_TYPE, this);
-			connection.SetRequestHandler(GetSkillDataMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(GetSkillLevelMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetStuntDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetExtraDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetDirectResistSkillsMessage.MESSAGE_TYPE, this);
@@ -49,10 +49,10 @@ namespace GameLib.ClientComponents {
 							if (consequence != null) resp = GetConsequenceData(consequence);
 						}
 						break;
-					case GetSkillDataMessage.MESSAGE_TYPE: {
-							var skillDataMessage = (GetSkillDataMessage)request;
+					case GetSkillLevelMessage.MESSAGE_TYPE: {
+							var skillDataMessage = (GetSkillLevelMessage)request;
 							var character = CharacterManager.Instance.FindCharacterByID(skillDataMessage.characterID);
-							resp = GetSkillData(character, SkillType.SkillTypes[skillDataMessage.skillTypeID]);
+							resp = GetSkillLevel(character, SkillType.SkillTypes[skillDataMessage.skillTypeID]);
 						}
 						break;
 					case GetStuntDataMessage.MESSAGE_TYPE: {
@@ -110,7 +110,7 @@ namespace GameLib.ClientComponents {
 		private Message GetCharacterInfoData(Character character) {
 			var message = new CharacterInfoDataMessage();
 			message.characterID = character.ID;
-			message.describable = new Describable(character);
+			message.describable = StreamableFactory.CreateDescribable(character);
 			return message;
 		}
 
@@ -200,11 +200,11 @@ namespace GameLib.ClientComponents {
 			return message;
 		}
 
-		private Message GetSkillData(Character character, SkillType skillType) {
-			var message = new SkillDataMessage();
+		private Message GetSkillLevel(Character character, SkillType skillType) {
+			var message = new SkillLevelMessage();
 			message.characterID = character.ID;
 			message.skillTypeID = skillType.ID;
-			message.skillProperty = character.GetSkillProperty(skillType);
+			message.level = character.GetSkillLevel(skillType);
 			return message;
 		}
 
@@ -212,7 +212,6 @@ namespace GameLib.ClientComponents {
 			var message = new StuntDataMessage();
 			message.characterID = stunt.Belong == null ? "" : stunt.Belong.ID;
 			message.stuntID = stunt.ID;
-			message.boundSkillTypeID = stunt.BoundSkillType.ID;
 			message.needDMCheck = stunt.NeedDMCheck;
 			return message;
 		}

@@ -172,7 +172,7 @@ namespace GameLib.Utilities.Network.ClientMessages {
 		}
 	}
 
-	public sealed class GetSkillDataMessage : Message {
+	public sealed class GetSkillLevelMessage : Message {
 		public const int MESSAGE_TYPE = 11;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -290,7 +290,7 @@ namespace GameLib.Utilities.Network.ClientMessages {
 		public override void ReadFrom(IDataInputStream stream) { }
 	}
 
-	public sealed class BattleSceneGetActableObjectMovePathInfoMessage : Message {
+	public sealed class BattleSceneGetMovePathInfoMessage : Message {
 		public const int MESSAGE_TYPE = 19;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -302,20 +302,14 @@ namespace GameLib.Utilities.Network.ClientMessages {
 		public const int MESSAGE_TYPE = 20;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public int dstRow;
-		public int dstCol;
-		public bool dstHighland;
+		public GridPos dst;
 
 		public override void WriteTo(IDataOutputStream stream) {
-			stream.WriteInt32(dstRow);
-			stream.WriteInt32(dstCol);
-			stream.WriteBoolean(dstHighland);
+			dst.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
-			dstRow = stream.ReadInt32();
-			dstCol = stream.ReadInt32();
-			dstHighland = stream.ReadBoolean();
+			dst.ReadFrom(stream);
 		}
 	}
 
@@ -326,16 +320,14 @@ namespace GameLib.Utilities.Network.ClientMessages {
 		public string skillTypeOrStuntID;
 		public bool isStunt;
 		public CharacterAction action;
-		public int dstRow;
-		public int dstCol;
+		public GridPos dstCenter;
 		public string[] targets;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			skillTypeOrStuntID = stream.ReadString();
 			isStunt = stream.ReadBoolean();
 			action = (CharacterAction)stream.ReadByte();
-			dstRow = stream.ReadInt32();
-			dstCol = stream.ReadInt32();
+			dstCenter.ReadFrom(stream);
 			int length = stream.ReadInt32();
 			targets = new string[length];
 			for (int i = 0; i < length; ++i) {
@@ -347,8 +339,7 @@ namespace GameLib.Utilities.Network.ClientMessages {
 			stream.WriteString(skillTypeOrStuntID);
 			stream.WriteBoolean(isStunt);
 			stream.WriteByte((byte)action);
-			stream.WriteInt32(dstRow);
-			stream.WriteInt32(dstCol);
+			dstCenter.WriteTo(stream);
 			stream.WriteInt32(targets.Length);
 			foreach (var target in targets) {
 				stream.WriteString(target);
@@ -362,15 +353,13 @@ namespace GameLib.Utilities.Network.ClientMessages {
 
 		public string skillTypeOrStuntID;
 		public bool isStunt;
-		public int dstRow;
-		public int dstCol;
+		public GridPos dstCenter;
 		public string[] targets;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			skillTypeOrStuntID = stream.ReadString();
 			isStunt = stream.ReadBoolean();
-			dstRow = stream.ReadInt32();
-			dstCol = stream.ReadInt32();
+			dstCenter.ReadFrom(stream);
 			int length = stream.ReadInt32();
 			targets = new string[length];
 			for (int i = 0; i < length; ++i) {
@@ -381,8 +370,7 @@ namespace GameLib.Utilities.Network.ClientMessages {
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(skillTypeOrStuntID);
 			stream.WriteBoolean(isStunt);
-			stream.WriteInt32(dstRow);
-			stream.WriteInt32(dstCol);
+			dstCenter.WriteTo(stream);
 			stream.WriteInt32(targets.Length);
 			foreach (var target in targets) {
 				stream.WriteString(target);
@@ -492,7 +480,7 @@ namespace GameLib.Utilities.Network.ClientMessages {
 		}
 	}
 
-	public sealed class BattleSceneGetStuntTargetSelectableMessage : Message {
+	public sealed class GetStuntTargetSelectableMessage : Message {
 		public const int MESSAGE_TYPE = 31;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -512,4 +500,41 @@ namespace GameLib.Utilities.Network.ClientMessages {
 			stream.WriteByte((byte)action);
 		}
 	}
+	
+	public sealed class BattleSceneGetActionAffectableAreasMessage : Message {
+		public const int MESSAGE_TYPE = 32;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public string skillTypeOrStuntID;
+		public bool isStunt;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			skillTypeOrStuntID = stream.ReadString();
+			isStunt = stream.ReadBoolean();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteString(skillTypeOrStuntID);
+			stream.WriteBoolean(isStunt);
+		}
+	}
+
+	public sealed class BattleSceneGetActionTargetCountMessage : Message {
+		public const int MESSAGE_TYPE = 33;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public string skillTypeOrStuntID;
+		public bool isStunt;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			skillTypeOrStuntID = stream.ReadString();
+			isStunt = stream.ReadBoolean();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteString(skillTypeOrStuntID);
+			stream.WriteBoolean(isStunt);
+		}
+	}
+
 }

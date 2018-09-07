@@ -84,7 +84,11 @@ namespace GameLib.Core.ScriptSystem {
 		}
 
 		public void Execute(string code) {
-			_engine.Execute(code);
+			try {
+				_engine.Execute(code);
+			} catch (Exception e) {
+				Log(e.Message);
+			}
 		}
 	}
 

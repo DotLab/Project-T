@@ -7,8 +7,8 @@ namespace GameLib.CharacterSystem {
 	public sealed class SkillChecker {
 		public enum CheckerState {
 			IDLE,
-			INITIATIVE_SKILL_OR_STUNT,
-			PASSIVE_SKILL_OR_STUNT,
+			INITIATIVE_SKILL,
+			PASSIVE_SKILL,
 			INITIATIVE_ASPECT,
 			PASSIVE_ASPECT,
 			WAIT_FOR_ENDCHECK
@@ -116,36 +116,22 @@ namespace GameLib.CharacterSystem {
 
 		private SkillChecker() { }
 
-		public static bool CanInitiativeUseSkill(Character initiative, CharacterAction action, SkillType skillType) {
-			var skillSituation = initiative.GetSkillSituation(skillType);
+		public static bool CanInitiativeUseSkillInAction(Character initiative, SkillType skillType, CharacterAction action) {
+			var skillSituation = initiative.GetSkillSituationLimit(skillType);
 			if (action == CharacterAction.ATTACK) {
 				if (!skillSituation.canAttack) return false;
 			}
 			return true;
 		}
-
-		public static bool CanInitiativeUseStunt(Character initiative, Character passive, CharacterAction action, Stunt initiativeStunt) {
-			if (initiativeStunt.Condition != null
-				&& !initiativeStunt.Condition(initiative, passive, action, null, true))
-				return false;
-			return true;
-		}
-
-		public static bool CanPassiveUseSkill(Character passive, CharacterAction action, SkillType skillType) {
-			var skillSituation = passive.GetSkillSituation(skillType);
+		
+		public static bool CanPassiveUseSkillInAction(Character passive, SkillType skillType, CharacterAction action) {
+			var skillSituation = passive.GetSkillSituationLimit(skillType);
 			if (action == CharacterAction.ATTACK) {
 				if (!skillSituation.canDefend) return false;
 			}
 			return true;
 		}
-
-		public static bool CanPassiveUseStunt(Character initiative, Character passive, CharacterAction action, SkillType initiativeSkillType, Stunt passiveStunt) {
-			if (passiveStunt.Condition != null
-				&& !passiveStunt.Condition(initiative, passive, action, initiativeSkillType, false))
-				return false;
-			return true;
-		}
-
+		
 		public static bool CanResistSkillWithoutDMCheck(SkillType initiativeUsing, SkillType resist, CharacterAction action) {
 			Dictionary<SkillType, List<SkillType>> resistTable;
 			switch (action) {
@@ -166,11 +152,11 @@ namespace GameLib.CharacterSystem {
 		}
 
 		public int GetInitiativePoint() {
-			return (_initiativeSkillType != null ? _initiative.GetSkillProperty(_initiativeSkillType).level : 0) + _initiativeRollPoint + _initiativeExtraPoint;
+			return (_initiativeSkillType != null ? _initiative.GetSkillLevel(_initiativeSkillType) : 0) + _initiativeRollPoint + _initiativeExtraPoint;
 		}
 
 		public int GetPassivePoint() {
-			return (_passiveSkillType != null ? _passive.GetSkillProperty(_passiveSkillType).level : 0) + _passiveRollPoint + _passiveExtraPoint;
+			return (_passiveSkillType != null ? _passive.GetSkillLevel(_passiveSkillType) : 0) + _passiveRollPoint + _passiveExtraPoint;
 		}
 
 		public void StartCheck(
@@ -188,7 +174,7 @@ namespace GameLib.CharacterSystem {
 			_passive = passive ?? throw new ArgumentNullException(nameof(passive));
 			_action = action;
 			_checkOverCallback = checkOverCallback ?? throw new ArgumentNullException(nameof(checkOverCallback));
-			_state = CheckerState.INITIATIVE_SKILL_OR_STUNT;
+			_state = CheckerState.INITIATIVE_SKILL;
 		}
 
 		public void ForceEndCheck(CheckResult initiativeResult, CheckResult passiveResult, int delta) {
@@ -227,8 +213,8 @@ namespace GameLib.CharacterSystem {
 		}
 
 		public void InitiativeSelectSkill(SkillType skillType) {
-			if (_state != CheckerState.INITIATIVE_SKILL_OR_STUNT) throw new InvalidOperationException("State incorrect.");
-			if (!CanInitiativeUseSkill(_initiative, _action, skillType)) throw new InvalidOperationException("This skill cannot use in attack situation.");
+			if (_state != CheckerState.INITIATIVE_SKILL) throw new InvalidOperationException("State incorrect.");
+			if (!CanInitiativeUseSkillInAction(_initiative, skillType, _action)) throw new InvalidOperationException("This skill cannot use in attack situation.");
 			_initiativeSkillType = skillType;
 		}
 
@@ -240,8 +226,8 @@ namespace GameLib.CharacterSystem {
 		}
 
 		public void InitiativeSkillSelectionOver() {
-			if (_state != CheckerState.INITIATIVE_SKILL_OR_STUNT || _initiativeSkillType == null) throw new InvalidOperationException("State incorrect.");
-			_state = CheckerState.PASSIVE_SKILL_OR_STUNT;
+			if (_state != CheckerState.INITIATIVE_SKILL || _initiativeSkillType == null) throw new InvalidOperationException("State incorrect.");
+			_state = CheckerState.PASSIVE_SKILL;
 		}
 
 		public void InitiativeAspectSelectionOver() {
@@ -276,8 +262,8 @@ namespace GameLib.CharacterSystem {
 		}
 
 		public void PassiveSelectSkill(SkillType skillType) {
-			if (_state != CheckerState.PASSIVE_SKILL_OR_STUNT) throw new InvalidOperationException("State incorrect.");
-			if (!CanPassiveUseSkill(_passive, _action, skillType)) throw new InvalidOperationException("This skill cannot use in attack situation.");
+			if (_state != CheckerState.PASSIVE_SKILL) throw new InvalidOperationException("State incorrect.");
+			if (!CanPassiveUseSkillInAction(_passive, skillType, _action)) throw new InvalidOperationException("This skill cannot use in attack situation.");
 			_passiveSkillType = skillType;
 		}
 
@@ -289,7 +275,7 @@ namespace GameLib.CharacterSystem {
 		}
 
 		public void PassiveSkillSelectionOver() {
-			if (_state != CheckerState.PASSIVE_SKILL_OR_STUNT || _passiveSkillType == null) throw new InvalidOperationException("State incorrect.");
+			if (_state != CheckerState.PASSIVE_SKILL || _passiveSkillType == null) throw new InvalidOperationException("State incorrect.");
 			_state = CheckerState.INITIATIVE_ASPECT;
 		}
 

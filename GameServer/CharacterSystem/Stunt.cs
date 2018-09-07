@@ -1,4 +1,5 @@
-﻿using GameLib.Core;
+﻿using GameLib.Container.BattleComponent;
+using GameLib.Core;
 using GameLib.Core.ScriptSystem;
 using GameLib.Utilities;
 using System;
@@ -9,7 +10,7 @@ namespace GameLib.CharacterSystem {
 	public class StuntPropertyList<T> : AttachableList<Stunt, T> where T : class, IStuntProperty {
 		public StuntPropertyList(Stunt owner) : base(owner) { }
 	}
-
+	
 	public sealed class Stunt : AutogenIdentifiable, ICharacterProperty {
 		#region Javascript API class
 		private sealed class JSAPI : IJSAPI<Stunt> {
@@ -63,22 +64,6 @@ namespace GameLib.CharacterSystem {
 				}
 			}
 
-			public void setInitiativeEffect(IJSAPI<InitiativeEffect> effect) {
-				try {
-					_outer.Effect = JSContextHelper.Instance.GetAPIOrigin(effect);
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-				}
-			}
-
-			public IJSAPI<InitiativeEffect> getInitiativeEffect() {
-				try {
-					return (IJSAPI<InitiativeEffect>)_outer.Effect.GetContext();
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-					return null;
-				}
-			}
 
 			public Stunt Origin(JSContextHelper proof) {
 				try {
@@ -97,23 +82,22 @@ namespace GameLib.CharacterSystem {
 		private string _name = "";
 		private string _description = "";
 		private Character _belong = null;
-		private Func<Character, Character, CharacterAction, SkillType, bool, bool> _condition = null; // initiative, passive, action, initiativeSkillType, isInitiativeUsing
+		private Condition _targetCondition = null;
 		private InitiativeEffect _initiativeEffect;
 		private readonly StuntPropertyList<PassiveEffect> _passiveEffects;
-		private SkillType _boundSkillType;
-		private SkillProperty _skillProperty;
+		private BattleMapSkillProperty _skillProperty;
+		private StuntSituationLimit _situationLimit;
 		private readonly bool _needDMCheck;
 
-		public Stunt(InitiativeEffect effect, SkillType boundSkillType, bool needDMCheck = true, string name = "", string description = "") {
+		public Stunt(InitiativeEffect effect, bool needDMCheck = true, string name = "", string description = "") {
 			if (effect == null) throw new ArgumentNullException(nameof(effect));
 			if (effect.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(effect));
 			_initiativeEffect = effect;
 			effect.SetBelong(this);
-			_boundSkillType = boundSkillType ?? throw new ArgumentNullException(nameof(boundSkillType));
-			_skillProperty = _boundSkillType.Property;
-			_needDMCheck = needDMCheck;
 			_name = name ?? throw new ArgumentNullException(nameof(name));
 			_description = description ?? throw new ArgumentNullException(nameof(description));
+			_skillProperty = BattleMapSkillProperty.INIT;
+			_needDMCheck = needDMCheck;
 			_passiveEffects = new StuntPropertyList<PassiveEffect>(this);
 			_apiObj = new JSAPI(this);
 		}
@@ -123,7 +107,19 @@ namespace GameLib.CharacterSystem {
 		public override string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
 		public override string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
 		public Character Belong => _belong;
-		public Func<Character, Character, CharacterAction, SkillType, bool, bool> Condition { get => _condition; set => _condition = value; }
+		public Condition TargetCondition {
+			get => _targetCondition;
+			set {
+				if (value != null) {
+					if (value.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(value));
+					_targetCondition.SetBelong(null);
+					_targetCondition = value;
+					value.SetBelong(this);
+				} else {
+					_targetCondition = value;
+				}
+			}
+		}
 		public InitiativeEffect Effect {
 			get => _initiativeEffect;
 			set {
@@ -135,8 +131,8 @@ namespace GameLib.CharacterSystem {
 			}
 		}
 		public StuntPropertyList<PassiveEffect> PassiveEffects => _passiveEffects;
-		public SkillType BoundSkillType { get => _boundSkillType; set => _boundSkillType = value ?? throw new ArgumentNullException(nameof(value)); }
-		public SkillProperty SkillProperty { get => _skillProperty; set => _skillProperty = value; }
+		public BattleMapSkillProperty SkillProperty { get => _skillProperty; set => _skillProperty = value; }
+		public StuntSituationLimit SituationLimit { get => _situationLimit; set => _situationLimit = value; }
 		public bool NeedDMCheck => _needDMCheck;
 
 		public void SetBelong(Character belong) {

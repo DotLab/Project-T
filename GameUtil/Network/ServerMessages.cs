@@ -26,12 +26,13 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(objID);
-			OutputStreamHelper.WriteCharacterView(stream, view);
+			view.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			objID = stream.ReadString();
-			view = InputStreamHelper.ReadCharacterView(stream);
+			view = new CharacterView();
+			view.ReadFrom(stream);
 		}
 	}
 
@@ -59,12 +60,12 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(objID);
-			OutputStreamHelper.WriteLayout(stream, to);
+			to.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			objID = stream.ReadString();
-			to = InputStreamHelper.ReadLayout(stream);
+			to.ReadFrom(stream);
 		}
 	}
 
@@ -77,12 +78,12 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(objID);
-			OutputStreamHelper.WriteCharacterViewEffect(stream, effect);
+			effect.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			objID = stream.ReadString();
-			effect = InputStreamHelper.ReadCharacterViewEffect(stream);
+			effect.ReadFrom(stream);
 		}
 	}
 
@@ -95,12 +96,12 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(objID);
-			OutputStreamHelper.WritePortraitStyle(stream, portrait);
+			portrait.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			objID = stream.ReadString();
-			portrait = InputStreamHelper.ReadPortraitStyle(stream);
+			portrait.ReadFrom(stream);
 		}
 	}
 
@@ -111,11 +112,11 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public Layout to;
 
 		public override void WriteTo(IDataOutputStream stream) {
-			OutputStreamHelper.WriteLayout(stream, to);
+			to.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
-			to = InputStreamHelper.ReadLayout(stream);
+			to.ReadFrom(stream);
 		}
 	}
 
@@ -126,11 +127,11 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public CameraEffect effect;
 
 		public override void WriteTo(IDataOutputStream stream) {
-			OutputStreamHelper.WriteCameraEffect(stream, effect);
+			effect.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
-			effect = InputStreamHelper.ReadCameraEffect(stream);
+			effect.ReadFrom(stream);
 		}
 	}
 
@@ -235,11 +236,12 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public CharacterView view;
 
 		public override void WriteTo(IDataOutputStream stream) {
-			OutputStreamHelper.WriteCharacterView(stream, view);
+			view.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
-			view = InputStreamHelper.ReadCharacterView(stream);
+			view = new CharacterView();
+			view.ReadFrom(stream);
 		}
 	}
 
@@ -250,11 +252,11 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public PortraitStyle style;
 
 		public override void WriteTo(IDataOutputStream stream) {
-			OutputStreamHelper.WritePortraitStyle(stream, style);
+			style.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
-			style = InputStreamHelper.ReadPortraitStyle(stream);
+			style.ReadFrom(stream);
 		}
 	}
 
@@ -265,11 +267,11 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public CharacterViewEffect effect;
 
 		public override void WriteTo(IDataOutputStream stream) {
-			OutputStreamHelper.WriteCharacterViewEffect(stream, effect);
+			effect.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
-			effect = InputStreamHelper.ReadCharacterViewEffect(stream);
+			effect.ReadFrom(stream);
 		}
 	}
 
@@ -441,24 +443,24 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		}
 	}
 
-	public sealed class SkillDataMessage : Message {
+	public sealed class SkillLevelMessage : Message {
 		public const int MESSAGE_TYPE = -29;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public string characterID;
 		public string skillTypeID;
-		public SkillProperty skillProperty;
+		public int level;
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(characterID);
 			stream.WriteString(skillTypeID);
-			OutputStreamHelper.WriteSkillProperty(stream, skillProperty);
+			stream.WriteInt32(level);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			characterID = stream.ReadString();
 			skillTypeID = stream.ReadString();
-			skillProperty = InputStreamHelper.ReadSkillProperty(stream);
+			level = stream.ReadInt32();
 		}
 	}
 
@@ -468,20 +470,17 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public string characterID;
 		public string stuntID;
-		public string boundSkillTypeID;
 		public bool needDMCheck;
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(characterID);
 			stream.WriteString(stuntID);
-			stream.WriteString(boundSkillTypeID);
 			stream.WriteBoolean(needDMCheck);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			characterID = stream.ReadString();
 			stuntID = stream.ReadString();
-			boundSkillTypeID = stream.ReadString();
 			needDMCheck = stream.ReadBoolean();
 		}
 	}
@@ -572,17 +571,19 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(initiativeCharacterID);
-			OutputStreamHelper.WriteCharacterView(stream, initiativeView);
+			initiativeView.WriteTo(stream);
 			stream.WriteString(passiveCharacterID);
-			OutputStreamHelper.WriteCharacterView(stream, passiveView);
+			passiveView.WriteTo(stream);
 			stream.WriteInt32(playerState);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			initiativeCharacterID = stream.ReadString();
-			initiativeView = InputStreamHelper.ReadCharacterView(stream);
+			initiativeView = new CharacterView();
+			initiativeView.ReadFrom(stream);
 			passiveCharacterID = stream.ReadString();
-			passiveView = InputStreamHelper.ReadCharacterView(stream);
+			passiveView = new CharacterView();
+			passiveView.ReadFrom(stream);
 			playerState = stream.ReadInt32();
 		}
 	}
@@ -814,13 +815,14 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteInt32(playerIndex);
 			stream.WriteString(characterID);
-			OutputStreamHelper.WriteCharacterView(stream, view);
+			view.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			playerIndex = stream.ReadInt32();
 			characterID = stream.ReadString();
-			view = InputStreamHelper.ReadCharacterView(stream);
+			view = new CharacterView();
+			view.ReadFrom(stream);
 		}
 	}
 
@@ -851,12 +853,13 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public override void WriteTo(IDataOutputStream stream) {
 			objData.WriteTo(stream);
-			OutputStreamHelper.WriteCharacterView(stream, view);
+			view.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			objData.ReadFrom(stream);
-			view = InputStreamHelper.ReadCharacterView(stream);
+			view = new CharacterView();
+			view.ReadFrom(stream);
 		}
 	}
 
@@ -864,7 +867,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -49;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj gridObj;
+		public BattleSceneObject gridObj;
 
 		public override void WriteTo(IDataOutputStream stream) {
 			gridObj.WriteTo(stream);
@@ -884,12 +887,13 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public override void WriteTo(IDataOutputStream stream) {
 			objData.WriteTo(stream);
-			OutputStreamHelper.WriteCharacterView(stream, view);
+			view.WriteTo(stream);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			objData.ReadFrom(stream);
-			view = InputStreamHelper.ReadCharacterView(stream);
+			view = new CharacterView();
+			view.ReadFrom(stream);
 		}
 	}
 
@@ -897,7 +901,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -51;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj ladderObj;
+		public BattleSceneObject ladderObj;
 
 		public override void WriteTo(IDataOutputStream stream) {
 			ladderObj.WriteTo(stream);
@@ -930,11 +934,11 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -53;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj[] objOrder;
+		public BattleSceneObject[] objOrder;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			int length = stream.ReadInt32();
-			objOrder = new BattleSceneObj[length];
+			objOrder = new BattleSceneObject[length];
 			for (int i = 0; i < length; ++i) {
 				objOrder[i].ReadFrom(stream);
 			}
@@ -953,7 +957,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public override int MessageType => MESSAGE_TYPE;
 
 		public bool canOperate;
-		public BattleSceneObj gridObj;
+		public BattleSceneObject gridObj;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			canOperate = stream.ReadBoolean();
@@ -970,8 +974,8 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -55;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj passiveObj;
-		public BattleSceneObj initiativeObj;
+		public BattleSceneObject passiveObj;
+		public BattleSceneObject initiativeObj;
 		public SkillTypeDescription initiativeSkillType;
 		public CharacterAction action;
 
@@ -1009,7 +1013,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -57;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj obj;
+		public BattleSceneObject obj;
 		public int point;
 
 		public override void ReadFrom(IDataInputStream stream) {
@@ -1027,7 +1031,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -58;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj obj;
+		public BattleSceneObject obj;
 		public string skillTypeID;
 		public bool bigone;
 
@@ -1048,8 +1052,8 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -59;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj userObj;
-		public BattleSceneObj aspectOwnerObj;
+		public BattleSceneObject userObj;
+		public BattleSceneObject aspectOwnerObj;
 		public CharacterPropertyDescription aspect;
 
 		public override void ReadFrom(IDataInputStream stream) {
@@ -1071,24 +1075,18 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public struct ReachableGrid : IStreamable {
 			public int prevPlaceIndex;
-			public int row;
-			public int col;
-			public bool highland;
+			public GridPos pos;
 			public int leftMovePoint;
 
 			public void ReadFrom(IDataInputStream stream) {
 				prevPlaceIndex = stream.ReadInt32();
-				row = stream.ReadInt32();
-				col = stream.ReadInt32();
-				highland = stream.ReadBoolean();
+				pos.ReadFrom(stream);
 				leftMovePoint = stream.ReadInt32();
 			}
 
 			public void WriteTo(IDataOutputStream stream) {
 				stream.WriteInt32(prevPlaceIndex);
-				stream.WriteInt32(row);
-				stream.WriteInt32(col);
-				stream.WriteBoolean(highland);
+				pos.WriteTo(stream);
 				stream.WriteInt32(leftMovePoint);
 			}
 		}
@@ -1115,7 +1113,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -61;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj obj;
+		public BattleSceneObject obj;
 		public BattleMapDirection direction;
 		public bool stairway;
 
@@ -1166,7 +1164,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -64;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj obj;
+		public BattleSceneObject obj;
 		public SkillTypeDescription moveSkillType;
 		public int newMovePoint;
 
@@ -1187,7 +1185,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -65;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj obj;
+		public BattleSceneObject obj;
 		public int newActionPoint;
 
 		public override void ReadFrom(IDataInputStream stream) {
@@ -1260,7 +1258,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		}
 	}
 
-	public sealed class BattleSceneUpdateGridInfoMessage : Message {
+	public sealed class BattleSceneUpdateGridDataMessage : Message {
 		public const int MESSAGE_TYPE = -69;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -1285,7 +1283,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -70;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj obj;
+		public BattleSceneObject obj;
 		public int newMovePoint;
 
 		public override void ReadFrom(IDataInputStream stream) {
@@ -1303,17 +1301,17 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -71;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj initiativeObj;
+		public BattleSceneObject initiativeObj;
 		public SkillTypeDescription initiativeSkillType;
 		public CharacterAction action;
-		public BattleSceneObj[] targets;
+		public BattleSceneObject[] targets;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			initiativeObj.ReadFrom(stream);
 			initiativeSkillType.ReadFrom(stream);
 			action = (CharacterAction)stream.ReadByte();
 			int length = stream.ReadInt32();
-			targets = new BattleSceneObj[length];
+			targets = new BattleSceneObject[length];
 			for (int i = 0; i < length; ++i) {
 				targets[i].ReadFrom(stream);
 			}
@@ -1334,7 +1332,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public const int MESSAGE_TYPE = -72;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public BattleSceneObj nextone;
+		public BattleSceneObject nextone;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			nextone.ReadFrom(stream);
@@ -1389,7 +1387,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		}
 	}
 
-	public sealed class BattleSceneStuntTargetSelectableMessage : Message {
+	public sealed class StuntTargetSelectableMessage : Message {
 		public const int MESSAGE_TYPE = -76;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -1401,6 +1399,58 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public override void ReadFrom(IDataInputStream stream) {
 			result = stream.ReadBoolean();
+		}
+	}
+	
+	public sealed class BattleSceneActionAffectableAreasMessage : Message {
+		public const int MESSAGE_TYPE = -77;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public GridPos[] centers;
+		public GridPos[][] areas;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			int length = stream.ReadInt32();
+			centers = new GridPos[length];
+			for (int i = 0; i < length; ++i) {
+				centers[i].ReadFrom(stream);
+			}
+			areas = new GridPos[length][];
+			for (int i = 0; i < length; ++i) {
+				int gridCount = stream.ReadInt32();
+				areas[i] = new GridPos[gridCount];
+				for (int j = 0; j < gridCount; ++j) {
+					areas[i][j].ReadFrom(stream);
+				}
+			}
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteInt32(centers.Length);
+			foreach (var center in centers) {
+				center.WriteTo(stream);
+			}
+			foreach (var area in areas) {
+				stream.WriteInt32(area.Length);
+				foreach (var grid in area) {
+					grid.WriteTo(stream);
+				}
+			}
+		}
+	}
+
+	public sealed class BattleSceneActionTargetCountMessage : Message {
+		public const int MESSAGE_TYPE = -78;
+		public override int MessageType => MESSAGE_TYPE;
+		
+		public int count;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			count = stream.ReadInt32();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteInt32(count);
 		}
 	}
 }

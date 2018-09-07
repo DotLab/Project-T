@@ -69,8 +69,8 @@ namespace GameLib.Utilities.Network {
 					return new AspectDataMessage();
 				case ConsequenceDataMessage.MESSAGE_TYPE:
 					return new ConsequenceDataMessage();
-				case SkillDataMessage.MESSAGE_TYPE:
-					return new SkillDataMessage();
+				case SkillLevelMessage.MESSAGE_TYPE:
+					return new SkillLevelMessage();
 				case StuntDataMessage.MESSAGE_TYPE:
 					return new StuntDataMessage();
 				case ExtraDataMessage.MESSAGE_TYPE:
@@ -149,8 +149,8 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneObjectUsableStuntListMessage();
 				case BattleSceneCanTakeExtraMoveMessage.MESSAGE_TYPE:
 					return new BattleSceneCanTakeExtraMoveMessage();
-				case BattleSceneUpdateGridInfoMessage.MESSAGE_TYPE:
-					return new BattleSceneUpdateGridInfoMessage();
+				case BattleSceneUpdateGridDataMessage.MESSAGE_TYPE:
+					return new BattleSceneUpdateGridDataMessage();
 				case BattleSceneUpdateMovePointMessage.MESSAGE_TYPE:
 					return new BattleSceneUpdateMovePointMessage();
 				case BattleSceneStartCheckMessage.MESSAGE_TYPE:
@@ -163,8 +163,12 @@ namespace GameLib.Utilities.Network {
 					return new UserDeterminMessage();
 				case CheckerCheckResultMessage.MESSAGE_TYPE:
 					return new CheckerCheckResultMessage();
-				case BattleSceneStuntTargetSelectableMessage.MESSAGE_TYPE:
-					return new BattleSceneStuntTargetSelectableMessage();
+				case StuntTargetSelectableMessage.MESSAGE_TYPE:
+					return new StuntTargetSelectableMessage();
+				case BattleSceneActionAffectableAreasMessage.MESSAGE_TYPE:
+					return new BattleSceneActionAffectableAreasMessage();
+				case BattleSceneActionTargetCountMessage.MESSAGE_TYPE:
+					return new BattleSceneActionTargetCountMessage();
 
 				// client message
 				case ClientInitMessage.MESSAGE_TYPE:
@@ -187,8 +191,8 @@ namespace GameLib.Utilities.Network {
 					return new GetAspectDataMessage();
 				case GetConsequenceDataMessage.MESSAGE_TYPE:
 					return new GetConsequenceDataMessage();
-				case GetSkillDataMessage.MESSAGE_TYPE:
-					return new GetSkillDataMessage();
+				case GetSkillLevelMessage.MESSAGE_TYPE:
+					return new GetSkillLevelMessage();
 				case GetStuntDataMessage.MESSAGE_TYPE:
 					return new GetStuntDataMessage();
 				case GetExtraDataMessage.MESSAGE_TYPE:
@@ -203,8 +207,8 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneSetSkipSelectAspectMessage();
 				case SelectAspectOverMessage.MESSAGE_TYPE:
 					return new SelectAspectOverMessage();
-				case BattleSceneGetActableObjectMovePathInfoMessage.MESSAGE_TYPE:
-					return new BattleSceneGetActableObjectMovePathInfoMessage();
+				case BattleSceneGetMovePathInfoMessage.MESSAGE_TYPE:
+					return new BattleSceneGetMovePathInfoMessage();
 				case BattleSceneActableObjectMoveMessage.MESSAGE_TYPE:
 					return new BattleSceneActableObjectMoveMessage();
 				case BattleSceneActableObjectDoActionMessage.MESSAGE_TYPE:
@@ -227,8 +231,12 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneTurnOverMessage();
 				case UserDeterminResultMessage.MESSAGE_TYPE:
 					return new UserDeterminResultMessage();
-				case BattleSceneGetStuntTargetSelectableMessage.MESSAGE_TYPE:
-					return new BattleSceneGetStuntTargetSelectableMessage();
+				case GetStuntTargetSelectableMessage.MESSAGE_TYPE:
+					return new GetStuntTargetSelectableMessage();
+				case BattleSceneGetActionAffectableAreasMessage.MESSAGE_TYPE:
+					return new BattleSceneGetActionAffectableAreasMessage();
+				case BattleSceneGetActionTargetCountMessage.MESSAGE_TYPE:
+					return new BattleSceneGetActionTargetCountMessage();
 
 				default:
 					throw new NotImplementedException();

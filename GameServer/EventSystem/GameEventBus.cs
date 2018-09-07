@@ -91,11 +91,11 @@ namespace GameLib.EventSystem {
 				if (_triggerPools.TryGetValue(id, out List<Trigger> triggers)) {
 					foreach (Trigger trigger in triggers) {
 						if (trigger.Active) {
-							e.SendContext();
+							e.TransmitContext();
 							trigger.Notify();
 							e.RetrieveContext();
+							if (e.Swallowed) return;
 						}
-						if (e.Swallowed) return;
 					}
 				}
 			}
@@ -112,21 +112,23 @@ namespace GameLib.EventSystem {
 
 		public void Register(Trigger trigger) {
 			if (_publishing) {
+				if (_waitForAdding.Contains(trigger)) throw new ArgumentException("Repeated trigger is registered to the event bus.", nameof(trigger));
 				_waitForAdding.Enqueue(trigger);
 				return;
 			}
 			if (!_triggerPools.ContainsKey(trigger.BoundEventID)) {
-				_triggerPools.Add(trigger.BoundEventID, new List<Trigger>());
+				_triggerPools.Add(trigger.BoundEventID, new List<Trigger>() { trigger });
+			} else {
+				List<Trigger> triggers = _triggerPools[trigger.BoundEventID];
+				if (triggers.Contains(trigger)) throw new ArgumentException("Repeated trigger is registered to the event bus.", nameof(trigger));
+				triggers.Add(trigger);
 			}
-			List<Trigger> triggers = _triggerPools[trigger.BoundEventID];
-			if (triggers.Contains(trigger)) throw new ArgumentException("Repeated trigger is registered to the event bus.", nameof(trigger));
-			triggers.Add(trigger);
 		}
 
 		public bool Unregister(Trigger trigger) {
 			if (_triggerPools.TryGetValue(trigger.BoundEventID, out List<Trigger> triggers)) {
 				if (_publishing) {
-					if (triggers.Contains(trigger)) {
+					if (triggers.Contains(trigger) && !_waitForRemoving.Contains(trigger)) {
 						_waitForRemoving.Enqueue(trigger);
 						return true;
 					} else return false;

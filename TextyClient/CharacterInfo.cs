@@ -46,14 +46,14 @@ namespace TextyClient {
 				}
 			});
 			foreach (var skillType in Program.skillTypes) {
-				var skillReq = new GetSkillDataMessage() {
+				var skillReq = new GetSkillLevelMessage() {
 					characterID = characterID,
 					skillTypeID = skillType.propertyID
 				};
 				Program.connection.Request(skillReq, result => {
-					var resp = result as SkillDataMessage;
+					var resp = result as SkillLevelMessage;
 					if (resp != null) {
-						this.skillListBox.Items.Add(skillType.name + " " + (resp.skillProperty.level >= 0 ? "+" : "") + resp.skillProperty.level);
+						this.skillListBox.Items.Add(skillType.name + " " + (resp.level >= 0 ? "+" : "") + resp.level);
 					}
 				});
 			}

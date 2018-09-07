@@ -53,18 +53,18 @@ namespace GameLib.ClientComponents {
 		}
 
 		private void OnSelectSkill(SkillType skillType) {
-			if (_position == ClientPosition.INITIATIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_SKILL_OR_STUNT) {
+			if (_position == ClientPosition.INITIATIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_SKILL) {
 				StorySceneContainer.Instance.InitiativeUseSkill(skillType, false, false);
-			} else if (_position == ClientPosition.PASSIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL_OR_STUNT) {
+			} else if (_position == ClientPosition.PASSIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL) {
 				StorySceneContainer.Instance.PassiveUseSkill(skillType, false, false);
 			}
 		}
 
 		private void OnSelectStunt(string stuntID) {
-			if (_position == ClientPosition.INITIATIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_SKILL_OR_STUNT) {
+			if (_position == ClientPosition.INITIATIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_SKILL) {
 				var stunt = SkillChecker.Instance.Initiative.FindStuntByID(stuntID);
 				StorySceneContainer.Instance.InitiativeUseStunt(stunt);
-			} else if (_position == ClientPosition.PASSIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL_OR_STUNT) {
+			} else if (_position == ClientPosition.PASSIVE && SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL) {
 				var stunt = SkillChecker.Instance.Passive.FindStuntByID(stuntID);
 				StorySceneContainer.Instance.PassiveUseStunt(stunt);
 			}

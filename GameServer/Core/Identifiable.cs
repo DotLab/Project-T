@@ -2,6 +2,11 @@
 using GameLib.Utilities;
 
 namespace GameLib.Core {
+	public interface IDescribable {
+		string Name { get; set; }
+		string Description { get; set; }
+	}
+
 	public interface IIdentifiable : IDescribable, IJSContextProvider {
 		string ID { get; }
 	}

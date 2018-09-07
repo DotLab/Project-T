@@ -13,7 +13,7 @@ namespace GameLib.Core {
 		public IJSAPI<StorySceneContainer> storyScene = (IJSAPI<StorySceneContainer>)StorySceneContainer.Instance.GetContext();
 		public IJSAPI<BattleSceneContainer> battleScene = (IJSAPI<BattleSceneContainer>)BattleSceneContainer.Instance.GetContext();
 		public IJSAPI<GameEventBus> gameEventBus = (IJSAPI<GameEventBus>)GameEventBus.Instance.GetContext();
-
+		
 	}
 
 	public static class Game {
@@ -40,14 +40,19 @@ namespace GameLib.Core {
 			}
 
 			IJSEngineRaw engineRaw = JSEngineManager.EngineRaw;
+			engineRaw.BindType(nameof(Vec2), typeof(Vec2));
+			engineRaw.BindType(nameof(Vec3), typeof(Vec3));
+			engineRaw.BindType(nameof(Vec4), typeof(Vec4));
+			engineRaw.BindType(nameof(Range), typeof(Range));
 			engineRaw.BindType(nameof(CharacterView), typeof(CharacterView));
-			engineRaw.BindType(nameof(CameraEffect), typeof(CameraEffect));
 			engineRaw.BindType(nameof(Layout), typeof(Layout));
-			engineRaw.BindType(nameof(PortraitStyle), typeof(PortraitStyle));
+			engineRaw.BindType(nameof(GridPos), typeof(GridPos));
+			engineRaw.BindType(nameof(CameraEffect), typeof(CameraEffect));
 			engineRaw.BindType(nameof(CharacterViewEffect), typeof(CharacterViewEffect));
-			engineRaw.BindType(nameof(Vector3), typeof(Vector3));
-			engineRaw.BindType(nameof(Quaternion), typeof(Quaternion));
-			engineRaw.BindType(nameof(SkillProperty), typeof(SkillProperty));
+			engineRaw.BindType(nameof(PortraitStyle), typeof(PortraitStyle));
+			engineRaw.BindType(nameof(SkillSituationLimit), typeof(SkillSituationLimit));
+			engineRaw.BindType(nameof(StuntSituationLimit), typeof(StuntSituationLimit));
+			engineRaw.BindType(nameof(BattleMapSkillProperty), typeof(BattleMapSkillProperty));
 			engineRaw.SetVar("$", _globalObject);
 
 

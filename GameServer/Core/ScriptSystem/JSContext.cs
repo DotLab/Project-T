@@ -15,9 +15,7 @@
 
 		public static JSContextHelper Instance => _instance;
 
-		private JSContextHelper() {
-
-		}
+		private JSContextHelper() { }
 
 		public T GetAPIOrigin<T>(IJSAPI<T> jsApi) where T : IJSContextProvider {
 			return jsApi.Origin(this);

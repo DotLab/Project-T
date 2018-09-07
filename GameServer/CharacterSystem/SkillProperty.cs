@@ -1,27 +1,22 @@
-﻿namespace GameLib.Utilities {
-	public enum BattleMapDirection {
-		POSITIVE_ROW = 0b0001,
-		POSITIVE_COL = 0b0010,
-		NEGATIVE_ROW = 0b0100,
-		NEGATIVE_COL = 0b1000
+﻿using GameLib.Utilities;
+using System;
+using System.Collections.Generic;
+
+namespace GameLib.CharacterSystem {
+	public struct SkillSituationLimit {
+		public bool canAttack;
+		public bool damageMental;
+		public bool canDefend;
 	}
 
-	public enum CharacterAction {
-		CREATE_ASPECT,
-		ATTACK,
-		HINDER
+	public struct StuntSituationLimit {
+		public CharacterAction usableSituation;
+		public CharacterAction resistableSituation;
+		public bool canUseInSpecialAction;
 	}
 
-	public enum CheckResult {
-		FAIL,
-		TIE,
-		SUCCEED,
-		SUCCEED_WITH_STYLE
-	}
-
-	public struct SkillProperty {
-		public static readonly SkillProperty INIT = new SkillProperty {
-			level = 0,
+	public struct BattleMapSkillProperty {
+		public static readonly BattleMapSkillProperty INIT = new BattleMapSkillProperty {
 			actionPointCost = 1,
 			useRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
 			affectRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
@@ -32,7 +27,6 @@
 			targetCount = 1
 		};
 
-		public int level;
 		public int actionPointCost;
 		public Range useRange;
 		public bool islinearUse;

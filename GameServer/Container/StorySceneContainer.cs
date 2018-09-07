@@ -434,30 +434,30 @@ namespace GameLib.Container.StoryComponent {
 				}
 			}
 
-			public Vector3 getPosition() {
+			public Vec3 getPosition() {
 				try {
 					return _outer.Layout.pos;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
-					return new Vector3();
+					return new Vec3();
 				}
 			}
 
-			public Quaternion getRotation() {
+			public float getRotation() {
 				try {
 					return _outer.Layout.rot;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
-					return new Quaternion();
+					return 0.0f;
 				}
 			}
 
-			public Vector3 getScale() {
+			public Vec2 getScale() {
 				try {
 					return _outer.Layout.sca;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
-					return new Vector3();
+					return new Vec2();
 				}
 			}
 
@@ -643,30 +643,30 @@ namespace GameLib.Container.StoryComponent {
 				}
 			}
 
-			public Vector3 getPosition() {
+			public Vec3 getPosition() {
 				try {
 					return _outer.Layout.pos;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
-					return new Vector3();
+					return new Vec3();
 				}
 			}
 
-			public Quaternion getRotation() {
+			public float getRotation() {
 				try {
 					return _outer.Layout.rot;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
-					return new Quaternion();
+					return 0.0f;
 				}
 			}
 
-			public Vector3 getScale() {
+			public Vec2 getScale() {
 				try {
 					return _outer.Layout.sca;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
-					return new Vector3();
+					return new Vec2();
 				}
 			}
 

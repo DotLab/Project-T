@@ -1,15 +1,32 @@
-﻿using GameLib.Utilities;
+﻿using GameLib.Core.ScriptSystem;
+using GameLib.Utilities;
 using System;
 using System.Collections.Generic;
 
-namespace GameLib.CharacterSystem {
-	public struct SkillSituation {
-		public bool canAttack;
-		public bool damageMental;
-		public bool canDefend;
-	}
+namespace GameLib.CharacterSystem {	
+	public sealed class SkillType : IJSContextProvider, IEquatable<SkillType> {
+		#region Javascript API class
+		private sealed class JSAPI : IJSAPI<SkillType> {
+			private readonly SkillType _outer;
 
-	public sealed class SkillType : IEquatable<SkillType> {
+			public JSAPI(SkillType outer) {
+				_outer = outer;
+			}
+
+			public SkillType Origin(JSContextHelper proof) {
+				try {
+					if (proof == JSContextHelper.Instance) {
+						return _outer;
+					}
+					return null;
+				} catch (Exception) {
+					return null;
+				}
+			}
+		}
+		#endregion
+		private readonly JSAPI _apiObj;
+
 		public static readonly SkillType Athletics = new SkillType("Athletics", "运动");
 		public static readonly SkillType Burglary = new SkillType("Burglary", "盗窃");
 		public static readonly SkillType Contacts = new SkillType("Contacts", "人脉");
@@ -33,14 +50,14 @@ namespace GameLib.CharacterSystem {
 		public static Dictionary<string, SkillType> SkillTypes => skillTypes;
 
 		static SkillType() {
-			Athletics._situation.canDefend = true;
-			Fight._situation.canAttack = true;
-			Fight._situation.canDefend = true;
-			Fight._property.useRange = new Range() { low = 0, lowOpen = false, high = 1, highOpen = false };
-			Physique._situation.canDefend = true;
-			Provoke._situation.canAttack = true;
-			Provoke._property.useRange = new Range() { low = 0, lowOpen = false, high = 4, highOpen = false };
-			Will._situation.canDefend = true;
+			Athletics._situationLimit.canDefend = true;
+			Fight._situationLimit.canAttack = true;
+			Fight._situationLimit.canDefend = true;
+			Fight._skillProperty.useRange = new Range() { low = 0, lowOpen = false, high = 1, highOpen = false };
+			Physique._situationLimit.canDefend = true;
+			Provoke._situationLimit.canAttack = true;
+			Provoke._skillProperty.useRange = new Range() { low = 0, lowOpen = false, high = 3, highOpen = false };
+			Will._situationLimit.canDefend = true;
 			skillTypes.Add(Athletics.ID, Athletics);
 			skillTypes.Add(Burglary.ID, Burglary);
 			skillTypes.Add(Contacts.ID, Contacts);
@@ -63,18 +80,20 @@ namespace GameLib.CharacterSystem {
 
 		private readonly string _id;
 		private readonly string _name;
-		private SkillProperty _property;
-		private SkillSituation _situation;
+		private int _level = 0;
+		private BattleMapSkillProperty _skillProperty = BattleMapSkillProperty.INIT;
+		private SkillSituationLimit _situationLimit = new SkillSituationLimit() { canAttack = false, canDefend = false, damageMental = false };
 
 		public string ID => _id;
 		public string Name => _name;
-		public SkillProperty Property => _property;
-		public SkillSituation Situation => _situation;
-
+		public int Level => _level;
+		public BattleMapSkillProperty SkillProperty => _skillProperty;
+		public SkillSituationLimit SituationLimit => _situationLimit;
+		
 		private SkillType(string id, string name) {
 			_id = id ?? throw new ArgumentNullException(nameof(id));
 			_name = name ?? throw new ArgumentNullException(nameof(name));
-			_property = SkillProperty.INIT;
+			_apiObj = new JSAPI(this);
 		}
 
 		public bool Equals(SkillType other) {
@@ -82,7 +101,7 @@ namespace GameLib.CharacterSystem {
 		}
 
 		public override bool Equals(object obj) {
-			return this.Equals(obj as SkillType);
+			return Equals(obj as SkillType);
 		}
 
 		public override int GetHashCode() {
@@ -96,5 +115,11 @@ namespace GameLib.CharacterSystem {
 		public static bool operator !=(SkillType a, SkillType b) {
 			return !(a == b);
 		}
+
+		public IJSContext GetContext() {
+			return _apiObj;
+		}
+
+		public void SetContext(IJSContext context) { }
 	}
 }

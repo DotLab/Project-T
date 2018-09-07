@@ -6,7 +6,7 @@ namespace GameLib.EventSystem {
 
 		public bool Swallowed { get => _swallowed; set => _swallowed = value; }
 
-		public void SendContext() {
+		public void TransmitContext() {
 			IEventInfo eventInfo = (IEventInfo)this.GetContext();
 			eventInfo.setSwallowed(_swallowed);
 			this.SetContext(eventInfo);

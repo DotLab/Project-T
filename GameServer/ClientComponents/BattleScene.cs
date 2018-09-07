@@ -23,9 +23,9 @@ namespace GameLib.ClientComponents {
 			for (int i = 0; i < reachablePlaces.Count; ++i) {
 				var prevPlace = reachablePlaces[i].prevPlace;
 				ret.pathInfo[i].prevPlaceIndex = prevPlace != null ? reachablePlaces.IndexOf(prevPlace) : -1;
-				ret.pathInfo[i].row = reachablePlaces[i].row;
-				ret.pathInfo[i].col = reachablePlaces[i].col;
-				ret.pathInfo[i].highland = reachablePlaces[i].highland;
+				ret.pathInfo[i].pos.row = reachablePlaces[i].pos.row;
+				ret.pathInfo[i].pos.col = reachablePlaces[i].pos.col;
+				ret.pathInfo[i].pos.highland = reachablePlaces[i].pos.highland;
 				ret.pathInfo[i].leftMovePoint = reachablePlaces[i].leftMovePoint;
 			}
 			return ret;
@@ -52,7 +52,7 @@ namespace GameLib.ClientComponents {
 							resp.objData = StreamableFactory.CreateBattleSceneLadderObjData(ladderObject);
 							return resp;
 						}
-					case BattleSceneGetActableObjectMovePathInfoMessage.MESSAGE_TYPE: {
+					case BattleSceneGetMovePathInfoMessage.MESSAGE_TYPE: {
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) break;
 							var list = container.CurrentActable.GetReachablePlaceList();
 							var resp = CreateMovePathInfoMessage(list);
@@ -72,7 +72,8 @@ namespace GameLib.ClientComponents {
 								var candoList = new List<Stunt>();
 								if (container.CurrentActable.CharacterRef.Stunts != null) {
 									foreach (var stunt in container.CurrentActable.CharacterRef.Stunts) {
-										if (container.CurrentActable.IsActionPointEnough(stunt.SkillProperty)) {
+										if (container.CurrentActable.CanUseStuntInAction(stunt, reqMsg.action)
+											&& container.CurrentActable.IsActionPointEnough(stunt.SkillProperty)) {
 											candoList.Add(stunt);
 										}
 									}
@@ -86,8 +87,8 @@ namespace GameLib.ClientComponents {
 								var resp = new BattleSceneObjectUsableSkillListMessage();
 								var candoList = new List<SkillType>();
 								foreach (var skillType in SkillType.SkillTypes) {
-									var skillProperty = container.CurrentActable.CharacterRef.GetSkillProperty(skillType.Value);
-									if (container.CurrentActable.CanUseSkill(skillType.Value, reqMsg.action)
+									var skillProperty = container.CurrentActable.CharacterRef.GetSkillMapProperty(skillType.Value);
+									if (container.CurrentActable.CanUseSkillInAction(skillType.Value, reqMsg.action)
 										&& container.CurrentActable.IsActionPointEnough(skillProperty)) {
 										candoList.Add(skillType.Value);
 									}
@@ -99,14 +100,55 @@ namespace GameLib.ClientComponents {
 								return resp;
 							}
 						}
-					case BattleSceneGetStuntTargetSelectableMessage.MESSAGE_TYPE: {
+					case BattleSceneGetActionAffectableAreasMessage.MESSAGE_TYPE: {
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) break;
-							var reqMsg = (BattleSceneGetStuntTargetSelectableMessage)request;
+							var reqMsg = (BattleSceneGetActionAffectableAreasMessage)request;
+							var resp = new BattleSceneActionAffectableAreasMessage();
+							Dictionary<GridPos, List<GridPos>> areas;
+							if (reqMsg.isStunt) {
+								var stunt = container.CurrentActable.CharacterRef.FindStuntByID(reqMsg.skillTypeOrStuntID);
+								areas = container.CurrentActable.GetStuntAffectableAreas(stunt);
+							} else {
+								var skillType = SkillType.SkillTypes[reqMsg.skillTypeOrStuntID];
+								areas = container.CurrentActable.GetSkillAffectableAreas(skillType);
+							}
+							resp.centers = new GridPos[areas.Count];
+							resp.areas = new GridPos[areas.Count][];
+							int i = 0;
+							foreach (var area in areas) {
+								resp.centers[i] = new GridPos() { row = area.Key.row, col = area.Key.col, highland = area.Key.highland };
+								var gridList = area.Value;
+								int gridCount = area.Value.Count;
+								resp.areas[i] = new GridPos[gridCount];
+								for (int j = 0; j < gridCount; ++j) {
+									resp.areas[i][j] = new GridPos() { row = gridList[j].row, col = gridList[j].col, highland = gridList[j].highland };
+								}
+								++i;
+							}
+							return resp;
+						}
+					case BattleSceneGetActionTargetCountMessage.MESSAGE_TYPE: {
+							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) break;
+							var reqMsg = (BattleSceneGetActionTargetCountMessage)request;
+							var resp = new BattleSceneActionTargetCountMessage();
+							if (reqMsg.isStunt) {
+								var stunt = container.CurrentActable.CharacterRef.FindStuntByID(reqMsg.skillTypeOrStuntID);
+								resp.count = stunt.SkillProperty.targetCount;
+							} else {
+								var skillType = SkillType.SkillTypes[reqMsg.skillTypeOrStuntID];
+								var skillProperty = container.CurrentActable.CharacterRef.GetSkillMapProperty(skillType);
+								resp.count = skillProperty.targetCount;
+							}
+							return resp;
+						}
+					case GetStuntTargetSelectableMessage.MESSAGE_TYPE: {
+							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) break;
+							var reqMsg = (GetStuntTargetSelectableMessage)request;
 							var target = container.FindObject(reqMsg.targetID);
 							var stunt = container.CurrentActable.CharacterRef.FindStuntByID(reqMsg.stuntID);
 							if (target != null && stunt != null) {
-								var resp = new BattleSceneStuntTargetSelectableMessage();
-								resp.result = container.CurrentActable.CanUseStunt(target, stunt, reqMsg.action);
+								var resp = new StuntTargetSelectableMessage();
+								resp.result = container.CurrentActable.CanUseStuntOnTarget(target, stunt, reqMsg.action);
 								return resp;
 							} else break;
 						}
@@ -163,7 +205,7 @@ namespace GameLib.ClientComponents {
 							var msg = (BattleSceneActableObjectMoveMessage)message;
 							if (container.IsChecking) return;
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) return;
-							container.CurrentActable.MoveTo(msg.dstRow, msg.dstCol, msg.dstHighland);
+							container.CurrentActable.MoveTo(msg.dst.row, msg.dst.col, msg.dst.highland);
 						}
 						break;
 					case BattleSceneTakeExtraMovePointMessage.MESSAGE_TYPE: {
@@ -185,7 +227,7 @@ namespace GameLib.ClientComponents {
 										targets.Add(target);
 								}
 								if (selectedStunt != null)
-									container.CurrentActable.UseStunt(selectedStunt, msg.action, msg.dstRow, msg.dstCol, targets);
+									container.CurrentActable.UseStunt(selectedStunt, msg.action, msg.dstCenter, targets);
 							} else {
 								var skillType = SkillType.SkillTypes[msg.skillTypeOrStuntID];
 								List<SceneObject> targets = new List<SceneObject>();
@@ -194,7 +236,7 @@ namespace GameLib.ClientComponents {
 									if (target != null)
 										targets.Add(target);
 								}
-								container.CurrentActable.UseSkill(skillType, msg.action, msg.dstRow, msg.dstCol, targets);
+								container.CurrentActable.UseSkill(skillType, msg.action, msg.dstCenter, targets);
 							}
 						}
 						break;
@@ -212,7 +254,7 @@ namespace GameLib.ClientComponents {
 					case CheckerSkillSelectedMessage.MESSAGE_TYPE: {
 							var msg = (CheckerSkillSelectedMessage)message;
 							if (!container.IsChecking) return;
-							if (SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL_OR_STUNT
+							if (SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL
 								&& container.CurrentPassive.CharacterRef.Controller == _owner) {
 								var selectedSkillType = SkillType.SkillTypes[msg.skillTypeID];
 								container.CurrentPassiveUseSkill(selectedSkillType);
@@ -222,7 +264,7 @@ namespace GameLib.ClientComponents {
 					case CheckerStuntSelectedMessage.MESSAGE_TYPE: {
 							var msg = (CheckerStuntSelectedMessage)message;
 							if (!container.IsChecking) return;
-							if (SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL_OR_STUNT
+							if (SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_SKILL
 								&& container.CurrentPassive.CharacterRef.Controller == _owner) {
 								var stunt = container.CurrentPassive.CharacterRef.FindStuntByID(msg.stuntID);
 								if (stunt != null) container.CurrentPassiveUseStunt(stunt);
@@ -275,10 +317,12 @@ namespace GameLib.ClientComponents {
 			base(connection, owner) {
 			connection.SetRequestHandler(BattleSceneGetGridObjectDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetLadderObjectDataMessage.MESSAGE_TYPE, this);
-			connection.SetRequestHandler(BattleSceneGetActableObjectMovePathInfoMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(BattleSceneGetMovePathInfoMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetCanExtraMoveMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetInitiativeUsableSkillOrStuntListMessage.MESSAGE_TYPE, this);
-			connection.SetRequestHandler(BattleSceneGetStuntTargetSelectableMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(BattleSceneGetActionAffectableAreasMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(BattleSceneGetActionTargetCountMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(GetStuntTargetSelectableMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetPassiveUsableSkillOrStuntListMessage.MESSAGE_TYPE, this);
 
 			connection.AddMessageReceiver(BattleSceneActableObjectMoveMessage.MESSAGE_TYPE, this);
@@ -318,8 +362,8 @@ namespace GameLib.ClientComponents {
 			_connection.SendMessage(message);
 		}
 
-		public void UpdateGridInfo(Grid grid) {
-			var message = new BattleSceneUpdateGridInfoMessage();
+		public void UpdateGridData(Grid grid) {
+			var message = new BattleSceneUpdateGridDataMessage();
 			message.row = grid.PosRow;
 			message.col = grid.PosCol;
 			message.isMiddleLand = grid.IsMiddleLand;
@@ -363,7 +407,7 @@ namespace GameLib.ClientComponents {
 		public void SetActingOrder(List<ActableGridObject> actableObjects) {
 			if (!_isUsing) return;
 			var message = new BattleSceneSetActingOrderMessage();
-			message.objOrder = new BattleSceneObj[actableObjects.Count];
+			message.objOrder = new BattleSceneObject[actableObjects.Count];
 			for (int i = 0; i < actableObjects.Count; ++i) {
 				message.objOrder[i] = StreamableFactory.CreateBattleSceneObj(actableObjects[i]);
 			}
@@ -398,7 +442,7 @@ namespace GameLib.ClientComponents {
 		}
 
 		public void NotifyPassiveSelectSkillOrStunt(CharacterAction action, SceneObject passive, SceneObject initiative, SkillType initiativeSkillType) {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_SKILL_OR_STUNT) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_SKILL) return;
 			var message = new BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage();
 			message.passiveObj = StreamableFactory.CreateBattleSceneObj(passive);
 			message.initiativeObj = StreamableFactory.CreateBattleSceneObj(initiative);
@@ -408,7 +452,7 @@ namespace GameLib.ClientComponents {
 		}
 
 		public void NotifyPassiveSelectSkillOrStuntComplete() {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_SKILL_OR_STUNT) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_SKILL) return;
 			var message = new CheckerSelectSkillOrStuntCompleteMessage();
 			message.isInitiative = false;
 			message.failure = false;
@@ -417,7 +461,7 @@ namespace GameLib.ClientComponents {
 		}
 
 		public void NotifyPassiveSelectSkillOrStuntFailure(string msg) {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_SKILL_OR_STUNT) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_SKILL) return;
 			var message = new CheckerSelectSkillOrStuntCompleteMessage();
 			message.isInitiative = false;
 			message.failure = true;
@@ -567,7 +611,7 @@ namespace GameLib.ClientComponents {
 			message.action = action;
 			int count = 0;
 			foreach (var target in targets) ++count;
-			message.targets = new BattleSceneObj[count];
+			message.targets = new BattleSceneObject[count];
 			int i = 0;
 			foreach (var target in targets) {
 				message.targets[i++] = StreamableFactory.CreateBattleSceneObj(target);

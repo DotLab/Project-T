@@ -1,9 +1,18 @@
 ﻿using GameLib.CharacterSystem;
 using GameLib.Container.BattleComponent;
+using GameLib.Core;
 using GameLib.Utilities.Network.Streamable;
 
 namespace GameLib.ClientComponents {
 	public static class StreamableFactory {
+		public static Describable CreateDescribable(IDescribable describable) {
+			var ret = new Describable() {
+				name = describable.Name,
+				description = describable.Description
+			};
+			return ret;
+		}
+
 		public static SkillTypeDescription CreateSkillTypeDescription(SkillType skillType) {
 			var ret = new SkillTypeDescription() {
 				id = skillType.ID,
@@ -15,13 +24,13 @@ namespace GameLib.ClientComponents {
 		public static CharacterPropertyDescription CreateCharacterPropertyDescription(ICharacterProperty characterProperty) {
 			var ret = new CharacterPropertyDescription() {
 				propertyID = characterProperty.ID,
-				describable = new Describable(characterProperty)
+				describable = CreateDescribable(characterProperty)
 			};
 			return ret;
 		}
 		
-		public static BattleSceneObj CreateBattleSceneObj(SceneObject sceneObject) {
-			var ret = new BattleSceneObj() {
+		public static BattleSceneObject CreateBattleSceneObj(SceneObject sceneObject) {
+			var ret = new BattleSceneObject() {
 				row = sceneObject.GridRef.PosRow,
 				col = sceneObject.GridRef.PosCol,
 				id = sceneObject.ID
@@ -33,12 +42,12 @@ namespace GameLib.ClientComponents {
 			var ret = new GridObjectData();
 			ret.obj.row = gridObject.GridRef.PosRow;
 			ret.obj.col = gridObject.GridRef.PosCol;
-			ret.highland = gridObject.IsHighland;
+			ret.highland = gridObject.Highland;
 			ret.obj.id = gridObject.ID;
 			ret.direction = gridObject.Direction;
 			ret.obstacle = gridObject.Obstacle;
 			ret.stagnate = gridObject.Stagnate;
-			ret.terrain = gridObject.IsTerrain;
+			ret.terrain = gridObject.Terrain;
 			bool actable = ret.actable = gridObject is ActableGridObject;
 			if (actable) {
 				var actableObject = (ActableGridObject)gridObject;

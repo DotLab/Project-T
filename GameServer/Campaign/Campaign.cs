@@ -1,5 +1,5 @@
-﻿using GameLib.Core.ScriptSystem;
-using GameLib.Utilities;
+﻿using GameLib.Core;
+using GameLib.Core.ScriptSystem;
 using System;
 using System.Collections.Generic;
 

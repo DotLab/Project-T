@@ -18,6 +18,8 @@ namespace GameLib.Container {
 				_outer = outer;
 			}
 
+
+
 			public BattleSceneContainer Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {
@@ -75,7 +77,7 @@ namespace GameLib.Container {
 			for (int row = 0; row < _battleMap.Rows; ++row) {
 				for (int col = 0; col < _battleMap.Cols; ++col) {
 					var grid = _battleMap[row, col];
-					battleScene.UpdateGridInfo(grid);
+					battleScene.UpdateGridData(grid);
 					foreach (var lowlandObj in grid.Lowland) {
 						battleScene.PushGridObject(lowlandObj);
 					}
@@ -171,7 +173,7 @@ namespace GameLib.Container {
 
 		public bool RemoveGridObject(GridObject gridObject) {
 			if (!_objList.Contains(gridObject)) return false;
-			if (gridObject.IsHighland) ((List<GridObject>)gridObject.GridRef.Highland).Remove(gridObject);
+			if (gridObject.Highland) ((List<GridObject>)gridObject.GridRef.Highland).Remove(gridObject);
 			else ((List<GridObject>)gridObject.GridRef.Lowland).Remove(gridObject);
 			gridObject.SetGridRef(null);
 			_objList.Remove(gridObject);
@@ -322,16 +324,16 @@ namespace GameLib.Container {
 
 		public void NewRound() {
 			foreach (ActableGridObject actableObject in _actableObjList) {
-				SkillProperty noticeProperty = actableObject.CharacterRef.GetSkillProperty(SkillType.Notice);
-				SkillProperty athleticsProperty = actableObject.CharacterRef.GetSkillProperty(SkillType.Athletics);
+				int noticeLv = actableObject.CharacterRef.GetSkillLevel(SkillType.Notice);
+				int athleticsLv = actableObject.CharacterRef.GetSkillLevel(SkillType.Athletics);
 				int[] dicePoints = FateDice.Roll();
 				if (actableObject.CharacterRef.ControlPlayer != null) {
 					actableObject.CharacterRef.ControlPlayer.Client.BattleScene.DisplayDicePoints(actableObject.CharacterRef.ControlPlayer, dicePoints);
 				}
 				int sumPoint = 0;
 				foreach (int point in dicePoints) sumPoint += point;
-				actableObject.ActionPriority = noticeProperty.level + sumPoint;
-				int ap = 1 + (athleticsProperty.level >= 1 ? (athleticsProperty.level - 1) / 2 : 0);
+				actableObject.ActionPriority = noticeLv + sumPoint;
+				int ap = 1 + (athleticsLv >= 1 ? (athleticsLv - 1) / 2 : 0);
 				actableObject.ActionPoint = actableObject.ActionPoint >= 0 ? ap : ap + actableObject.ActionPoint;
 				actableObject.ActionPointMax = ap;
 				actableObject.MovePoint = 0;
@@ -509,13 +511,13 @@ namespace GameLib.Container {
 						}
 						break;
 					case CheckResult.SUCCEED: {
-							var skillSituation = _initiative.CharacterRef.GetSkillSituation(_initiativeSkillType);
+							var skillSituation = _initiative.CharacterRef.GetSkillSituationLimit(_initiativeSkillType);
 							_currentPassive.CharacterRef.Damage(delta, skillSituation.damageMental, _initiative.CharacterRef, "使用" + _initiativeSkillType.Name + "发动攻击");
 						}
 						break;
 					case CheckResult.SUCCEED_WITH_STYLE: {
 							_initiative.CharacterRef.Controller.Client.RequestDetermin("降低一点伤害来换取一个增益吗？", determin => {
-								var skillSituation = _initiative.CharacterRef.GetSkillSituation(_initiativeSkillType);
+								var skillSituation = _initiative.CharacterRef.GetSkillSituationLimit(_initiativeSkillType);
 								int damage = delta;
 								if (determin == 0) {
 									var boost = new Aspect();
@@ -567,12 +569,23 @@ namespace GameLib.Container {
 
 		public bool CanCurrentPassiveUseSkill(SkillType skillType) {
 			if (skillType == null) throw new ArgumentNullException(nameof(skillType));
-			return SkillChecker.CanPassiveUseSkill(_currentPassive.CharacterRef, _checkingAction, skillType);
+			return SkillChecker.CanPassiveUseSkillInAction(_currentPassive.CharacterRef, skillType, _checkingAction);
 		}
 
 		public bool CanCurrentPassiveUseStunt(Stunt stunt) {
 			if (stunt == null) throw new ArgumentNullException(nameof(stunt));
-			return SkillChecker.CanPassiveUseStunt(_initiative.CharacterRef, _currentPassive.CharacterRef, _checkingAction, _initiativeSkillType, stunt);
+			if ((stunt.SituationLimit.resistableSituation & _checkingAction) != 0) {
+				if (stunt.TargetCondition == null) return true;
+				stunt.TargetCondition.Situation = new Situation() {
+					IsInStoryScene = false,
+					IsInitiative = false,
+					InitiativeSS = null, InitiativeBS = _initiative,
+					PassiveSS = null, PassiveBS = _currentPassive,
+					Action = _checkingAction,
+					InitiativeSkillType = _initiativeSkillType, TargetsBS = null
+				};
+				return stunt.TargetCondition.Judge();
+			} else return false;
 		}
 
 		public void CurrentPassiveUseSkill(SkillType skillType, bool force = false, bool bigone = false, int[] fixedDicePoints = null) {
@@ -616,6 +629,14 @@ namespace GameLib.Container {
 					result => {
 						if (result) {
 							_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectSkillOrStuntComplete();
+							stunt.Effect.Situation = new Situation() {
+								IsInStoryScene = false,
+								IsInitiative = false,
+								InitiativeSS = null, InitiativeBS = _initiative,
+								PassiveSS = null, PassiveBS = _currentPassive,
+								Action = _checkingAction,
+								InitiativeSkillType = _initiativeSkillType, TargetsBS = null
+							};
 							stunt.Effect.DoAction();
 						} else {
 							_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectSkillOrStuntFailure("DM拒绝了你选择的特技");
@@ -623,6 +644,14 @@ namespace GameLib.Container {
 					});
 			} else {
 				_currentPassive.CharacterRef.Controller.Client.BattleScene.NotifyPassiveSelectSkillOrStuntComplete();
+				stunt.Effect.Situation = new Situation() {
+					IsInStoryScene = false,
+					IsInitiative = false,
+					InitiativeSS = null, InitiativeBS = _initiative,
+					PassiveSS = null, PassiveBS = _currentPassive,
+					Action = _checkingAction,
+					InitiativeSkillType = _initiativeSkillType, TargetsBS = null
+				};
 				stunt.Effect.DoAction();
 			}
 		}
@@ -709,12 +738,123 @@ namespace GameLib.Container {
 
 namespace GameLib.Container.BattleComponent {
 	public abstract class SceneObject : IIdentifiable {
+		#region Javascript API class
+		protected class JSAPI : IJSAPI<SceneObject> {
+			private readonly SceneObject _outer;
+
+			public JSAPI(SceneObject outer) {
+				_outer = outer;
+			}
+
+			public string getID() {
+				try {
+					return _outer.ID;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
+
+			public string getName() {
+				try {
+					return _outer.Name;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
+
+			public void setName(string val) {
+				try {
+					_outer.Name = val;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public string getDescription() {
+				try {
+					return _outer.Description;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
+
+			public void setDescription(string val) {
+				try {
+					_outer.Description = val;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public IJSAPI<Character> getCharacterRef() {
+				try {
+					return (IJSAPI<Character>)_outer.CharacterRef.GetContext();
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
+
+			public IJSAPI<Grid> getGridRef() {
+				try {
+					if (_outer.GridRef == null) return null;
+					return (IJSAPI<Grid>)_outer.GridRef.GetContext();
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
+			
+			public bool isTerrian() {
+				try {
+					return _outer.Terrain;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return false;
+				}
+			}
+
+			public int getStagnate() {
+				try {
+					return _outer.Stagnate;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return -1;
+				}
+			}
+
+			public void setStagnate(int val) {
+				try {
+					_outer.Stagnate = val;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public SceneObject Origin(JSContextHelper proof) {
+				try {
+					if (proof == JSContextHelper.Instance) {
+						return _outer;
+					}
+					return null;
+				} catch (Exception) {
+					return null;
+				}
+			}
+		}
+		#endregion
+		private readonly JSAPI _apiObj;
+
 		protected readonly Character _characterRef;
 		protected Grid _gridRef;
 		protected int _stagnate;
 
 		public SceneObject(Character characterRef) {
 			_characterRef = characterRef ?? throw new ArgumentNullException(nameof(characterRef));
+			_apiObj = new JSAPI(this);
 		}
 
 		public string ID => _characterRef.ID;
@@ -722,23 +862,69 @@ namespace GameLib.Container.BattleComponent {
 		public string Description { get => _characterRef.Description; set => _characterRef.Description = value; }
 		public Character CharacterRef => _characterRef;
 		public Grid GridRef => _gridRef;
-		public abstract bool IsTerrain { get; }
+		public abstract bool Terrain { get; }
 		public int Stagnate { get => _stagnate; set => _stagnate = value; }
 
-		public abstract IJSContext GetContext();
+		public virtual IJSContext GetContext() {
+			return _apiObj;
+		}
+
 		public void SetContext(IJSContext context) { }
 	}
 
 	public class GridObject : SceneObject {
 		#region Javascript API class
-		protected class JSAPI : IJSAPI<GridObject> {
+		protected new class JSAPI : SceneObject.JSAPI, IJSAPI<GridObject> {
 			private readonly GridObject _outer;
 
-			public JSAPI(GridObject outer) {
+			public JSAPI(GridObject outer) : base(outer) {
 				_outer = outer;
 			}
 
-			public GridObject Origin(JSContextHelper proof) {
+			public bool isObstacle() {
+				try {
+					return _outer.Obstacle;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return true;
+				}
+			}
+
+			public void setObstacle(bool val) {
+				try {
+					_outer.Obstacle = val;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public bool isHighland() {
+				try {
+					return _outer.Highland;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return false;
+				}
+			}
+			
+			public int getDirection() {
+				try {
+					return (int)_outer.Direction;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return -1;
+				}
+			}
+
+			public void setDirection(int val) {
+				try {
+					_outer.Direction = (BattleMapDirection)val;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+			
+			GridObject IJSAPI<GridObject>.Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {
 						return _outer;
@@ -753,23 +939,23 @@ namespace GameLib.Container.BattleComponent {
 		private readonly JSAPI _apiObj;
 
 		protected bool _obstacle;
-		protected bool _isHighland;
-		protected readonly bool _isTerrain;
+		protected bool _highland;
+		protected readonly bool _terrain;
 		protected BattleMapDirection _direction;
 
 		public bool Obstacle { get => _obstacle; set => _obstacle = value; }
-		public bool IsHighland => _isHighland;
-		public override bool IsTerrain => _isTerrain;
+		public bool Highland => _highland;
+		public override bool Terrain => _terrain;
 		public BattleMapDirection Direction { get => _direction; set => _direction = value; }
 
 		public GridObject(Character characterRef, bool isTerrian) :
 			base(characterRef) {
-			_isTerrain = isTerrian;
+			_terrain = isTerrian;
 			_apiObj = new JSAPI(this);
 		}
 
 		public void SetHighland(bool highland) {
-			_isHighland = highland;
+			_highland = highland;
 		}
 
 		public void SetGridRef(Grid gridRef) {
@@ -783,14 +969,33 @@ namespace GameLib.Container.BattleComponent {
 
 	public sealed class LadderObject : SceneObject {
 		#region Javascript API class
-		private sealed class JSAPI : IJSAPI<LadderObject> {
+		private sealed new class JSAPI : SceneObject.JSAPI, IJSAPI<LadderObject> {
 			private readonly LadderObject _outer;
 
-			public JSAPI(LadderObject outer) {
+			public JSAPI(LadderObject outer) : base(outer) {
 				_outer = outer;
 			}
 
-			public LadderObject Origin(JSContextHelper proof) {
+			public IJSAPI<Grid> getSecondGridRef() {
+				try {
+					if (_outer.SecondGridRef == null) return null;
+					return (IJSAPI<Grid>)_outer.SecondGridRef.GetContext();
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
+
+			public int getDirectionOnFirstGrid() {
+				try {
+					return (int)_outer.DirectionOnFirstGrid;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return -1;
+				}
+			}
+			
+			LadderObject IJSAPI<LadderObject>.Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {
 						return _outer;
@@ -808,7 +1013,7 @@ namespace GameLib.Container.BattleComponent {
 		private BattleMapDirection _directionOnFirstGrid;
 
 		public Grid SecondGridRef => _secondGridRef;
-		public override bool IsTerrain => true;
+		public override bool Terrain => true;
 		public BattleMapDirection DirectionOnFirstGrid => _directionOnFirstGrid;
 
 		public LadderObject(Character characterRef) :
@@ -835,13 +1040,175 @@ namespace GameLib.Container.BattleComponent {
 
 	public sealed class ActableGridObject : GridObject {
 		#region Javascript API class
-		private new class JSAPI : GridObject.JSAPI, IJSAPI<ActableGridObject> {
+		private sealed new class JSAPI : GridObject.JSAPI, IJSAPI<ActableGridObject> {
 			private readonly ActableGridObject _outer;
 
 			public JSAPI(ActableGridObject outer) : base(outer) {
 				_outer = outer;
 			}
+			
+			public int getActionPriority() {
+				try {
+					return _outer.ActionPriority;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return 0;
+				}
+			}
 
+			public void setActionPriority(int val) {
+				try {
+					_outer.ActionPriority = val;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public int getActionPoint() {
+				try {
+					return _outer.ActionPoint;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return -1;
+				}
+			}
+
+			public void setActionPoint(int val) {
+				try {
+					_outer.ActionPoint = val;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public int getActionPointMax() {
+				try {
+					return _outer.ActionPointMax;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return -1;
+				}
+			}
+
+			public void setActionPointMax(int val) {
+				try {
+					_outer.ActionPointMax = val;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public bool isMovable() {
+				try {
+					return _outer.Movable;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return false;
+				}
+			}
+
+			public void setMovable(bool val) {
+				try {
+					_outer.Movable = val;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public int getMovePoint() {
+				try {
+					return _outer.MovePoint;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return -1;
+				}
+			}
+
+			public void setMovePoint(int val) {
+				try {
+					_outer.MovePoint = val;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public bool isDead() {
+				try {
+					return _outer.Dead;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return false;
+				}
+			}
+
+			public void MarkDead() {
+				try {
+					_outer.MarkDead();
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public void addMovePoint() {
+
+			}
+
+			public void addMovePoint(int[] fixedDicePoints) {
+
+			}
+			/*
+			public bool canTakeExtraMove() {
+
+			}
+
+			public void takeExtraMove() {
+				
+			}
+
+			public List<ReachablePlace> getReachablePlaceList() {
+				
+			}
+
+			public void move(BattleMapDirection direction, bool stairway) {
+				
+			}
+
+			public void moveTo(int dstRow, int dstCol, bool dstHighland) {
+				
+			}
+
+			public bool isActionPointEnough(BattleMapSkillProperty skillProperty) {
+				
+			}
+
+			public bool canUseSkillInAction(SkillType skillType, CharacterAction action) {
+				
+			}
+
+			public bool canUseStuntInAction(Stunt stunt, CharacterAction action) {
+
+			}
+			
+			public Dictionary<GridPos, List<GridPos>> getSkillAffectableAreas(SkillType skillType) {
+				
+			}
+
+			public Dictionary<GridPos, List<GridPos>> getStuntAffectableAreas(Stunt stunt) {
+				
+			}
+
+			public bool canUseStuntOnTarget(SceneObject target, Stunt stunt, CharacterAction action) {
+				
+			}
+			
+			public void useSkill(SkillType skillType, CharacterAction action, GridPos center, IEnumerable<SceneObject> targets, bool force = false) {
+				
+			}
+
+			public void useStunt(Stunt stunt, CharacterAction action, GridPos center, IEnumerable<SceneObject> targets) {
+				
+			}
+			*/
 			ActableGridObject IJSAPI<ActableGridObject>.Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {
@@ -858,15 +1225,17 @@ namespace GameLib.Container.BattleComponent {
 
 		private static void GetAroundReachablePlacesRecursively(List<ReachablePlace> list, ReachablePlace center) {
 			int leftMovePoint = center.leftMovePoint;
-			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.POSITIVE_ROW, false, ref leftMovePoint)) {
+			if (CanMove(center.pos.row, center.pos.col, center.pos.highland, BattleMapDirection.POSITIVE_ROW, false, ref leftMovePoint)) {
 				var next = new ReachablePlace() {
-					row = center.row + 1,
-					col = center.col,
-					highland = center.highland,
+					pos = new GridPos() {
+						row = center.pos.row + 1,
+						col = center.pos.col,
+						highland = center.pos.highland
+					},
 					prevPlace = center,
 					leftMovePoint = leftMovePoint
 				};
-				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
+				var markedPlace = MarkedReachablePlace(list, next.pos.row, next.pos.col, next.pos.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
 						list.Remove(markedPlace);
@@ -879,15 +1248,17 @@ namespace GameLib.Container.BattleComponent {
 				}
 			}
 			leftMovePoint = center.leftMovePoint;
-			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.POSITIVE_COL, false, ref leftMovePoint)) {
+			if (CanMove(center.pos.row, center.pos.col, center.pos.highland, BattleMapDirection.POSITIVE_COL, false, ref leftMovePoint)) {
 				var next = new ReachablePlace() {
-					row = center.row,
-					col = center.col + 1,
-					highland = center.highland,
+					pos = new GridPos() {
+						row = center.pos.row,
+						col = center.pos.col + 1,
+						highland = center.pos.highland
+					},
 					prevPlace = center,
 					leftMovePoint = leftMovePoint
 				};
-				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
+				var markedPlace = MarkedReachablePlace(list, next.pos.row, next.pos.col, next.pos.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
 						list.Remove(markedPlace);
@@ -900,15 +1271,17 @@ namespace GameLib.Container.BattleComponent {
 				}
 			}
 			leftMovePoint = center.leftMovePoint;
-			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.NEGATIVE_ROW, false, ref leftMovePoint)) {
+			if (CanMove(center.pos.row, center.pos.col, center.pos.highland, BattleMapDirection.NEGATIVE_ROW, false, ref leftMovePoint)) {
 				var next = new ReachablePlace() {
-					row = center.row - 1,
-					col = center.col,
-					highland = center.highland,
+					pos = new GridPos() {
+						row = center.pos.row - 1,
+						col = center.pos.col,
+						highland = center.pos.highland
+					},
 					prevPlace = center,
 					leftMovePoint = leftMovePoint
 				};
-				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
+				var markedPlace = MarkedReachablePlace(list, next.pos.row, next.pos.col, next.pos.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
 						list.Remove(markedPlace);
@@ -921,15 +1294,17 @@ namespace GameLib.Container.BattleComponent {
 				}
 			}
 			leftMovePoint = center.leftMovePoint;
-			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.NEGATIVE_COL, false, ref leftMovePoint)) {
+			if (CanMove(center.pos.row, center.pos.col, center.pos.highland, BattleMapDirection.NEGATIVE_COL, false, ref leftMovePoint)) {
 				var next = new ReachablePlace() {
-					row = center.row,
-					col = center.col - 1,
-					highland = center.highland,
+					pos = new GridPos() {
+						row = center.pos.row,
+						col = center.pos.col - 1,
+						highland = center.pos.highland
+					},
 					prevPlace = center,
 					leftMovePoint = leftMovePoint
 				};
-				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
+				var markedPlace = MarkedReachablePlace(list, next.pos.row, next.pos.col, next.pos.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
 						list.Remove(markedPlace);
@@ -942,15 +1317,17 @@ namespace GameLib.Container.BattleComponent {
 				}
 			}
 			leftMovePoint = center.leftMovePoint;
-			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.POSITIVE_ROW, true, ref leftMovePoint)) {
+			if (CanMove(center.pos.row, center.pos.col, center.pos.highland, BattleMapDirection.POSITIVE_ROW, true, ref leftMovePoint)) {
 				var next = new ReachablePlace() {
-					row = center.row + 1,
-					col = center.col,
-					highland = !center.highland,
+					pos = new GridPos() {
+						row = center.pos.row + 1,
+						col = center.pos.col,
+						highland = !center.pos.highland
+					},
 					prevPlace = center,
 					leftMovePoint = leftMovePoint
 				};
-				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
+				var markedPlace = MarkedReachablePlace(list, next.pos.row, next.pos.col, next.pos.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
 						list.Remove(markedPlace);
@@ -963,15 +1340,17 @@ namespace GameLib.Container.BattleComponent {
 				}
 			}
 			leftMovePoint = center.leftMovePoint;
-			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.POSITIVE_COL, true, ref leftMovePoint)) {
+			if (CanMove(center.pos.row, center.pos.col, center.pos.highland, BattleMapDirection.POSITIVE_COL, true, ref leftMovePoint)) {
 				var next = new ReachablePlace() {
-					row = center.row,
-					col = center.col + 1,
-					highland = !center.highland,
+					pos = new GridPos() {
+						row = center.pos.row,
+						col = center.pos.col + 1,
+						highland = !center.pos.highland
+					},
 					prevPlace = center,
 					leftMovePoint = leftMovePoint
 				};
-				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
+				var markedPlace = MarkedReachablePlace(list, next.pos.row, next.pos.col, next.pos.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
 						list.Remove(markedPlace);
@@ -984,15 +1363,17 @@ namespace GameLib.Container.BattleComponent {
 				}
 			}
 			leftMovePoint = center.leftMovePoint;
-			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.NEGATIVE_ROW, true, ref leftMovePoint)) {
+			if (CanMove(center.pos.row, center.pos.col, center.pos.highland, BattleMapDirection.NEGATIVE_ROW, true, ref leftMovePoint)) {
 				var next = new ReachablePlace() {
-					row = center.row - 1,
-					col = center.col,
-					highland = !center.highland,
+					pos = new GridPos() {
+						row = center.pos.row - 1,
+						col = center.pos.col,
+						highland = !center.pos.highland
+					},
 					prevPlace = center,
 					leftMovePoint = leftMovePoint
 				};
-				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
+				var markedPlace = MarkedReachablePlace(list, next.pos.row, next.pos.col, next.pos.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
 						list.Remove(markedPlace);
@@ -1005,15 +1386,17 @@ namespace GameLib.Container.BattleComponent {
 				}
 			}
 			leftMovePoint = center.leftMovePoint;
-			if (CanMove(center.row, center.col, center.highland, BattleMapDirection.NEGATIVE_COL, true, ref leftMovePoint)) {
+			if (CanMove(center.pos.row, center.pos.col, center.pos.highland, BattleMapDirection.NEGATIVE_COL, true, ref leftMovePoint)) {
 				var next = new ReachablePlace() {
-					row = center.row,
-					col = center.col - 1,
-					highland = !center.highland,
+					pos = new GridPos() {
+						row = center.pos.row,
+						col = center.pos.col - 1,
+						highland = !center.pos.highland
+					},
 					prevPlace = center,
 					leftMovePoint = leftMovePoint
 				};
-				var markedPlace = MarkedReachablePlace(list, next.row, next.col, next.highland);
+				var markedPlace = MarkedReachablePlace(list, next.pos.row, next.pos.col, next.pos.highland);
 				if (markedPlace != null) {
 					if (markedPlace.leftMovePoint < next.leftMovePoint) {
 						list.Remove(markedPlace);
@@ -1057,7 +1440,7 @@ namespace GameLib.Container.BattleComponent {
 			}
 			GridObject terrian = null;
 			for (int i = land.Count - 1; i >= 0; --i) {
-				if (land[i].IsTerrain) {
+				if (land[i].Terrain) {
 					terrian = land[i];
 					break;
 				}
@@ -1070,7 +1453,7 @@ namespace GameLib.Container.BattleComponent {
 
 		private static ReachablePlace MarkedReachablePlace(List<ReachablePlace> list, int row, int col, bool highland) {
 			foreach (var place in list) {
-				if (place.row == row && place.col == col && place.highland == highland) return place;
+				if (place.pos.row == row && place.pos.col == col && place.pos.highland == highland) return place;
 			}
 			return null;
 		}
@@ -1099,16 +1482,16 @@ namespace GameLib.Container.BattleComponent {
 			_characterRef.MarkDead();
 		}
 
-		public void AddMovePoint() {
-			int[] dicePoints = FateDice.Roll();
+		public void AddMovePoint(int[] fixedDicePoints = null) {
+			int[] dicePoints = fixedDicePoints ?? FateDice.Roll();
 			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.DisplayDicePoints(this.CharacterRef.Controller, dicePoints);
 			}
 			Game.DM.Client.BattleScene.DisplayDicePoints(this.CharacterRef.Controller, dicePoints);
 			int sumPoint = 0;
 			foreach (int point in dicePoints) sumPoint += point;
-			SkillProperty athleticsProperty = this.CharacterRef.GetSkillProperty(SkillType.Athletics);
-			sumPoint += athleticsProperty.level;
+			int athleticsLv = this.CharacterRef.GetSkillLevel(SkillType.Athletics);
+			sumPoint += athleticsLv;
 			this.MovePoint += sumPoint > 0 ? sumPoint : 1;
 			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.UpdateMovePoint(this);
@@ -1138,9 +1521,11 @@ namespace GameLib.Container.BattleComponent {
 			List<ReachablePlace> ret = new List<ReachablePlace>();
 			ReachablePlace begin = new ReachablePlace {
 				prevPlace = null,
-				row = this.GridRef.PosRow,
-				col = this.GridRef.PosCol,
-				highland = this.IsHighland,
+				pos = new GridPos() {
+					row = this.GridRef.PosRow,
+					col = this.GridRef.PosCol,
+					highland = this.Highland,
+				},
 				leftMovePoint = this.MovePoint
 			};
 			ret.Add(begin);
@@ -1172,7 +1557,7 @@ namespace GameLib.Container.BattleComponent {
 			if (dstRow < 0 || dstRow >= BattleSceneContainer.Instance.BattleMap.Rows || dstCol < 0 || dstCol >= BattleSceneContainer.Instance.BattleMap.Cols)
 				throw new InvalidOperationException("Move out of map.");
 			Grid dstGrid = BattleSceneContainer.Instance.BattleMap[dstRow, dstCol];
-			bool dstHighland = stairway ^ this.IsHighland;
+			bool dstHighland = stairway ^ this.Highland;
 			IReadOnlyList<GridObject> land = dstHighland ? dstGrid.Highland : dstGrid.Lowland;
 			if (land.Count <= 0 || land[land.Count - 1].Obstacle) throw new InvalidOperationException("Cannot reach the place.");
 			int leftMovePoint = this.MovePoint;
@@ -1182,7 +1567,7 @@ namespace GameLib.Container.BattleComponent {
 			}
 			GridObject terrian = null;
 			for (int i = land.Count - 1; i >= 0; --i) {
-				if (land[i].IsTerrain) {
+				if (land[i].Terrain) {
 					terrian = land[i];
 					break;
 				}
@@ -1197,7 +1582,7 @@ namespace GameLib.Container.BattleComponent {
 			}
 			Game.DM.Client.BattleScene.DisplayActableObjectMove(this, direction, stairway);
 			Game.DM.Client.BattleScene.UpdateMovePoint(this);
-			BattleSceneContainer.Instance.BattleMap.MoveStack(srcRow, srcCol, this.IsHighland, dstRow, dstCol, dstHighland);
+			BattleSceneContainer.Instance.BattleMap.MoveStack(srcRow, srcCol, this.Highland, dstRow, dstCol, dstHighland);
 		}
 
 		public void MoveTo(int dstRow, int dstCol, bool dstHighland) {
@@ -1209,12 +1594,12 @@ namespace GameLib.Container.BattleComponent {
 			while (dst.prevPlace != null) {
 				var prevPlace = dst.prevPlace;
 				int direction = 0;
-				if (prevPlace.row - dst.row == 1 && prevPlace.col == dst.col) direction = (int)BattleMapDirection.NEGATIVE_ROW;
-				else if (prevPlace.row - dst.row == -1 && prevPlace.col == dst.col) direction = (int)BattleMapDirection.POSITIVE_ROW;
-				else if (prevPlace.row == dst.row && prevPlace.col - dst.col == 1) direction = (int)BattleMapDirection.NEGATIVE_COL;
-				else if (prevPlace.row == dst.row && prevPlace.col - dst.col == -1) direction = (int)BattleMapDirection.POSITIVE_COL;
+				if (prevPlace.pos.row - dst.pos.row == 1 && prevPlace.pos.col == dst.pos.col) direction = (int)BattleMapDirection.NEGATIVE_ROW;
+				else if (prevPlace.pos.row - dst.pos.row == -1 && prevPlace.pos.col == dst.pos.col) direction = (int)BattleMapDirection.POSITIVE_ROW;
+				else if (prevPlace.pos.row == dst.pos.row && prevPlace.pos.col - dst.pos.col == 1) direction = (int)BattleMapDirection.NEGATIVE_COL;
+				else if (prevPlace.pos.row == dst.pos.row && prevPlace.pos.col - dst.pos.col == -1) direction = (int)BattleMapDirection.POSITIVE_COL;
 				Debug.Assert(direction != 0, "GetReachablePlaceList() returns a invalid list.");
-				bool stairway = prevPlace.highland ^ dst.highland;
+				bool stairway = prevPlace.pos.highland ^ dst.pos.highland;
 				moveDirections.Add((BattleMapDirection)direction);
 				moveStairways.Add(stairway);
 				dst = prevPlace;
@@ -1225,92 +1610,146 @@ namespace GameLib.Container.BattleComponent {
 				Move(moveDirections[i], moveStairways[i]);
 			}
 		}
-		
-		public bool IsActionPointEnough(SkillProperty skillProperty) {
+
+		public bool IsActionPointEnough(BattleMapSkillProperty skillProperty) {
 			if (this.ActionPoint < this.ActionPointMax && this.ActionPoint - skillProperty.actionPointCost < 0) return false;
 			return true;
 		}
 
-		public bool CanUseSkill(SkillType skillType, CharacterAction action) {
+		public bool CanUseSkillInAction(SkillType skillType, CharacterAction action) {
 			if (skillType == null) throw new ArgumentNullException(nameof(skillType));
-			return SkillChecker.CanInitiativeUseSkill(this.CharacterRef, action, skillType);
+			return SkillChecker.CanInitiativeUseSkillInAction(this.CharacterRef, skillType, action);
 		}
 
-		public bool CanUseStunt(SceneObject target, Stunt stunt, CharacterAction action) {
-			if (target == null) throw new ArgumentNullException(nameof(target));
+		public bool CanUseStuntInAction(Stunt stunt, CharacterAction action) {
 			if (stunt == null) throw new ArgumentNullException(nameof(stunt));
-			return SkillChecker.CanInitiativeUseStunt(this.CharacterRef, target.CharacterRef, action, stunt);
+			return (stunt.SituationLimit.usableSituation & action) != 0;
 		}
-		
-		private void SkillCheckFilter(ref SkillType skillType, ref CharacterAction action, ref int centerRow, ref int centerCol, ref IEnumerable<SceneObject> targets) {
-			if (centerRow >= BattleSceneContainer.Instance.BattleMap.Rows || centerRow < 0)
-				throw new ArgumentOutOfRangeException(nameof(centerRow));
-			if (centerCol >= BattleSceneContainer.Instance.BattleMap.Cols || centerCol < 0)
-				throw new ArgumentOutOfRangeException(nameof(centerCol));
 
-			var skillProperty = this.CharacterRef.GetSkillProperty(skillType);
-
-			if (!CanUseSkill(skillType, action)) throw new InvalidOperationException("Cannot use this skill.");
-			if (!IsActionPointEnough(skillProperty)) throw new InvalidOperationException("Action point is not enough.");
-
+		private bool CanPutActionAt(BattleMapSkillProperty skillProperty, GridPos pos) {
+			if (!this.Highland && pos.highland) return false;
 			if (skillProperty.islinearUse) {
 				do {
-					if (centerRow == this.GridRef.PosRow && centerCol == this.GridRef.PosCol && skillProperty.useRange.InRange(0)) break;
-					if ((skillProperty.linearUseDirection & BattleMapDirection.POSITIVE_ROW) != 0 && centerCol == this.GridRef.PosCol && skillProperty.useRange.InRange(centerRow - this.GridRef.PosRow)) break;
-					if ((skillProperty.linearUseDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && centerCol == this.GridRef.PosCol && skillProperty.useRange.InRange(this.GridRef.PosRow - centerRow)) break;
-					if ((skillProperty.linearUseDirection & BattleMapDirection.POSITIVE_COL) != 0 && centerRow == this.GridRef.PosRow && skillProperty.useRange.InRange(centerCol - this.GridRef.PosCol)) break;
-					if ((skillProperty.linearUseDirection & BattleMapDirection.NEGATIVE_COL) != 0 && centerRow == this.GridRef.PosRow && skillProperty.useRange.InRange(this.GridRef.PosCol - centerCol)) break;
-					throw new InvalidOperationException("Cannot use this skill/stunt at the specified position.");
+					if (pos.row == this.GridRef.PosRow && pos.col == this.GridRef.PosCol && skillProperty.useRange.InRange(0)) break;
+					if ((skillProperty.linearUseDirection & BattleMapDirection.POSITIVE_ROW) != 0 && pos.col == this.GridRef.PosCol && skillProperty.useRange.InRange(pos.row - this.GridRef.PosRow)) break;
+					if ((skillProperty.linearUseDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && pos.col == this.GridRef.PosCol && skillProperty.useRange.InRange(this.GridRef.PosRow - pos.row)) break;
+					if ((skillProperty.linearUseDirection & BattleMapDirection.POSITIVE_COL) != 0 && pos.row == this.GridRef.PosRow && skillProperty.useRange.InRange(pos.col - this.GridRef.PosCol)) break;
+					if ((skillProperty.linearUseDirection & BattleMapDirection.NEGATIVE_COL) != 0 && pos.row == this.GridRef.PosRow && skillProperty.useRange.InRange(this.GridRef.PosCol - pos.col)) break;
+					return false;
 				} while (false);
-			} else if (skillProperty.useRange.OutOfRange(Math.Abs(centerRow - this.GridRef.PosRow) + Math.Abs(centerCol - this.GridRef.PosCol))) throw new InvalidOperationException("Cannot use this skill/stunt at the specified position.");
+			} else if (skillProperty.useRange.OutOfRange(Math.Abs(pos.row - this.GridRef.PosRow) + Math.Abs(pos.col - this.GridRef.PosCol))) return false;
+			return true;
+		}
+		
+		private List<GridPos> GetAffectArea(BattleMapSkillProperty skillProperty, GridPos center) {
+			var area = new List<GridPos>();
+			if (skillProperty.islinearAffect) {
+				for (int r = 0; r < BattleSceneContainer.Instance.BattleMap.Rows; ++r) {
+					for (int c = 0; c < BattleSceneContainer.Instance.BattleMap.Cols; ++c) {
+						if (((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0 && c == center.col && skillProperty.affectRange.InRange(r - center.row))
+							|| ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && c == center.col && skillProperty.affectRange.InRange(center.row - r))
+							|| ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0 && r == center.row && skillProperty.affectRange.InRange(c - center.col))
+							|| ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0 && r == center.row && skillProperty.affectRange.InRange(center.col - c))) {
+							area.Add(new GridPos() { row = r, col = c, highland = false });
+							if (this.Highland) area.Add(new GridPos() { row = r, col = c, highland = true });
+						}
+					}
+				}
+			} else {
+				for (int r = 0; r < BattleSceneContainer.Instance.BattleMap.Rows; ++r) {
+					for (int c = 0; c < BattleSceneContainer.Instance.BattleMap.Cols; ++c) {
+						if (skillProperty.affectRange.InRange(Math.Abs(r - center.row) + Math.Abs(c - center.col))) {
+							area.Add(new GridPos() { row = r, col = c, highland = false });
+							if (this.Highland) area.Add(new GridPos() { row = r, col = c, highland = true });
+						}
+					}
+				}
+			}
+			return area;
+		}
 
+		public Dictionary<GridPos, List<GridPos>> GetSkillAffectableAreas(SkillType skillType) {
+			if (skillType == null) throw new ArgumentNullException(nameof(skillType));
+			var skillProperty = this.CharacterRef.GetSkillMapProperty(skillType);
+			var putableArea = new List<GridPos>();
+			for (int r = 0; r < BattleSceneContainer.Instance.BattleMap.Rows; ++r) {
+				for (int c = 0; c < BattleSceneContainer.Instance.BattleMap.Cols; ++c) {
+					var pos = new GridPos() { row = r, col = c, highland = false };
+					if (CanPutActionAt(skillProperty, pos)) {
+						putableArea.Add(pos);
+					}
+					pos.highland = true;
+					if (CanPutActionAt(skillProperty, pos)) {
+						putableArea.Add(pos);
+					}
+				}
+			}
+			var ret = new Dictionary<GridPos, List<GridPos>>();
+			foreach (var putableGrid in putableArea) {
+				ret.Add(putableGrid, GetAffectArea(skillProperty, putableGrid));
+			}
+			return ret;
+		}
+
+		public Dictionary<GridPos, List<GridPos>> GetStuntAffectableAreas(Stunt stunt) {
+			if (stunt == null) throw new ArgumentNullException(nameof(stunt));
+			var putableArea = new List<GridPos>();
+			for (int r = 0; r < BattleSceneContainer.Instance.BattleMap.Rows; ++r) {
+				for (int c = 0; c < BattleSceneContainer.Instance.BattleMap.Cols; ++c) {
+					var pos = new GridPos() { row = r, col = c, highland = false };
+					if (CanPutActionAt(stunt.SkillProperty, pos)) {
+						putableArea.Add(pos);
+					}
+					pos.highland = true;
+					if (CanPutActionAt(stunt.SkillProperty, pos)) {
+						putableArea.Add(pos);
+					}
+				}
+			}
+			var ret = new Dictionary<GridPos, List<GridPos>>();
+			foreach (var putableGrid in putableArea) {
+				ret.Add(putableGrid, GetAffectArea(stunt.SkillProperty, putableGrid));
+			}
+			return ret;
+		}
+
+		public bool CanUseStuntOnTarget(SceneObject target, Stunt stunt, CharacterAction action) {
+			if (target == null) throw new ArgumentNullException(nameof(target));
+			if (stunt == null) throw new ArgumentNullException(nameof(stunt));
+			if (stunt.TargetCondition == null) return true;
+			stunt.TargetCondition.Situation = new Situation() {
+				IsInStoryScene = false,
+				IsInitiative = true,
+				InitiativeSS = null, InitiativeBS = this,
+				PassiveSS = null, PassiveBS = target,
+				Action = action,
+				InitiativeSkillType = null, TargetsBS = null
+			};
+			return stunt.TargetCondition.Judge();
+		}
+
+		private void SkillCheckFilter(ref SkillType skillType, ref CharacterAction action, ref GridPos center, ref IEnumerable<SceneObject> targets) {
+			if (center.row >= BattleSceneContainer.Instance.BattleMap.Rows || center.row < 0)
+				throw new ArgumentOutOfRangeException(nameof(center));
+			if (center.col >= BattleSceneContainer.Instance.BattleMap.Cols || center.col < 0)
+				throw new ArgumentOutOfRangeException(nameof(center));
+
+			var skillProperty = this.CharacterRef.GetSkillMapProperty(skillType);
+
+			if (!CanUseSkillInAction(skillType, action)) throw new InvalidOperationException("Cannot use this skill.");
+			if (!IsActionPointEnough(skillProperty)) throw new InvalidOperationException("Action point is not enough.");
+
+			var areas = GetSkillAffectableAreas(skillType);
+			if (!areas.ContainsKey(center)) throw new InvalidOperationException("Cannot use this skill at the specified position.");
+
+			var area = areas[center];
 			if (skillProperty.targetCount == -1) {
 				var areaTargets = new List<SceneObject>();
-				if (skillProperty.islinearAffect) {
-					if (skillProperty.affectRange.InRange(0)) {
-						areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, centerCol].Lowland);
-						areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, centerCol].Highland);
-					}
-					if ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0) {
-						for (int row = centerRow + 1; row < BattleSceneContainer.Instance.BattleMap.Rows; ++row) {
-							if (skillProperty.affectRange.InRange(row - centerRow)) {
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, centerCol].Lowland);
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, centerCol].Highland);
-							}
-						}
-					}
-					if ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0) {
-						for (int row = centerRow - 1; row >= 0; --row) {
-							if (skillProperty.affectRange.InRange(centerRow - row)) {
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, centerCol].Lowland);
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, centerCol].Highland);
-							}
-						}
-					}
-					if ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0) {
-						for (int col = centerCol + 1; col < BattleSceneContainer.Instance.BattleMap.Cols; ++col) {
-							if (skillProperty.affectRange.InRange(col - centerCol)) {
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, col].Lowland);
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, col].Highland);
-							}
-						}
-					}
-					if ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0) {
-						for (int col = centerCol - 1; col >= 0; --col) {
-							if (skillProperty.affectRange.InRange(centerCol - col)) {
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, col].Lowland);
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, col].Highland);
-							}
-						}
-					}
-				} else {
-					for (int row = 0; row < BattleSceneContainer.Instance.BattleMap.Rows; ++row) {
-						for (int col = 0; col < BattleSceneContainer.Instance.BattleMap.Cols; ++col) {
-							if (skillProperty.affectRange.InRange(Math.Abs(row - centerRow) + Math.Abs(col - centerCol))) {
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, col].Lowland);
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, col].Highland);
-							}
-						}
+				foreach (var place in area) {
+					if (place.highland) {
+						areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[place.row, place.col].Highland);
+					} else {
+						areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[place.row, place.col].Lowland);
 					}
 				}
 				targets = areaTargets;
@@ -1319,128 +1758,58 @@ namespace GameLib.Container.BattleComponent {
 				int count = 0;
 				foreach (GridObject target in targets) {
 					if (target == null) throw new ArgumentNullException(nameof(target));
-					int row = target.GridRef.PosRow;
-					int col = target.GridRef.PosCol;
-					if (skillProperty.islinearAffect) {
-						do {
-							if ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0 && col == centerCol && skillProperty.affectRange.InRange(row - centerRow)) break;
-							if ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && col == centerCol && skillProperty.affectRange.InRange(centerRow - row)) break;
-							if ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0 && row == centerRow && skillProperty.affectRange.InRange(col - centerCol)) break;
-							if ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0 && row == centerRow && skillProperty.affectRange.InRange(centerCol - col)) break;
-							throw new InvalidOperationException("Target is not in range!");
-						} while (false);
-					} else if (skillProperty.affectRange.OutOfRange(Math.Abs(row - centerRow) + Math.Abs(col - centerCol))) throw new InvalidOperationException("Target is not in range!");
+					if (!area.Contains(new GridPos() { row = target.GridRef.PosRow, col = target.GridRef.PosCol, highland = target.Highland }))
+						throw new InvalidOperationException("Target is not in range!");
 					++count;
 				}
 				if (count > skillProperty.targetCount) throw new InvalidOperationException("Targets count is more than limit!");
 			}
 		}
 
-		private void StuntCheckFilter(ref Stunt stunt, ref CharacterAction action, ref int centerRow, ref int centerCol, ref IEnumerable<SceneObject> targets) {
+		private void StuntCheckFilter(ref Stunt stunt, ref CharacterAction action, ref GridPos center, ref IEnumerable<SceneObject> targets) {
 			if (stunt.Belong != this.CharacterRef) throw new ArgumentException("This stunt is not belong to the character.", nameof(stunt));
 
-			if (centerRow >= BattleSceneContainer.Instance.BattleMap.Rows || centerRow < 0)
-				throw new ArgumentOutOfRangeException(nameof(centerRow));
-			if (centerCol >= BattleSceneContainer.Instance.BattleMap.Cols || centerCol < 0)
-				throw new ArgumentOutOfRangeException(nameof(centerCol));
-
+			if (center.row >= BattleSceneContainer.Instance.BattleMap.Rows || center.row < 0)
+				throw new ArgumentOutOfRangeException(nameof(center));
+			if (center.col >= BattleSceneContainer.Instance.BattleMap.Cols || center.col < 0)
+				throw new ArgumentOutOfRangeException(nameof(center));
+			
 			var skillProperty = stunt.SkillProperty;
+
+			if (!CanUseStuntInAction(stunt, action)) throw new InvalidOperationException("Cannot use this skill.");
 			if (!IsActionPointEnough(skillProperty)) throw new InvalidOperationException("Action point is not enough.");
 
-			if (skillProperty.islinearUse) {
-				do {
-					if (centerRow == this.GridRef.PosRow && centerCol == this.GridRef.PosCol && skillProperty.useRange.InRange(0)) break;
-					if ((skillProperty.linearUseDirection & BattleMapDirection.POSITIVE_ROW) != 0 && centerCol == this.GridRef.PosCol && skillProperty.useRange.InRange(centerRow - this.GridRef.PosRow)) break;
-					if ((skillProperty.linearUseDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && centerCol == this.GridRef.PosCol && skillProperty.useRange.InRange(this.GridRef.PosRow - centerRow)) break;
-					if ((skillProperty.linearUseDirection & BattleMapDirection.POSITIVE_COL) != 0 && centerRow == this.GridRef.PosRow && skillProperty.useRange.InRange(centerCol - this.GridRef.PosCol)) break;
-					if ((skillProperty.linearUseDirection & BattleMapDirection.NEGATIVE_COL) != 0 && centerRow == this.GridRef.PosRow && skillProperty.useRange.InRange(this.GridRef.PosCol - centerCol)) break;
-					throw new InvalidOperationException("Cannot use this skill/stunt at the specified position.");
-				} while (false);
-			} else if (skillProperty.useRange.OutOfRange(Math.Abs(centerRow - this.GridRef.PosRow) + Math.Abs(centerCol - this.GridRef.PosCol))) throw new InvalidOperationException("Cannot use this skill/stunt at the specified position.");
+			var areas = GetStuntAffectableAreas(stunt);
+			if (!areas.ContainsKey(center)) throw new InvalidOperationException("Cannot use this skill at the specified position.");
 
+			var area = areas[center];
 			if (skillProperty.targetCount == -1) {
 				var areaTargets = new List<SceneObject>();
-				if (skillProperty.islinearAffect) {
-					if (skillProperty.affectRange.InRange(0)) {
-						areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, centerCol].Lowland);
-						areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, centerCol].Highland);
-					}
-					if ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0) {
-						for (int row = centerRow + 1; row < BattleSceneContainer.Instance.BattleMap.Rows; ++row) {
-							if (skillProperty.affectRange.InRange(row - centerRow)) {
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, centerCol].Lowland);
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, centerCol].Highland);
-							}
-						}
-					}
-					if ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0) {
-						for (int row = centerRow - 1; row >= 0; --row) {
-							if (skillProperty.affectRange.InRange(centerRow - row)) {
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, centerCol].Lowland);
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, centerCol].Highland);
-							}
-						}
-					}
-					if ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0) {
-						for (int col = centerCol + 1; col < BattleSceneContainer.Instance.BattleMap.Cols; ++col) {
-							if (skillProperty.affectRange.InRange(col - centerCol)) {
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, col].Lowland);
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, col].Highland);
-							}
-						}
-					}
-					if ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0) {
-						for (int col = centerCol - 1; col >= 0; --col) {
-							if (skillProperty.affectRange.InRange(centerCol - col)) {
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, col].Lowland);
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[centerRow, col].Highland);
-							}
-						}
-					}
-				} else {
-					for (int row = 0; row < BattleSceneContainer.Instance.BattleMap.Rows; ++row) {
-						for (int col = 0; col < BattleSceneContainer.Instance.BattleMap.Cols; ++col) {
-							if (skillProperty.affectRange.InRange(Math.Abs(row - centerRow) + Math.Abs(col - centerCol))) {
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, col].Lowland);
-								areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[row, col].Highland);
-							}
-						}
+				foreach (var place in area) {
+					if (place.highland) {
+						areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[place.row, place.col].Highland);
+					} else {
+						areaTargets.AddRange(BattleSceneContainer.Instance.BattleMap[place.row, place.col].Lowland);
 					}
 				}
-				var filteredTargets = new List<SceneObject>();
-				foreach (var areaTarget in areaTargets) {
-					if (CanUseStunt(areaTarget, stunt, action)) {
-						filteredTargets.Add(areaTarget);
-					}
-				}
-				targets = filteredTargets;
+				targets = areaTargets;
 			} else {
 				if (targets == null) throw new ArgumentNullException(nameof(targets));
 				int count = 0;
 				foreach (GridObject target in targets) {
 					if (target == null) throw new ArgumentNullException(nameof(target));
-					if (!CanUseStunt(target, stunt, action)) throw new InvalidOperationException("Cannot use this stunt.");
-					int row = target.GridRef.PosRow;
-					int col = target.GridRef.PosCol;
-					if (skillProperty.islinearAffect) {
-						do {
-							if ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_ROW) != 0 && col == centerCol && skillProperty.affectRange.InRange(row - centerRow)) break;
-							if ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_ROW) != 0 && col == centerCol && skillProperty.affectRange.InRange(centerRow - row)) break;
-							if ((skillProperty.linearAffectDirection & BattleMapDirection.POSITIVE_COL) != 0 && row == centerRow && skillProperty.affectRange.InRange(col - centerCol)) break;
-							if ((skillProperty.linearAffectDirection & BattleMapDirection.NEGATIVE_COL) != 0 && row == centerRow && skillProperty.affectRange.InRange(centerCol - col)) break;
-							throw new InvalidOperationException("Target is not in range!");
-						} while (false);
-					} else if (skillProperty.affectRange.OutOfRange(Math.Abs(row - centerRow) + Math.Abs(col - centerCol))) throw new InvalidOperationException("Target is not in range!");
+					if (!area.Contains(new GridPos() { row = target.GridRef.PosRow, col = target.GridRef.PosCol, highland = target.Highland }))
+						throw new InvalidOperationException("Target is not in range!");
 					++count;
 				}
 				if (count > skillProperty.targetCount) throw new InvalidOperationException("Targets count is more than limit!");
 			}
 		}
 
-		public void UseSkill(SkillType skillType, CharacterAction action, int centerRow, int centerCol, IEnumerable<SceneObject> targets, bool force = false) {
+		public void UseSkill(SkillType skillType, CharacterAction action, GridPos center, IEnumerable<SceneObject> targets, bool force = false) {
 			if (skillType == null) throw new ArgumentNullException(nameof(skillType));
-			SkillCheckFilter(ref skillType, ref action, ref centerRow, ref centerCol, ref targets);
-			var skillProperty = this.CharacterRef.GetSkillProperty(skillType);
+			SkillCheckFilter(ref skillType, ref action, ref center, ref targets);
+			var skillProperty = this.CharacterRef.GetSkillMapProperty(skillType);
 			if (!force) {
 				if (action == CharacterAction.CREATE_ASPECT) {
 					Game.DM.DMClient.RequestCheck(this.CharacterRef.Controller,
@@ -1470,9 +1839,9 @@ namespace GameLib.Container.BattleComponent {
 			BattleSceneContainer.Instance.StartCheck(this, targets, action, skillType);
 		}
 
-		public void UseStunt(Stunt stunt, CharacterAction action, int centerRow, int centerCol, IEnumerable<SceneObject> targets) {
+		public void UseStunt(Stunt stunt, CharacterAction action, GridPos center, IEnumerable<SceneObject> targets) {
 			if (stunt == null) throw new ArgumentNullException(nameof(stunt));
-			StuntCheckFilter(ref stunt, ref action, ref centerRow, ref centerCol, ref targets);
+			StuntCheckFilter(ref stunt, ref action, ref center, ref targets);
 			var skillProperty = stunt.SkillProperty;
 			if (stunt.NeedDMCheck) {
 				Game.DM.DMClient.RequestCheck(this.CharacterRef.Controller,
@@ -1485,6 +1854,18 @@ namespace GameLib.Container.BattleComponent {
 								player.Client.BattleScene.UpdateActionPoint(this);
 							}
 							Game.DM.Client.BattleScene.UpdateActionPoint(this);
+							var targetList = new List<SceneObject>();
+							foreach (var target in targets) {
+								targetList.Add(target);
+							}
+							stunt.TargetCondition.Situation = new Situation() {
+								IsInStoryScene = false,
+								IsInitiative = true,
+								InitiativeSS = null, InitiativeBS = this,
+								PassiveSS = null, PassiveBS = null,
+								Action = action,
+								InitiativeSkillType = null, TargetsBS = targetList
+							};
 							stunt.Effect.DoAction();
 						} else {
 							this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntFailure("DM拒绝了你选择的特技");
@@ -1497,10 +1878,22 @@ namespace GameLib.Container.BattleComponent {
 					player.Client.BattleScene.UpdateActionPoint(this);
 				}
 				Game.DM.Client.BattleScene.UpdateActionPoint(this);
+				var targetList = new List<SceneObject>();
+				foreach (var target in targets) {
+					targetList.Add(target);
+				}
+				stunt.TargetCondition.Situation = new Situation() {
+					IsInStoryScene = false,
+					IsInitiative = true,
+					InitiativeSS = null, InitiativeBS = this,
+					PassiveSS = null, PassiveBS = null,
+					Action = action,
+					InitiativeSkillType = null, TargetsBS = targetList
+				};
 				stunt.Effect.DoAction();
 			}
 		}
-
+		
 		public override IJSContext GetContext() {
 			return _apiObj;
 		}
@@ -1514,6 +1907,8 @@ namespace GameLib.Container.BattleComponent {
 			public JSAPI(Grid outer) {
 				_outer = outer;
 			}
+
+
 
 			public Grid Origin(JSContextHelper proof) {
 				try {
@@ -1598,14 +1993,6 @@ namespace GameLib.Container.BattleComponent {
 		public void SetContext(IJSContext context) { }
 	}
 
-	public sealed class ReachablePlace {
-		public ReachablePlace prevPlace;
-		public int row;
-		public int col;
-		public bool highland;
-		public int leftMovePoint;
-	}
-
 	public sealed class BattleMap {
 		private Grid[,] _grids;
 		private int _rows;
@@ -1649,6 +2036,11 @@ namespace GameLib.Container.BattleComponent {
 				srcLand.RemoveAt(srcLastIndex);
 			}
 		}
+	}
 
+	public sealed class ReachablePlace {
+		public ReachablePlace prevPlace;
+		public GridPos pos;
+		public int leftMovePoint;
 	}
 }

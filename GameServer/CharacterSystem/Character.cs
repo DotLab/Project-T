@@ -85,18 +85,18 @@ namespace GameLib.CharacterSystem {
 				}
 			}
 
-			public SkillProperty getSkillProperty(string skillID) {
+			public BattleMapSkillProperty getSkillProperty(string skillID) {
 				try {
-					return _outer.GetSkillProperty(SkillType.SkillTypes[skillID]);
+					return _outer.GetSkillMapProperty(SkillType.SkillTypes[skillID]);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
-					return new SkillProperty();
+					return new BattleMapSkillProperty();
 				}
 			}
 
-			public void setSkillProperty(string skillID, SkillProperty property) {
+			public void setSkillProperty(string skillID, BattleMapSkillProperty property) {
 				try {
-					_outer.SetSkillProperty(SkillType.SkillTypes[skillID], property);
+					_outer.SetSkillMapProperty(SkillType.SkillTypes[skillID], property);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 				}
@@ -250,19 +250,36 @@ namespace GameLib.CharacterSystem {
 		
 		protected sealed class Skill : IDescribable {
 			private readonly SkillType _skillType;
-			private SkillProperty _property;
-			private SkillSituation _situation;
-
+			private int _level;
+			private bool _levelUseRef = true;
+			private BattleMapSkillProperty _skillProperty;
+			private bool _skillPropertyUseRef = true;
+			private SkillSituationLimit _situationLimit;
+			private bool _situationLimitUseRef = true;
+			
 			public string Name { get => _skillType.Name; set { } }
 			public string Description { get => ""; set { } }
 			public SkillType SkillType => _skillType;
-			public SkillProperty Property { get => _property; set => _property = value; }
-			public SkillSituation Situation { get => _situation; set => _situation = value; }
-
+			public int Level { get => _levelUseRef ? _skillType.Level : _level; set { _level = value; _levelUseRef = false; } }
+			public BattleMapSkillProperty SkillProperty { get => _skillPropertyUseRef ? _skillType.SkillProperty : _skillProperty; set { _skillProperty = value; _skillPropertyUseRef = false; } }
+			public SkillSituationLimit SituationLimit { get => _situationLimitUseRef ? _skillType.SituationLimit : _situationLimit; set { _situationLimit = value; _situationLimitUseRef = false; } }
+			
 			public Skill(SkillType skillType) {
 				_skillType = skillType ?? throw new ArgumentNullException(nameof(skillType));
-				_property = skillType.Property;
-				_situation = skillType.Situation;
+				_level = skillType.Level;
+				_skillProperty = skillType.SkillProperty;
+				_situationLimit = skillType.SituationLimit;
+			}
+
+			public Skill Clone() {
+				var ret = new Skill(_skillType);
+				ret._level = _level;
+				ret._levelUseRef = _levelUseRef;
+				ret._skillProperty = _skillProperty;
+				ret._skillPropertyUseRef = _skillPropertyUseRef;
+				ret._situationLimit = _situationLimit;
+				ret._situationLimitUseRef = _situationLimitUseRef;
+				return ret;
 			}
 		}
 
@@ -318,13 +335,55 @@ namespace GameLib.CharacterSystem {
 		public abstract CharacterPropertyList<Extra> Extras { get; }
 		public abstract CharacterPropertyList<Consequence> Consequences { get; }
 		
-		public SkillSituation GetSkillSituation(SkillType skillType) {
+		public int GetSkillLevel(SkillType skillType) {
 			foreach (var skill in _skills) {
 				if (skill.SkillType == skillType) {
-					return skill.Situation;
+					return skill.Level;
 				}
 			}
-			var ret = skillType.Situation;
+			return skillType.Level;
+		}
+
+		public void SetSkillLevel(SkillType skillType, int level) {
+			foreach (var skill in _skills) {
+				if (skill.SkillType == skillType) {
+					skill.Level = level;
+					return;
+				}
+			}
+			var newSkill = new Skill(skillType);
+			newSkill.Level = level;
+			_skills.Add(newSkill);
+		}
+
+		public BattleMapSkillProperty GetSkillMapProperty(SkillType skillType) {
+			foreach (var skill in _skills) {
+				if (skill.SkillType == skillType) {
+					return skill.SkillProperty;
+				}
+			}
+			return skillType.SkillProperty;
+		}
+
+		public void SetSkillMapProperty(SkillType skillType, BattleMapSkillProperty property) {
+			foreach (var skill in _skills) {
+				if (skill.SkillType == skillType) {
+					skill.SkillProperty = property;
+					return;
+				}
+			}
+			var newSkill = new Skill(skillType);
+			newSkill.SkillProperty = property;
+			_skills.Add(newSkill);
+		}
+
+		public SkillSituationLimit GetSkillSituationLimit(SkillType skillType) {
+			foreach (var skill in _skills) {
+				if (skill.SkillType == skillType) {
+					return skill.SituationLimit;
+				}
+			}
+			var ret = skillType.SituationLimit;
 			if (skillType == SkillType.Shoot) {
 				if (this.Extras != null) {
 					foreach (var extra in this.Extras) {
@@ -338,36 +397,15 @@ namespace GameLib.CharacterSystem {
 			return ret;
 		}
 
-		public void SetSkillSituation(SkillType skillType, SkillSituation situation) {
+		public void SetSkillSituationLimit(SkillType skillType, SkillSituationLimit situation) {
 			foreach (var skill in _skills) {
 				if (skill.SkillType == skillType) {
-					skill.Situation = situation;
+					skill.SituationLimit = situation;
 					return;
 				}
 			}
 			var newSkill = new Skill(skillType);
-			newSkill.Situation = situation;
-			_skills.Add(newSkill);
-		}
-		
-		public SkillProperty GetSkillProperty(SkillType skillType) {
-			foreach (var skill in _skills) {
-				if (skill.SkillType == skillType) {
-					return skill.Property;
-				}
-			}
-			return skillType.Property;
-		}
-
-		public void SetSkillProperty(SkillType skillType, SkillProperty property) {
-			foreach (var skill in _skills) {
-				if (skill.SkillType == skillType) {
-					skill.Property = property;
-					return;
-				}
-			}
-			var newSkill = new Skill(skillType);
-			newSkill.Property = property;
+			newSkill.SituationLimit = situation;
 			_skills.Add(newSkill);
 		}
 
@@ -492,11 +530,7 @@ namespace GameLib.CharacterSystem {
 				this.Aspects.Add(clone);
 			}
 			foreach (Skill skill in template._skills) {
-				Skill clone = new Skill(skill.SkillType) {
-					Name = skill.Name,
-					Property = skill.Property,
-					Situation = skill.Situation
-				};
+				Skill clone = skill.Clone();
 				_skills.Add(skill);
 			}
 			this.PhysicsStress = template.PhysicsStress;
@@ -557,6 +591,15 @@ namespace GameLib.CharacterSystem {
 
 			public JSAPI(CharacterManager outer) {
 				_outer = outer;
+			}
+
+			public IJSAPI<SkillType> getSkillType(string id) {
+				try {
+					return (IJSAPI<SkillType>)SkillType.SkillTypes[id].GetContext();
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
 			}
 
 			public CharacterManager Origin(JSContextHelper proof) {
@@ -677,33 +720,7 @@ namespace GameLib.CharacterSystem {
 			}
 			return ret;
 		}
-
-		public Aspect CreateAspect() {
-			Aspect ret = new Aspect();
-			return ret;
-		}
-
-		public Consequence CreateConsequence() {
-			Consequence ret = new Consequence();
-			return ret;
-		}
 		
-		public Stunt CreateStunt() {
-			throw new NotImplementedException();
-		}
-
-		public Extra CreateExtra() {
-			throw new NotImplementedException();
-		}
-
-		public InitiativeEffect CreateInitiativeEffect() {
-			throw new NotImplementedException();
-		}
-
-		public PassiveEffect CreatePassiveEffect() {
-			throw new NotImplementedException();
-		}
-
 		public IJSContext GetContext() {
 			return _apiObj;
 		}
