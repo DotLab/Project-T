@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace GameLib.Core {
+namespace GameServer.Core {
 	public interface IReadonlyIdentifiedObjList<T> : IEnumerable<T>, IEnumerable, IReadOnlyCollection<T> {
 		T this[string id] { get; }
 		bool Contains(string id);

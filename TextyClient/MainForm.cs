@@ -1,6 +1,6 @@
-﻿using GameLib.Utilities.Network;
-using GameLib.Utilities.Network.ClientMessages;
-using GameLib.Utilities.Network.ServerMessages;
+﻿using GameUtil.Network;
+using GameUtil.Network.ClientMessages;
+using GameUtil.Network.ServerMessages;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -14,7 +14,8 @@ using System.Windows.Forms;
 namespace TextyClient {
 	public partial class MainForm : Form, IMessageReceiver {
 		public readonly BattleSceneForm battleSceneForm = new BattleSceneForm();
-		private readonly CheckForm _dmCheckForm = new CheckForm();
+		private readonly DMCheckForm _dmCheckForm = new DMCheckForm();
+		private readonly UserCheckForm _userCheckForm = new UserCheckForm();
 		private readonly bool _isDM;
 
 		public AdvancedConsole AdvancedConsole => advancedConsole;
@@ -22,20 +23,20 @@ namespace TextyClient {
 		public MainForm(bool isDM) {
 			InitializeComponent();
 
+			Program.connection.AddMessageReceiver(UserDeterminMessage.MESSAGE_TYPE, this);
+
 			_isDM = isDM;
 			if (isDM) {
-				Program.connection.AddMessageReceiver(UserDeterminMessage.MESSAGE_TYPE, this);
 				Program.connection.AddMessageReceiver(DMCheckMessage.MESSAGE_TYPE, this);
 			}
 		}
 
-		public void MessageReceived(GameLib.Utilities.Network.Message message) {
+		public void MessageReceived(GameUtil.Network.Message message) {
 			switch (message.MessageType) {
 				case DMCheckMessage.MESSAGE_TYPE: {
 						if (_isDM) {
 							var msg = (DMCheckMessage)message;
 							_dmCheckForm.SetMessage(msg.text);
-							_dmCheckForm.DMCheck = true;
 							_dmCheckForm.Visible = true;
 							_dmCheckForm.Activate();
 						}
@@ -43,10 +44,9 @@ namespace TextyClient {
 					break;
 				case UserDeterminMessage.MESSAGE_TYPE: {
 						var msg = (UserDeterminMessage)message;
-						_dmCheckForm.SetMessage(msg.text);
-						_dmCheckForm.DMCheck = false;
-						_dmCheckForm.Visible = true;
-						_dmCheckForm.Activate();
+						_userCheckForm.SetMessage(msg.text);
+						_userCheckForm.Visible = true;
+						_userCheckForm.Activate();
 					}
 					break;
 				default:

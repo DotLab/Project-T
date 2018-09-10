@@ -1,0 +1,6 @@
+(function () {
+	$__this__.setResult(false);
+	if ($__this__.getBelongStunt().getBelong().findExtraByID("ItemGun").isLongRangeWeapon()) {
+		$__this__.setResult(true);
+	}
+})();

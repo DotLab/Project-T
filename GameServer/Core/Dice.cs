@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GameLib.Core {
+namespace GameServer.Core {
 	public struct DicePoint {
 		public int value;
 		public double weight;

@@ -1,0 +1,38 @@
+(function () {
+	var situation = $__this__.getSituation();
+	if (situation.isInStoryScene()) {
+		
+	} else {
+		var me = situation.getInitiativeBS().getCharacterRef();
+		var consequences = me.getConsequenceList();
+		if (consequences != null) {
+			var lv2 = new Array();
+			var lv4 = new Array();
+			consequences.forEach(function (item) {
+				if (item.getCounteractLevel() == 2 && !item.isMentalDamage()) lv2.push(item);
+				else if (item.getCounteractLevel() == 4&& !item.isMentalDamage()) lv4.push(item);
+			});
+			var text = "请选择一个要变更的伤痕\n";
+			var index;
+			for (index = 1; index <= lv2.length; ++index) {
+				text += index + ".伤痕-2 " + lv2[index - 1].getName();
+			}
+			if (lv2.length < 2 && lv4.length > 0) {
+				text += index + ".伤痕-4 " + lv4[0].getName();
+				++index;
+			}
+			var stunt = $__this__.getBelongStunt();
+			$.campaignManager.askPlayer(me, text, function(result) {
+				if (result > 0 && result < index) {
+					if (result > lv2.length) {
+						lv4[0].setCounteractLevel(2);
+					} else {
+						consequences.remove(lv2[result - 1]);
+					}
+					me.setFatePoint(me.getFatePoint() - 1);
+					stunt.setCustomData(true);
+				}
+			});
+		}
+	}
+})();

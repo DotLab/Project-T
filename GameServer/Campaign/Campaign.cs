@@ -1,9 +1,10 @@
-﻿using GameLib.Core;
-using GameLib.Core.ScriptSystem;
+﻿using GameServer.CharacterSystem;
+using GameServer.Core;
+using GameServer.Core.ScriptSystem;
 using System;
 using System.Collections.Generic;
 
-namespace GameLib.Campaign {
+namespace GameServer.Campaign {
 	public enum ShotType {
 		STORY, BATTLE, FREEDOM
 	}
@@ -79,6 +80,36 @@ namespace GameLib.Campaign {
 				_outer = outer;
 			}
 
+			public void askPlayer(IJSAPI<Character> playerCharacter, string text, Action<int> callback) {
+				try {
+					var origin_character = JSContextHelper.Instance.GetAPIOrigin(playerCharacter);
+					origin_character.Controller.Client.RequestDetermin(text, result => {
+						try {
+							callback(result);
+						} catch (Exception e) {
+							JSEngineManager.Engine.Log(e.Message);
+						}
+					});
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public void askDM(IJSAPI<Character> invoker, string text, Action<bool> callback) {
+				try {
+					var origin_invoker = JSContextHelper.Instance.GetAPIOrigin(invoker);
+					Game.DM.DMClient.RequestDMCheck(origin_invoker.Controller, text, result => {
+						try {
+							callback(result);
+						} catch (Exception e) {
+							JSEngineManager.Engine.Log(e.Message);
+						}
+					});
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+			
 			public CampaignManager Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {

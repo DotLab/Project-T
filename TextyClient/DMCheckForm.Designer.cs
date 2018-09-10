@@ -1,5 +1,5 @@
 ﻿namespace TextyClient {
-	partial class CheckForm {
+	partial class DMCheckForm {
 		/// <summary>
 		/// Required designer variable.
 		/// </summary>
@@ -68,7 +68,7 @@
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
 			this.Name = "CheckForm";
-			this.Text = "确认";
+			this.Text = "DM确认";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.CheckForm_FormClosing);
 			this.ResumeLayout(false);
 			this.PerformLayout();

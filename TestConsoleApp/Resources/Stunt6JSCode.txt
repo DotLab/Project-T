@@ -1,0 +1,24 @@
+(function () {
+	var situation = $__this__.getSituation();
+	if (situation.isInStoryScene()) {
+	
+	} else {
+		if (!situation.isInitiative()) {
+			var initiative = situation.getInitiativeBS();
+			var me = situation.getPassiveBS();
+			var action = situation.getAction();
+			var initiativeSkillType = situation.getInitiativeSkillType();
+			var noticeSkillType = $.characterManager.getSkillType("Notice");
+			var investigateSkillType = $.characterManager.getSkillType("Investigate");
+			var stunt = $__this__.getBelongStunt();
+			var thisCharacter = stunt.getBelong();
+			stunt.setCustomData(thisCharacter.getSkill(noticeSkillType).clone());
+			var notice = thisCharacter.getSkill(noticeSkillType);
+			var investigate = thisCharacter.getSkill(investigateSkillType);
+			notice.setName("¶´²ì£¨µ÷²é£©");
+			notice.setLevel(investigate.getLevel());
+			notice.setBattleMapProperty(investigate.getBattleMapProperty());
+			$.battleScene.currentPassiveUseSkill(noticeSkillType, false, 0, null);
+		}
+	}
+})();

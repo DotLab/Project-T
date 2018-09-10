@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GameLib.Utilities.Network.Streamable {
+namespace GameUtil.Network.Streamable {
 	public interface IDataOutputStream {
 		void WriteBoolean(Boolean val);
 		void WriteString(String val);

@@ -1,12 +1,12 @@
-﻿using GameLib.Campaign;
-using GameLib.CharacterSystem;
-using GameLib.Container;
-using GameLib.Core.ScriptSystem;
-using GameLib.EventSystem;
-using GameLib.Utilities;
+﻿using GameServer.Campaign;
+using GameServer.CharacterSystem;
+using GameServer.Container;
+using GameServer.Core.ScriptSystem;
+using GameServer.EventSystem;
+using GameUtil;
 using System.Collections.Generic;
 
-namespace GameLib.Core {
+namespace GameServer.Core {
 	public class JavascriptGlobalObject {
 		public IJSAPI<CharacterManager> characterManager = (IJSAPI<CharacterManager>)CharacterManager.Instance.GetContext();
 		public IJSAPI<CampaignManager> campaignManager = (IJSAPI<CampaignManager>)CampaignManager.Instance.GetContext();
@@ -52,7 +52,7 @@ namespace GameLib.Core {
 			engineRaw.BindType(nameof(PortraitStyle), typeof(PortraitStyle));
 			engineRaw.BindType(nameof(SkillSituationLimit), typeof(SkillSituationLimit));
 			engineRaw.BindType(nameof(StuntSituationLimit), typeof(StuntSituationLimit));
-			engineRaw.BindType(nameof(BattleMapSkillProperty), typeof(BattleMapSkillProperty));
+			engineRaw.BindType(nameof(SkillBattleMapProperty), typeof(SkillBattleMapProperty));
 			engineRaw.SetVar("$", _globalObject);
 
 

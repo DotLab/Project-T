@@ -1,0 +1,17 @@
+(function () {
+	var thisEffect = $__this__;
+	var stunt = $__this__.getBelongStunt();
+	var situation = $__this__.getSituation();
+	if (situation.isInStoryScene()) {
+	
+	} else {
+		if (situation.isInitiative()) {
+			var me = situation.getInitiativeBS();
+			var targets = situation.getTargetsBS();
+			var action = situation.getAction();
+			var skillType = $.characterManager.getSkillType("Shoot");
+			thisEffect.notifyResult(true, "");
+			me.useSkill(skillType, action, targets, false, true, 2, null);
+		}
+	}
+})();

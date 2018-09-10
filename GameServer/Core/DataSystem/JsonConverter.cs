@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GameLib.Core.DataSystem {
+namespace GameServer.Core.DataSystem {
 	public interface IJsonConverterRaw {
 		string Serialize(object obj);
 		T Deserialize<T>(string json);

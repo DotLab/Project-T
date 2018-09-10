@@ -1,8 +1,8 @@
-﻿using GameLib.Core;
-using GameLib.Core.ScriptSystem;
+﻿using GameServer.Core;
+using GameServer.Core.ScriptSystem;
 using System;
 
-namespace GameLib.EventSystem {
+namespace GameServer.EventSystem {
 	public class Trigger : IJSContextProvider {
 		#region Javascript API class
 		protected class JSAPI : IJSAPI<Trigger> {

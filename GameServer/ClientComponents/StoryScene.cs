@@ -1,15 +1,15 @@
-﻿using GameLib.CharacterSystem;
-using GameLib.Container;
-using GameLib.Container.StoryComponent;
-using GameLib.Core;
-using GameLib.Core.DataSystem;
-using GameLib.Utilities;
-using GameLib.Utilities.Network;
-using GameLib.Utilities.Network.ClientMessages;
-using GameLib.Utilities.Network.ServerMessages;
+﻿using GameServer.CharacterSystem;
+using GameServer.Container;
+using GameServer.Container.StoryComponent;
+using GameServer.Core;
+using GameServer.Core.DataSystem;
+using GameUtil;
+using GameUtil.Network;
+using GameUtil.Network.ClientMessages;
+using GameUtil.Network.ServerMessages;
 using System;
 
-namespace GameLib.ClientComponents {
+namespace GameServer.ClientComponents {
 	public sealed class SkillCheckPanel : ClientComponent {
 		public enum ClientPosition {
 			INITIATIVE,

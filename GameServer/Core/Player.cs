@@ -1,10 +1,10 @@
-﻿using GameLib.CharacterSystem;
-using GameLib.ClientComponents;
-using GameLib.Utilities.Network;
+﻿using GameServer.CharacterSystem;
+using GameServer.ClientComponents;
+using GameUtil.Network;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace GameLib.Core {
+namespace GameServer.Core {
 	public sealed class Player : User {
 		private readonly PlayerClient _playerClient;
 		private readonly List<Character> _characters;

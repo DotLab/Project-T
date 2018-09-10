@@ -1,6 +1,6 @@
-﻿using GameLib.Core.ScriptSystem;
+﻿using GameServer.Core.ScriptSystem;
 
-namespace GameLib.EventSystem {
+namespace GameServer.EventSystem {
 	public abstract class Event : IJSContextProvider {
 		protected bool _swallowed = false;
 
@@ -8,7 +8,7 @@ namespace GameLib.EventSystem {
 
 		public void TransmitContext() {
 			IEventInfo eventInfo = (IEventInfo)this.GetContext();
-			eventInfo.setSwallowed(_swallowed);
+			eventInfo.Swallowed = _swallowed;
 			this.SetContext(eventInfo);
 			JSEngineManager.Engine.SynchronizeContext("$__eventArgs__", this);
 		}
@@ -17,7 +17,7 @@ namespace GameLib.EventSystem {
 			JSEngineManager.Engine.SynchronizeContext("$__eventArgs__", this);
 			JSEngineManager.Engine.RemoveContext("$__eventArgs__");
 			IEventInfo eventInfo = (IEventInfo)this.GetContext();
-			_swallowed = eventInfo.isSwallowed();
+			_swallowed = eventInfo.Swallowed;
 		}
 
 		public abstract string[] NotifyList { get; }
@@ -27,7 +27,6 @@ namespace GameLib.EventSystem {
 	}
 
 	public interface IEventInfo : IJSContext {
-		void setSwallowed(bool value);
-		bool isSwallowed();
+		bool Swallowed { get; set; }
 	}
 }

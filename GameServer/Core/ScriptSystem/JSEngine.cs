@@ -1,8 +1,8 @@
-﻿using GameLib.Core.DataSystem;
-using GameLib.Core.ScriptSystem.EngineWrapper;
+﻿using GameServer.Core.DataSystem;
+using GameServer.Core.ScriptSystem.EngineWrapper;
 using System;
 
-namespace GameLib.Core.ScriptSystem {
+namespace GameServer.Core.ScriptSystem {
 	public interface IJSEngineRaw {
 		void BindType(string typeName, Type type);
 		object GetVar(string name);
@@ -60,13 +60,17 @@ namespace GameLib.Core.ScriptSystem {
 
 	public sealed class JSEngine {
 		private readonly IJSEngineRaw _engine;
-
+		private string _logPrefix = null;
+		
 		public JSEngine(IJSEngineRaw engine) {
-			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
+			_engine = engine;
+			engine.SetVar("log", new Action<string>(Log));
 		}
 
 		public void Log(string log) {
-			Logger.WriteLine("Javascript Engine Log:" + log);
+			Logger.Write("Javascript Engine Log:");
+			if (_logPrefix != null) Logger.Write(_logPrefix);
+			Logger.WriteLine(log);
 		}
 
 		public void SynchronizeContext(string varname, IJSContextProvider provider) {
@@ -83,12 +87,10 @@ namespace GameLib.Core.ScriptSystem {
 			_engine.DelVar(varname);
 		}
 
-		public void Execute(string code) {
-			try {
-				_engine.Execute(code);
-			} catch (Exception e) {
-				Log(e.Message);
-			}
+		public void Execute(string code, string logPrefix = "") {
+			_logPrefix = logPrefix;
+			_engine.Execute(code);
+			_logPrefix = null;
 		}
 	}
 

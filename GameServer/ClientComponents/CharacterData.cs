@@ -1,15 +1,15 @@
-﻿using GameLib.CharacterSystem;
-using GameLib.Core;
-using GameLib.Core.DataSystem;
-using GameLib.Utilities;
-using GameLib.Utilities.Network;
-using GameLib.Utilities.Network.ClientMessages;
-using GameLib.Utilities.Network.ServerMessages;
-using GameLib.Utilities.Network.Streamable;
+﻿using GameServer.CharacterSystem;
+using GameServer.Core;
+using GameServer.Core.DataSystem;
+using GameUtil;
+using GameUtil.Network;
+using GameUtil.Network.ClientMessages;
+using GameUtil.Network.ServerMessages;
+using GameUtil.Network.Streamable;
 using System;
 using System.Collections.Generic;
 
-namespace GameLib.ClientComponents {
+namespace GameServer.ClientComponents {
 	public sealed class CharacterData : IRequestHandler {
 		private readonly Connection _connection;
 		private readonly User _owner;
@@ -20,10 +20,11 @@ namespace GameLib.ClientComponents {
 			connection.SetRequestHandler(GetCharacterDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetAspectDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetConsequenceDataMessage.MESSAGE_TYPE, this);
-			connection.SetRequestHandler(GetSkillLevelMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(GetSkillDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetStuntDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetExtraDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetDirectResistSkillsMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(GetDirectResistStuntsMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetSkillTypeListMessage.MESSAGE_TYPE, this);
 		}
 
@@ -49,10 +50,10 @@ namespace GameLib.ClientComponents {
 							if (consequence != null) resp = GetConsequenceData(consequence);
 						}
 						break;
-					case GetSkillLevelMessage.MESSAGE_TYPE: {
-							var skillDataMessage = (GetSkillLevelMessage)request;
+					case GetSkillDataMessage.MESSAGE_TYPE: {
+							var skillDataMessage = (GetSkillDataMessage)request;
 							var character = CharacterManager.Instance.FindCharacterByID(skillDataMessage.characterID);
-							resp = GetSkillLevel(character, SkillType.SkillTypes[skillDataMessage.skillTypeID]);
+							resp = GetSkillData(character, SkillType.SkillTypes[skillDataMessage.skillTypeID]);
 						}
 						break;
 					case GetStuntDataMessage.MESSAGE_TYPE: {
@@ -70,8 +71,13 @@ namespace GameLib.ClientComponents {
 						}
 						break;
 					case GetDirectResistSkillsMessage.MESSAGE_TYPE: {
-							var resistSkillsMessage = (GetDirectResistSkillsMessage)request;
-							resp = GetDirectResistSkills(SkillType.SkillTypes[resistSkillsMessage.initiativeSkillTypeID], (CharacterAction)resistSkillsMessage.actionType);
+							var req = (GetDirectResistSkillsMessage)request;
+							resp = GetDirectResistSkills(SkillType.SkillTypes[req.initiativeSkillTypeID], req.actionType);
+						}
+						break;
+					case GetDirectResistStuntsMessage.MESSAGE_TYPE: {
+							var req = (GetDirectResistStuntsMessage)request;
+							resp = GetDirectResistStunts(SkillType.SkillTypes[req.initiativeSkillTypeID], CharacterManager.Instance.FindCharacterByID(req.passiveCharacterID), req.actionType);
 						}
 						break;
 					case GetSkillTypeListMessage.MESSAGE_TYPE: {
@@ -183,7 +189,7 @@ namespace GameLib.ClientComponents {
 			message.characterID = aspect.Belong == null ? "" : aspect.Belong.ID;
 			message.aspectID = aspect.ID;
 			message.persistenceType = (int)aspect.PersistenceType;
-			message.benefitCharacterID = aspect.Benefit == null ? "" : aspect.Benefit.ID;
+			message.benefiterID = aspect.Benefiter == null ? "" : aspect.Benefiter.ID;
 			message.benefitTimes = aspect.BenefitTimes;
 			return message;
 		}
@@ -193,18 +199,20 @@ namespace GameLib.ClientComponents {
 			message.characterID = consequence.Belong == null ? "" : consequence.Belong.ID;
 			message.consequenceID = consequence.ID;
 			message.persistenceType = (int)consequence.PersistenceType;
-			message.benefitCharacterID = consequence.Benefit == null ? "" : consequence.Benefit.ID;
+			message.benefitCharacterID = consequence.Benefiter == null ? "" : consequence.Benefiter.ID;
 			message.benefitTimes = consequence.BenefitTimes;
 			message.counteractLevel = consequence.CounteractLevel;
 			message.mentalDamage = consequence.MentalDamage;
 			return message;
 		}
 
-		private Message GetSkillLevel(Character character, SkillType skillType) {
-			var message = new SkillLevelMessage();
+		private Message GetSkillData(Character character, SkillType skillType) {
+			var message = new SkillDataMessage();
+			var skill = character.GetSkill(skillType);
 			message.characterID = character.ID;
 			message.skillTypeID = skillType.ID;
-			message.level = character.GetSkillLevel(skillType);
+			message.customName = skill.Name;
+			message.level = skill.Level;
 			return message;
 		}
 
@@ -212,7 +220,6 @@ namespace GameLib.ClientComponents {
 			var message = new StuntDataMessage();
 			message.characterID = stunt.Belong == null ? "" : stunt.Belong.ID;
 			message.stuntID = stunt.ID;
-			message.needDMCheck = stunt.NeedDMCheck;
 			return message;
 		}
 
@@ -228,7 +235,7 @@ namespace GameLib.ClientComponents {
 		}
 
 		private Message GetDirectResistSkills(SkillType initiativeSkillType, CharacterAction action) {
-			var message = new DirectResistSkillsDataMessage();
+			var message = new DirectResistSkillsListMessage();
 			List<SkillType> resistables = new List<SkillType>();
 			foreach (var skillType in SkillType.SkillTypes) {
 				if (SkillChecker.CanResistSkillWithoutDMCheck(initiativeSkillType, skillType.Value, action)) {
@@ -238,6 +245,24 @@ namespace GameLib.ClientComponents {
 			message.skillTypes = new SkillTypeDescription[resistables.Count];
 			for (int i = 0; i < resistables.Count; ++i) {
 				message.skillTypes[i] = StreamableFactory.CreateSkillTypeDescription(resistables[i]);
+			}
+			return message;
+		}
+
+		private Message GetDirectResistStunts(SkillType initiativeSkillType, Character passive, CharacterAction action) {
+			var message = new DirectResistStuntsListMessage();
+			List<Stunt> resistables = new List<Stunt>();
+			if (passive.Stunts != null) {
+				foreach (var stunt in passive.Stunts) {
+					if (stunt.CanResistSkillWithoutDMCheck(initiativeSkillType, action)) {
+						resistables.Add(stunt);
+					}
+				}
+			}
+			message.characterID = passive.ID;
+			message.stunts = new CharacterPropertyDescription[resistables.Count];
+			for (int i = 0; i < resistables.Count; ++i) {
+				message.stunts[i] = StreamableFactory.CreateCharacterPropertyDescription(resistables[i]);
 			}
 			return message;
 		}

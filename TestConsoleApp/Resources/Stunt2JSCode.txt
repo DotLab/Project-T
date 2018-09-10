@@ -1,0 +1,24 @@
+(function () {
+	var situation = $__this__.getSituation();
+	if (situation.isInStoryScene()) {
+	
+	} else {
+		if (!situation.isInitiative()) {
+			var initiative = situation.getInitiativeBS();
+			var me = situation.getPassiveBS();
+			var action = situation.getAction();
+			var initiativeSkillType = situation.getInitiativeSkillType();
+			var physiqueSkillType = $.characterManager.getSkillType("Physique");
+			var willSkillType = $.characterManager.getSkillType("Will");
+			var stunt = $__this__.getBelongStunt();
+			var thisCharacter = stunt.getBelong();
+			stunt.setCustomData(thisCharacter.getSkill(physiqueSkillType).clone());
+			var physique = thisCharacter.getSkill(physiqueSkillType);
+			var will = thisCharacter.getSkill(willSkillType);
+			physique.setName("体格（意志）");
+			physique.setLevel(will.getLevel());
+			physique.setBattleMapProperty(will.getBattleMapProperty());
+			$.battleScene.currentPassiveUseSkill(physiqueSkillType, false, 0, null);
+		}
+	}
+})();

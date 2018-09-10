@@ -1,9 +1,9 @@
-﻿using GameLib.CharacterSystem;
-using GameLib.Container.BattleComponent;
-using GameLib.Core;
-using GameLib.Utilities.Network.Streamable;
+﻿using GameServer.CharacterSystem;
+using GameServer.Container.BattleComponent;
+using GameServer.Core;
+using GameUtil.Network.Streamable;
 
-namespace GameLib.ClientComponents {
+namespace GameServer.ClientComponents {
 	public static class StreamableFactory {
 		public static Describable CreateDescribable(IDescribable describable) {
 			var ret = new Describable() {
@@ -29,7 +29,7 @@ namespace GameLib.ClientComponents {
 			return ret;
 		}
 		
-		public static BattleSceneObject CreateBattleSceneObj(SceneObject sceneObject) {
+		public static BattleSceneObject CreateBattleSceneObject(SceneObject sceneObject) {
 			var ret = new BattleSceneObject() {
 				row = sceneObject.GridRef.PosRow,
 				col = sceneObject.GridRef.PosCol,

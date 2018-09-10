@@ -1,8 +1,8 @@
-﻿using GameLib.Core;
+﻿using GameServer.Core;
 using System;
 using System.Collections.Generic;
 
-namespace GameLib.Campaign {
+namespace GameServer.Campaign {
 	public sealed class StoryShot : Shot {
 		private readonly List<SceneAction> _actions;
 		private int _currentActionIndex;

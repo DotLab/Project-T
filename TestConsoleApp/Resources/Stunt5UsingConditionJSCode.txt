@@ -1,0 +1,13 @@
+(function () {
+	$__this__.setResult(false);
+	if ($__this__.getSituation().isTriggerInvoking()) {
+		var me = $__eventArgs__.to;
+		if ($__this__.getBelongStunt().getBelong() == me.getCharacterRef()
+			&& $__eventArgs__.action == 1
+			&& ($__eventArgs__.from_checkResult == 2 || $__eventArgs__.from_checkResult == 3)) {
+			if (me.getCharacterRef().getFatePoint() > 0) {
+				$__this__.setResult(true);
+			}
+		}
+	}
+})();

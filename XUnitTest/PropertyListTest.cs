@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using Xunit;
 using System.Text;
-using GameLib.Core.ScriptSystem;
-using GameLib.CharacterSystem;
+using GameServer.Core.ScriptSystem;
+using GameServer.CharacterSystem;
 using Xunit.Abstractions;
-using GameLib.Core.ScriptSystem.EngineWrapper;
+using GameServer.Core.ScriptSystem.EngineWrapper;
 
 namespace XUnitTest {
 	public class TestElement : ICharacterProperty {
@@ -21,7 +21,7 @@ namespace XUnitTest {
 			}
 
 			public string name { get => _outer.Name; set => _outer.Name = value; }
-			public string description { get => _outer.Description; set => _outer.Description = value; }
+			public string aaa { get => _outer.Description; set => _outer.Description = value; }
 
 			public TestElement Origin(JSContextHelper proof) {
 				try {
@@ -79,7 +79,7 @@ namespace XUnitTest {
 			CharacterPropertyList<TestElement> testList = new CharacterPropertyList<TestElement>(null);
 			engineRaw.SetVar(nameof(TestElement.createTestElement), new Func<IJSAPI<TestElement>>(TestElement.createTestElement));
 			engine.SynchronizeContext(nameof(testList), testList);
-			engine.Execute("var ae = createTestElement(); ae.description = 'AddTest'; testList.add(ae);");
+			engine.Execute("var ae = createTestElement(); ae.aaa = 'AddTest'; testList.add(ae);");
 			Assert.True(testList.Count == 1);
 			Assert.True(testList[0].Description == "AddTest");
 
@@ -103,7 +103,7 @@ namespace XUnitTest {
 			testList.Add(new TestElement("B"));
 			testList.Add(new TestElement("C"));
 			testList.Add(new TestElement("D"));
-			engine.Execute("testList.forEach(function(e){ e.description += ' Engine'; log(e.description); count++; });");
+			engine.Execute("testList.forEach(function(e){ e.aaa += ' Engine'; log(e.aaa); count++; });");
 			engine.Execute("log(count);");
 			foreach (TestElement e in testList) {
 				Assert.Contains("Engine", e.Description);

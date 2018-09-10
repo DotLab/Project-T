@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GameLib.Core.DataSystem {
+namespace GameServer.Core.DataSystem {
 	public interface ILogger {
 		void Write(string str);
 		void WriteLine(string str);

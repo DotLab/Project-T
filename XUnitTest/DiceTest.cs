@@ -1,6 +1,6 @@
 using System;
 using Xunit;
-using GameLib.Core;
+using GameServer.Core;
 
 namespace XUnitTest {
 	public class DiceTest {

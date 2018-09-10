@@ -1,0 +1,13 @@
+(function () {
+	var stunt = $__this__.getBelongStunt();
+	if (stunt != null) {
+		var me = stunt.getBelong();
+		var dataBackup = stunt.getCustomData();
+		var skillType = $__eventArgs__.initiativeSkillType;
+		if (me == $__eventArgs__.initiative.getCharacterRef()
+			&& skillType.getID() == "Fight"
+			&& dataBackup != null) {
+			me.setSkill(skillType, dataBackup);
+		}
+	}
+})();

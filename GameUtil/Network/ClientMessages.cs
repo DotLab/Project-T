@@ -1,6 +1,6 @@
-﻿using GameLib.Utilities.Network.Streamable;
+﻿using GameUtil.Network.Streamable;
 
-namespace GameLib.Utilities.Network.ClientMessages {
+namespace GameUtil.Network.ClientMessages {
 	public sealed class ClientInitMessage : Message {
 		public const int MESSAGE_TYPE = 1;
 		public override int MessageType => MESSAGE_TYPE;
@@ -172,7 +172,7 @@ namespace GameLib.Utilities.Network.ClientMessages {
 		}
 	}
 
-	public sealed class GetSkillLevelMessage : Message {
+	public sealed class GetSkillDataMessage : Message {
 		public const int MESSAGE_TYPE = 11;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -347,7 +347,7 @@ namespace GameLib.Utilities.Network.ClientMessages {
 		}
 	}
 
-	public sealed class BattleSceneActableObjectDoSpecialActionMessage : Message {
+	public sealed class BattleSceneActableObjectDoInteractMessage : Message {
 		public const int MESSAGE_TYPE = 22;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -487,17 +487,20 @@ namespace GameLib.Utilities.Network.ClientMessages {
 		public string targetID;
 		public string stuntID;
 		public CharacterAction action;
+		public bool isInteract;
 
 		public override void ReadFrom(IDataInputStream stream) {
 			targetID = stream.ReadString();
 			stuntID = stream.ReadString();
 			action = (CharacterAction)stream.ReadByte();
+			isInteract = stream.ReadBoolean();
 		}
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(targetID);
 			stream.WriteString(stuntID);
 			stream.WriteByte((byte)action);
+			stream.WriteBoolean(isInteract);
 		}
 	}
 	
@@ -535,6 +538,35 @@ namespace GameLib.Utilities.Network.ClientMessages {
 			stream.WriteString(skillTypeOrStuntID);
 			stream.WriteBoolean(isStunt);
 		}
+	}
+
+	public sealed class GetDirectResistStuntsMessage : Message {
+		public const int MESSAGE_TYPE = 34;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public string initiativeSkillTypeID;
+		public string passiveCharacterID;
+		public CharacterAction actionType;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			initiativeSkillTypeID = stream.ReadString();
+			passiveCharacterID = stream.ReadString();
+			actionType = (CharacterAction)stream.ReadByte();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteString(initiativeSkillTypeID);
+			stream.WriteString(passiveCharacterID);
+			stream.WriteByte((byte)actionType);
+		}
+	}
+	
+	public sealed class BattleSceneGetInitiativeUsableStuntListOnInteractMessage : Message {
+		public const int MESSAGE_TYPE = 35;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public override void ReadFrom(IDataInputStream stream) { }
+		public override void WriteTo(IDataOutputStream stream) { }
 	}
 
 }

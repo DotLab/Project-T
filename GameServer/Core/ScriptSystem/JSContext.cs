@@ -1,4 +1,4 @@
-﻿namespace GameLib.Core.ScriptSystem {
+﻿namespace GameServer.Core.ScriptSystem {
 	public interface IJSContext { }
 
 	public interface IJSContextProvider {

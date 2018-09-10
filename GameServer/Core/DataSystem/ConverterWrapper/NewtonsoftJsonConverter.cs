@@ -1,4 +1,4 @@
-﻿namespace GameLib.Core.DataSystem.ConverterWrapper {
+﻿namespace GameServer.Core.DataSystem.ConverterWrapper {
 	public sealed class NewtonsoftJsonConverter : IJsonConverterRaw {
 		public T Deserialize<T>(string json) {
 			return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);

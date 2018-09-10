@@ -1,8 +1,8 @@
-﻿using GameLib.Core;
-using GameLib.Core.ScriptSystem;
+﻿using GameServer.Core;
+using GameServer.Core.ScriptSystem;
 using System;
 
-namespace GameLib.CharacterSystem {
+namespace GameServer.CharacterSystem {
 	public enum PersistenceType {
 		Fixed = 0,
 		Common = 1,
@@ -61,9 +61,45 @@ namespace GameLib.CharacterSystem {
 				}
 			}
 
-			public void setPersistenceType(int value) {
+			public void setPersistenceType(int val) {
 				try {
-					_outer.PersistenceType = (PersistenceType)value;
+					_outer.PersistenceType = (PersistenceType)val;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public IJSAPI<Character> getBenefiter() {
+				try {
+					if (_outer.Benefiter == null) return null;
+					return (IJSAPI<Character>)_outer.Benefiter.GetContext();
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
+
+			public void setBenefiter(IJSAPI<Character> val) {
+				try {
+					if (val == null) _outer.Benefiter = null;
+					else _outer.Benefiter = JSContextHelper.Instance.GetAPIOrigin(val);
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public int getBenefitTimes() {
+				try {
+					return _outer.BenefitTimes;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return -1;
+				}
+			}
+
+			public void setBenefitTimes(int val) {
+				try {
+					_outer.BenefitTimes = val;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 				}
@@ -96,7 +132,7 @@ namespace GameLib.CharacterSystem {
 		protected string _name = "";
 		protected string _description = "";
 		protected PersistenceType _persistenceType = PersistenceType.Common;
-		protected Character _benefit = null;
+		protected Character _benefiter = null;
 		protected int _benefitTimes = 0;
 		protected Character _belong = null;
 
@@ -109,19 +145,19 @@ namespace GameLib.CharacterSystem {
 		public override string Name { get => _name; set => _name = value ?? throw new ArgumentNullException(nameof(value)); }
 		public override string Description { get => _description; set => _description = value ?? throw new ArgumentNullException(nameof(value)); }
 		public PersistenceType PersistenceType { get => _persistenceType; set => _persistenceType = value; }
-		public Character Benefit {
-			get => _benefit;
+		public Character Benefiter {
+			get => _benefiter;
 			set {
-				_benefit = value;
-				if (_benefit != null && _benefitTimes <= 0) _benefitTimes = 1;
-				if (_benefit == null && _benefitTimes > 0) _benefitTimes = 0;
+				_benefiter = value;
+				if (_benefiter != null && _benefitTimes <= 0) _benefitTimes = 1;
+				if (_benefiter == null && _benefitTimes > 0) _benefitTimes = 0;
 			}
 		}
 		public int BenefitTimes {
 			get => _benefitTimes;
 			set {
 				_benefitTimes = value;
-				if (_benefitTimes <= 0) _benefit = null;
+				if (_benefitTimes <= 0) _benefiter = null;
 			}
 		}
 		public Character Belong => _belong;
@@ -155,9 +191,26 @@ namespace GameLib.CharacterSystem {
 				}
 			}
 
-			public void setCounteractLevel(int value) {
+			public void setCounteractLevel(int val) {
 				try {
-					_outer.CounteractLevel = value;
+					_outer.CounteractLevel = val;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public bool isMentalDamage() {
+				try {
+					return _outer.MentalDamage;
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return false;
+				}
+			}
+
+			public void setMentalDamage(bool val) {
+				try {
+					_outer.MentalDamage = val;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 				}
@@ -178,9 +231,11 @@ namespace GameLib.CharacterSystem {
 		private readonly JSAPI _apiObj;
 
 		private int _counteractLevel = 0;
+		private int _actualDamage = 0;
 		private bool _mentalDamage = false;
 
 		public int CounteractLevel { get => _counteractLevel; set => _counteractLevel = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Counteract level is less than 0."); }
+		public int ActualDamage { get => _actualDamage; set => _actualDamage = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Actual damage is less than 0."); }
 		public bool MentalDamage { get => _mentalDamage; set => _mentalDamage = value; }
 
 		protected override string BaseID => "Consequence";

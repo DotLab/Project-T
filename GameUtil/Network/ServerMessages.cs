@@ -1,6 +1,6 @@
-﻿using GameLib.Utilities.Network.Streamable;
+﻿using GameUtil.Network.Streamable;
 
-namespace GameLib.Utilities.Network.ServerMessages {
+namespace GameUtil.Network.ServerMessages {
 	public sealed class ServerReadyMessage : Message {
 		public const int MESSAGE_TYPE = -1;
 		public override int MessageType => MESSAGE_TYPE;
@@ -390,14 +390,14 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		public string characterID;
 		public string aspectID;
 		public int persistenceType;
-		public string benefitCharacterID;
+		public string benefiterID;
 		public int benefitTimes;
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(characterID);
 			stream.WriteString(aspectID);
 			stream.WriteInt32(persistenceType);
-			stream.WriteString(benefitCharacterID);
+			stream.WriteString(benefiterID);
 			stream.WriteInt32(benefitTimes);
 		}
 
@@ -405,7 +405,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 			characterID = stream.ReadString();
 			aspectID = stream.ReadString();
 			persistenceType = stream.ReadInt32();
-			benefitCharacterID = stream.ReadString();
+			benefiterID = stream.ReadString();
 			benefitTimes = stream.ReadInt32();
 		}
 	}
@@ -443,23 +443,26 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		}
 	}
 
-	public sealed class SkillLevelMessage : Message {
+	public sealed class SkillDataMessage : Message {
 		public const int MESSAGE_TYPE = -29;
 		public override int MessageType => MESSAGE_TYPE;
 
 		public string characterID;
 		public string skillTypeID;
+		public string customName;
 		public int level;
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(characterID);
 			stream.WriteString(skillTypeID);
+			stream.WriteString(customName);
 			stream.WriteInt32(level);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			characterID = stream.ReadString();
 			skillTypeID = stream.ReadString();
+			customName = stream.ReadString();
 			level = stream.ReadInt32();
 		}
 	}
@@ -470,18 +473,15 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public string characterID;
 		public string stuntID;
-		public bool needDMCheck;
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(characterID);
 			stream.WriteString(stuntID);
-			stream.WriteBoolean(needDMCheck);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			characterID = stream.ReadString();
 			stuntID = stream.ReadString();
-			needDMCheck = stream.ReadBoolean();
 		}
 	}
 
@@ -515,7 +515,7 @@ namespace GameLib.Utilities.Network.ServerMessages {
 		}
 	}
 
-	public sealed class DirectResistSkillsDataMessage : Message {
+	public sealed class DirectResistSkillsListMessage : Message {
 		public const int MESSAGE_TYPE = -32;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -1451,6 +1451,71 @@ namespace GameLib.Utilities.Network.ServerMessages {
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteInt32(count);
+		}
+	}
+
+	public sealed class DirectResistStuntsListMessage : Message {
+		public const int MESSAGE_TYPE = -79;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public string characterID;
+		public CharacterPropertyDescription[] stunts;
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteString(characterID);
+			stream.WriteInt32(stunts.Length);
+			foreach (var stunt in stunts) {
+				stunt.WriteTo(stream);
+			}
+		}
+
+		public override void ReadFrom(IDataInputStream stream) {
+			characterID = stream.ReadString();
+			int length = stream.ReadInt32();
+			stunts = new CharacterPropertyDescription[length];
+			for (int i = 0; i < length; ++i) {
+				stunts[i].ReadFrom(stream);
+			}
+		}
+	}
+	
+	public sealed class BattleSceneObjectUsableStuntListOnInteractMessage : Message {
+		public const int MESSAGE_TYPE = -80;
+		public override int MessageType => MESSAGE_TYPE;
+		
+		public CharacterPropertyDescription[] stunts;
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteInt32(stunts.Length);
+			foreach (var stunt in stunts) {
+				stunt.WriteTo(stream);
+			}
+		}
+
+		public override void ReadFrom(IDataInputStream stream) {
+			int length = stream.ReadInt32();
+			stunts = new CharacterPropertyDescription[length];
+			for (int i = 0; i < length; ++i) {
+				stunts[i].ReadFrom(stream);
+			}
+		}
+	}
+
+	public sealed class BattleSceneDisplayUsingStuntMessage : Message {
+		public const int MESSAGE_TYPE = -81;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public BattleSceneObject obj;
+		public CharacterPropertyDescription stunt;
+
+		public override void WriteTo(IDataOutputStream stream) {
+			obj.WriteTo(stream);
+			stunt.WriteTo(stream);
+		}
+
+		public override void ReadFrom(IDataInputStream stream) {
+			obj.ReadFrom(stream);
+			stunt.ReadFrom(stream);
 		}
 	}
 }

@@ -1,11 +1,11 @@
-﻿using GameLib.Utilities.Network.Streamable;
+﻿using GameUtil.Network.Streamable;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GameLib.Utilities {
+namespace GameUtil {
 	public enum BattleMapDirection {
 		POSITIVE_ROW = 0b0001,
 		POSITIVE_COL = 0b0010,
@@ -20,10 +20,10 @@ namespace GameLib.Utilities {
 	}
 
 	public enum CheckResult {
-		FAIL,
-		TIE,
-		SUCCEED,
-		SUCCEED_WITH_STYLE
+		FAIL = 0,
+		TIE = 1,
+		SUCCEED = 2,
+		SUCCEED_WITH_STYLE = 3
 	}
 
 	public struct Vec2 : IStreamable {

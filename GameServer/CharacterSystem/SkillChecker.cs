@@ -1,9 +1,9 @@
-﻿using GameLib.Core;
-using GameLib.Utilities;
+﻿using GameServer.Core;
+using GameUtil;
 using System;
 using System.Collections.Generic;
 
-namespace GameLib.CharacterSystem {
+namespace GameServer.CharacterSystem {
 	public sealed class SkillChecker {
 		public enum CheckerState {
 			IDLE,
@@ -19,9 +19,13 @@ namespace GameLib.CharacterSystem {
 		private static Range SUCCEED;
 		private static Range SUCCEED_WITH_STYLE;
 
-		private static readonly Dictionary<SkillType, List<SkillType>> OVERCOME = new Dictionary<SkillType, List<SkillType>>();
-		private static readonly Dictionary<SkillType, List<SkillType>> EVADE = new Dictionary<SkillType, List<SkillType>>();
-		private static readonly Dictionary<SkillType, List<SkillType>> DEFEND = new Dictionary<SkillType, List<SkillType>>();
+		private static readonly Dictionary<SkillType, List<SkillType>> _OVERCOME = new Dictionary<SkillType, List<SkillType>>();
+		private static readonly Dictionary<SkillType, List<SkillType>> _EVADE = new Dictionary<SkillType, List<SkillType>>();
+		private static readonly Dictionary<SkillType, List<SkillType>> _DEFEND = new Dictionary<SkillType, List<SkillType>>();
+
+		public static Dictionary<SkillType, List<SkillType>> OVERCOME => _OVERCOME;
+		public static Dictionary<SkillType, List<SkillType>> EVADE => _EVADE;
+		public static Dictionary<SkillType, List<SkillType>> DEFEND => _DEFEND;
 
 		static SkillChecker() {
 			FAIL = new Range(float.NegativeInfinity, 0);
@@ -31,48 +35,48 @@ namespace GameLib.CharacterSystem {
 			SUCCEED.lowOpen = true;
 			SUCCEED_WITH_STYLE = new Range(3, float.PositiveInfinity);
 
-			OVERCOME.Add(SkillType.Athletics, new List<SkillType>(new SkillType[] { SkillType.Athletics }));
-			OVERCOME.Add(SkillType.Burglary, new List<SkillType>(new SkillType[] { SkillType.Burglary }));
-			OVERCOME.Add(SkillType.Contacts, new List<SkillType>(new SkillType[] { SkillType.Contacts }));
-			OVERCOME.Add(SkillType.Crafts, new List<SkillType>(new SkillType[] { SkillType.Crafts }));
-			OVERCOME.Add(SkillType.Deceive, new List<SkillType>(new SkillType[] { SkillType.Deceive }));
-			OVERCOME.Add(SkillType.Drive, new List<SkillType>(new SkillType[] { SkillType.Drive }));
-			OVERCOME.Add(SkillType.Empathy, new List<SkillType>(new SkillType[] { SkillType.Empathy }));
-			OVERCOME.Add(SkillType.Fight, new List<SkillType>(new SkillType[] { SkillType.Fight }));
-			OVERCOME.Add(SkillType.Investigate, new List<SkillType>(new SkillType[] { SkillType.Investigate }));
-			OVERCOME.Add(SkillType.Lore, new List<SkillType>(new SkillType[] { SkillType.Lore }));
-			OVERCOME.Add(SkillType.Notice, new List<SkillType>(new SkillType[] { SkillType.Notice }));
-			OVERCOME.Add(SkillType.Physique, new List<SkillType>(new SkillType[] { SkillType.Physique }));
-			OVERCOME.Add(SkillType.Provoke, new List<SkillType>(new SkillType[] { SkillType.Provoke }));
-			OVERCOME.Add(SkillType.Rapport, new List<SkillType>(new SkillType[] { SkillType.Rapport }));
-			OVERCOME.Add(SkillType.Resources, new List<SkillType>(new SkillType[] { SkillType.Resources }));
-			OVERCOME.Add(SkillType.Shoot, new List<SkillType>(new SkillType[] { SkillType.Shoot }));
-			OVERCOME.Add(SkillType.Stealth, new List<SkillType>(new SkillType[] { SkillType.Stealth }));
-			OVERCOME.Add(SkillType.Will, new List<SkillType>(new SkillType[] { SkillType.Will }));
+			_OVERCOME.Add(SkillType.Athletics, new List<SkillType>(new SkillType[] { SkillType.Athletics }));
+			_OVERCOME.Add(SkillType.Burglary, new List<SkillType>(new SkillType[] { SkillType.Burglary }));
+			_OVERCOME.Add(SkillType.Contacts, new List<SkillType>(new SkillType[] { SkillType.Contacts }));
+			_OVERCOME.Add(SkillType.Crafts, new List<SkillType>(new SkillType[] { SkillType.Crafts }));
+			_OVERCOME.Add(SkillType.Deceive, new List<SkillType>(new SkillType[] { SkillType.Deceive }));
+			_OVERCOME.Add(SkillType.Drive, new List<SkillType>(new SkillType[] { SkillType.Drive }));
+			_OVERCOME.Add(SkillType.Empathy, new List<SkillType>(new SkillType[] { SkillType.Empathy }));
+			_OVERCOME.Add(SkillType.Fight, new List<SkillType>(new SkillType[] { SkillType.Fight }));
+			_OVERCOME.Add(SkillType.Investigate, new List<SkillType>(new SkillType[] { SkillType.Investigate }));
+			_OVERCOME.Add(SkillType.Lore, new List<SkillType>(new SkillType[] { SkillType.Lore }));
+			_OVERCOME.Add(SkillType.Notice, new List<SkillType>(new SkillType[] { SkillType.Notice }));
+			_OVERCOME.Add(SkillType.Physique, new List<SkillType>(new SkillType[] { SkillType.Physique }));
+			_OVERCOME.Add(SkillType.Provoke, new List<SkillType>(new SkillType[] { SkillType.Provoke }));
+			_OVERCOME.Add(SkillType.Rapport, new List<SkillType>(new SkillType[] { SkillType.Rapport }));
+			_OVERCOME.Add(SkillType.Resources, new List<SkillType>(new SkillType[] { SkillType.Resources }));
+			_OVERCOME.Add(SkillType.Shoot, new List<SkillType>(new SkillType[] { SkillType.Shoot }));
+			_OVERCOME.Add(SkillType.Stealth, new List<SkillType>(new SkillType[] { SkillType.Stealth }));
+			_OVERCOME.Add(SkillType.Will, new List<SkillType>(new SkillType[] { SkillType.Will }));
 
-			EVADE.Add(SkillType.Athletics, new List<SkillType>(new SkillType[] { SkillType.Athletics }));
-			EVADE.Add(SkillType.Burglary, new List<SkillType>(new SkillType[] { SkillType.Burglary }));
-			EVADE.Add(SkillType.Contacts, new List<SkillType>(new SkillType[] { SkillType.Contacts }));
-			EVADE.Add(SkillType.Crafts, new List<SkillType>(new SkillType[] { SkillType.Crafts }));
-			EVADE.Add(SkillType.Deceive, new List<SkillType>(new SkillType[] { SkillType.Deceive }));
-			EVADE.Add(SkillType.Drive, new List<SkillType>(new SkillType[] { SkillType.Drive }));
-			EVADE.Add(SkillType.Empathy, new List<SkillType>(new SkillType[] { SkillType.Empathy }));
-			EVADE.Add(SkillType.Fight, new List<SkillType>(new SkillType[] { SkillType.Fight }));
-			EVADE.Add(SkillType.Investigate, new List<SkillType>(new SkillType[] { SkillType.Investigate }));
-			EVADE.Add(SkillType.Lore, new List<SkillType>(new SkillType[] { SkillType.Lore }));
-			EVADE.Add(SkillType.Notice, new List<SkillType>(new SkillType[] { SkillType.Notice }));
-			EVADE.Add(SkillType.Physique, new List<SkillType>(new SkillType[] { SkillType.Physique }));
-			EVADE.Add(SkillType.Provoke, new List<SkillType>(new SkillType[] { SkillType.Provoke }));
-			EVADE.Add(SkillType.Rapport, new List<SkillType>(new SkillType[] { SkillType.Rapport }));
-			EVADE.Add(SkillType.Resources, new List<SkillType>(new SkillType[] { SkillType.Resources }));
-			EVADE.Add(SkillType.Shoot, new List<SkillType>(new SkillType[] { SkillType.Shoot }));
-			EVADE.Add(SkillType.Stealth, new List<SkillType>(new SkillType[] { SkillType.Stealth }));
-			EVADE.Add(SkillType.Will, new List<SkillType>(new SkillType[] { SkillType.Will }));
+			_EVADE.Add(SkillType.Athletics, new List<SkillType>(new SkillType[] { SkillType.Athletics }));
+			_EVADE.Add(SkillType.Burglary, new List<SkillType>(new SkillType[] { SkillType.Burglary }));
+			_EVADE.Add(SkillType.Contacts, new List<SkillType>(new SkillType[] { SkillType.Contacts }));
+			_EVADE.Add(SkillType.Crafts, new List<SkillType>(new SkillType[] { SkillType.Crafts }));
+			_EVADE.Add(SkillType.Deceive, new List<SkillType>(new SkillType[] { SkillType.Deceive }));
+			_EVADE.Add(SkillType.Drive, new List<SkillType>(new SkillType[] { SkillType.Drive }));
+			_EVADE.Add(SkillType.Empathy, new List<SkillType>(new SkillType[] { SkillType.Empathy }));
+			_EVADE.Add(SkillType.Fight, new List<SkillType>(new SkillType[] { SkillType.Fight }));
+			_EVADE.Add(SkillType.Investigate, new List<SkillType>(new SkillType[] { SkillType.Investigate }));
+			_EVADE.Add(SkillType.Lore, new List<SkillType>(new SkillType[] { SkillType.Lore }));
+			_EVADE.Add(SkillType.Notice, new List<SkillType>(new SkillType[] { SkillType.Notice }));
+			_EVADE.Add(SkillType.Physique, new List<SkillType>(new SkillType[] { SkillType.Physique }));
+			_EVADE.Add(SkillType.Provoke, new List<SkillType>(new SkillType[] { SkillType.Provoke }));
+			_EVADE.Add(SkillType.Rapport, new List<SkillType>(new SkillType[] { SkillType.Rapport }));
+			_EVADE.Add(SkillType.Resources, new List<SkillType>(new SkillType[] { SkillType.Resources }));
+			_EVADE.Add(SkillType.Shoot, new List<SkillType>(new SkillType[] { SkillType.Shoot }));
+			_EVADE.Add(SkillType.Stealth, new List<SkillType>(new SkillType[] { SkillType.Stealth }));
+			_EVADE.Add(SkillType.Will, new List<SkillType>(new SkillType[] { SkillType.Will }));
 
-			DEFEND.Add(SkillType.Athletics, new List<SkillType>(new SkillType[] { SkillType.Fight, SkillType.Shoot }));
-			DEFEND.Add(SkillType.Physique, new List<SkillType>(new SkillType[] { SkillType.Fight, SkillType.Shoot }));
-			DEFEND.Add(SkillType.Fight, new List<SkillType>(new SkillType[] { SkillType.Fight }));
-			DEFEND.Add(SkillType.Will, new List<SkillType>(new SkillType[] { SkillType.Provoke }));
+			_DEFEND.Add(SkillType.Athletics, new List<SkillType>(new SkillType[] { SkillType.Fight, SkillType.Shoot }));
+			_DEFEND.Add(SkillType.Physique, new List<SkillType>(new SkillType[] { SkillType.Fight, SkillType.Shoot }));
+			_DEFEND.Add(SkillType.Fight, new List<SkillType>(new SkillType[] { SkillType.Fight }));
+			_DEFEND.Add(SkillType.Will, new List<SkillType>(new SkillType[] { SkillType.Provoke }));
 		}
 
 		public static void SetShifts(Range fail, Range tie, Range succeed, Range succeedWithStyle) {
@@ -87,13 +91,13 @@ namespace GameLib.CharacterSystem {
 
 		private Character _initiative;
 		private Character _passive;
-		private CharacterAction _action;
+		private CharacterAction _checkingAction;
 		private Action<CheckResult, CheckResult, int> _checkOverCallback;
 
 		private SkillType _initiativeSkillType;
 		private SkillType _passiveSkillType;
-		private int _initiativeRollPoint;
-		private int _passiveRollPoint;
+		private int[] _initiativeRollPoints;
+		private int[] _passiveRollPoints;
 
 		private int _initiativeExtraPoint;
 		private int _passiveExtraPoint;
@@ -102,12 +106,12 @@ namespace GameLib.CharacterSystem {
 
 		public Character Initiative => _initiative;
 		public Character Passive => _passive;
-		public CharacterAction Action => _action;
+		public CharacterAction CheckingAction => _checkingAction;
 
 		public SkillType InitiativeSkillType => _initiativeSkillType;
 		public SkillType PassiveSkillType => _passiveSkillType;
-		public int InitiativeRollPoint => _initiativeRollPoint;
-		public int PassiveRollPoint => _passiveRollPoint;
+		public int[] InitiativeRollPoints => _initiativeRollPoints;
+		public int[] PassiveRollPoints => _passiveRollPoints;
 
 		public int InitiativeExtraPoint { get => _initiativeExtraPoint; set => _initiativeExtraPoint = value; }
 		public int PassiveExtraPoint { get => _passiveExtraPoint; set => _passiveExtraPoint = value; }
@@ -117,17 +121,17 @@ namespace GameLib.CharacterSystem {
 		private SkillChecker() { }
 
 		public static bool CanInitiativeUseSkillInAction(Character initiative, SkillType skillType, CharacterAction action) {
-			var skillSituation = initiative.GetSkillSituationLimit(skillType);
+			var situationLimit = initiative.GetSkill(skillType).SituationLimit;
 			if (action == CharacterAction.ATTACK) {
-				if (!skillSituation.canAttack) return false;
+				if (!situationLimit.canAttack) return false;
 			}
 			return true;
 		}
 		
 		public static bool CanPassiveUseSkillInAction(Character passive, SkillType skillType, CharacterAction action) {
-			var skillSituation = passive.GetSkillSituationLimit(skillType);
+			var situationLimit = passive.GetSkill(skillType).SituationLimit;
 			if (action == CharacterAction.ATTACK) {
-				if (!skillSituation.canDefend) return false;
+				if (!situationLimit.canDefend) return false;
 			}
 			return true;
 		}
@@ -136,13 +140,13 @@ namespace GameLib.CharacterSystem {
 			Dictionary<SkillType, List<SkillType>> resistTable;
 			switch (action) {
 				case CharacterAction.CREATE_ASPECT:
-					resistTable = EVADE;
+					resistTable = _EVADE;
 					break;
 				case CharacterAction.ATTACK:
-					resistTable = DEFEND;
+					resistTable = _DEFEND;
 					break;
 				case CharacterAction.HINDER:
-					resistTable = OVERCOME;
+					resistTable = _OVERCOME;
 					break;
 				default:
 					throw new ArgumentOutOfRangeException(nameof(action));
@@ -152,11 +156,15 @@ namespace GameLib.CharacterSystem {
 		}
 
 		public int GetInitiativePoint() {
-			return (_initiativeSkillType != null ? _initiative.GetSkillLevel(_initiativeSkillType) : 0) + _initiativeRollPoint + _initiativeExtraPoint;
+			var rollPoint = 0;
+			foreach (int point in _initiativeRollPoints) rollPoint += point;
+			return (_initiativeSkillType != null ? _initiative.GetSkill(_initiativeSkillType).Level : 0) + rollPoint + _initiativeExtraPoint;
 		}
 
 		public int GetPassivePoint() {
-			return (_passiveSkillType != null ? _passive.GetSkillLevel(_passiveSkillType) : 0) + _passiveRollPoint + _passiveExtraPoint;
+			var rollPoint = 0;
+			foreach (int point in _passiveRollPoints) rollPoint += point;
+			return (_passiveSkillType != null ? _passive.GetSkill(_passiveSkillType).Level : 0) + rollPoint + _passiveExtraPoint;
 		}
 
 		public void StartCheck(
@@ -164,16 +172,16 @@ namespace GameLib.CharacterSystem {
 			Action<CheckResult, CheckResult, int> checkOverCallback
 			) {
 			if (_state != CheckerState.IDLE) throw new InvalidOperationException("Already in checking state.");
-			_initiativeSkillType = null;
-			_passiveSkillType = null;
-			_initiativeRollPoint = 0;
-			_passiveRollPoint = 0;
-			_initiativeExtraPoint = 0;
-			_passiveExtraPoint = 0;
 			_initiative = initiative ?? throw new ArgumentNullException(nameof(initiative));
 			_passive = passive ?? throw new ArgumentNullException(nameof(passive));
-			_action = action;
 			_checkOverCallback = checkOverCallback ?? throw new ArgumentNullException(nameof(checkOverCallback));
+			_initiativeSkillType = null;
+			_passiveSkillType = null;
+			_initiativeRollPoints = null;
+			_passiveRollPoints = null;
+			_initiativeExtraPoint = 0;
+			_passiveExtraPoint = 0;
+			_checkingAction = action;
 			_state = CheckerState.INITIATIVE_SKILL;
 		}
 
@@ -214,15 +222,13 @@ namespace GameLib.CharacterSystem {
 
 		public void InitiativeSelectSkill(SkillType skillType) {
 			if (_state != CheckerState.INITIATIVE_SKILL) throw new InvalidOperationException("State incorrect.");
-			if (!CanInitiativeUseSkillInAction(_initiative, skillType, _action)) throw new InvalidOperationException("This skill cannot use in attack situation.");
+			if (!CanInitiativeUseSkillInAction(_initiative, skillType, _checkingAction)) throw new InvalidOperationException("This skill cannot use in attack situation.");
 			_initiativeSkillType = skillType;
 		}
 
 		public int[] InitiativeRollDice(int[] fixedDicePoints = null) {
-			int[] dicePoints = fixedDicePoints ?? FateDice.Roll();
-			_initiativeRollPoint = 0;
-			foreach (int point in dicePoints) _initiativeRollPoint += point;
-			return dicePoints;
+			_initiativeRollPoints = fixedDicePoints ?? FateDice.Roll();
+			return _initiativeRollPoints;
 		}
 
 		public void InitiativeSkillSelectionOver() {
@@ -237,7 +243,7 @@ namespace GameLib.CharacterSystem {
 
 		public bool CheckInitiativeAspectUsable(Aspect aspect, out string msg) {
 			msg = "";
-			if (aspect.Benefit != _initiative && _initiative.FatePoint - 1 < 0) {
+			if (aspect.Benefiter != _initiative && _initiative.FatePoint - 1 < 0) {
 				msg = "命运点不足";
 				return false;
 			}
@@ -246,13 +252,13 @@ namespace GameLib.CharacterSystem {
 
 		public int[] InitiativeUseAspect(Aspect aspect, bool reroll) {
 			if (_state != CheckerState.INITIATIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
-			if (aspect.Benefit != _initiative && _initiative.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
-			if (aspect.Benefit != null && aspect.Benefit != _initiative && aspect.BenefitTimes > 0) {
-				++aspect.Benefit.FatePoint;
-			} else if (aspect.Benefit == null) {
+			if (aspect.Benefiter != _initiative && _initiative.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
+			if (aspect.Benefiter != null && aspect.Benefiter != _initiative && aspect.BenefitTimes > 0) {
+				++aspect.Benefiter.FatePoint;
+			} else if (aspect.Benefiter == null) {
 				++_passive.FatePoint;
 			}
-			if (aspect.Benefit != _initiative || aspect.BenefitTimes <= 0) --_initiative.FatePoint;
+			if (aspect.Benefiter != _initiative || aspect.BenefitTimes <= 0) --_initiative.FatePoint;
 			else --aspect.BenefitTimes;
 			if (reroll) return this.InitiativeRollDice();
 			else {
@@ -263,15 +269,13 @@ namespace GameLib.CharacterSystem {
 
 		public void PassiveSelectSkill(SkillType skillType) {
 			if (_state != CheckerState.PASSIVE_SKILL) throw new InvalidOperationException("State incorrect.");
-			if (!CanPassiveUseSkillInAction(_passive, skillType, _action)) throw new InvalidOperationException("This skill cannot use in attack situation.");
+			if (!CanPassiveUseSkillInAction(_passive, skillType, _checkingAction)) throw new InvalidOperationException("This skill cannot use in attack situation.");
 			_passiveSkillType = skillType;
 		}
 
 		public int[] PassiveRollDice(int[] fixedDicePoints = null) {
-			int[] dicePoints = fixedDicePoints ?? FateDice.Roll();
-			_passiveRollPoint = 0;
-			foreach (int point in dicePoints) _passiveRollPoint += point;
-			return dicePoints;
+			_passiveRollPoints = fixedDicePoints ?? FateDice.Roll();
+			return _passiveRollPoints;
 		}
 
 		public void PassiveSkillSelectionOver() {
@@ -286,7 +290,7 @@ namespace GameLib.CharacterSystem {
 
 		public bool CheckPassiveAspectUsable(Aspect aspect, out string msg) {
 			msg = "";
-			if (aspect.Benefit != _passive && _passive.FatePoint - 1 < 0) {
+			if (aspect.Benefiter != _passive && _passive.FatePoint - 1 < 0) {
 				msg = "命运点不足";
 				return false;
 			}
@@ -295,13 +299,13 @@ namespace GameLib.CharacterSystem {
 
 		public int[] PassiveUseAspect(Aspect aspect, bool reroll) {
 			if (_state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
-			if (aspect.Benefit != _passive && _passive.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
-			if (aspect.Benefit != null && aspect.Benefit != _passive && aspect.BenefitTimes > 0) {
-				++aspect.Benefit.FatePoint;
-			} else if (aspect.Benefit == null) {
+			if (aspect.Benefiter != _passive && _passive.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
+			if (aspect.Benefiter != null && aspect.Benefiter != _passive && aspect.BenefitTimes > 0) {
+				++aspect.Benefiter.FatePoint;
+			} else if (aspect.Benefiter == null) {
 				++_initiative.FatePoint;
 			}
-			if (aspect.Benefit != _passive || aspect.BenefitTimes <= 0) --_passive.FatePoint;
+			if (aspect.Benefiter != _passive || aspect.BenefitTimes <= 0) --_passive.FatePoint;
 			else --aspect.BenefitTimes;
 			if (reroll) return this.PassiveRollDice();
 			else {

@@ -1,4 +1,4 @@
-﻿using GameLib.Utilities.Network.ClientMessages;
+﻿using GameUtil.Network.ClientMessages;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,12 +10,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace TextyClient {
-	public partial class CheckForm : Form {
-		private bool _dmCheck = false;
-
-		public bool DMCheck { get => _dmCheck; set => _dmCheck = value; }
-
-		public CheckForm() {
+	public partial class DMCheckForm : Form {
+		public DMCheckForm() {
 			InitializeComponent();
 		}
 
@@ -32,15 +28,9 @@ namespace TextyClient {
 		}
 
 		private void SendResult(bool reject) {
-			if (_dmCheck) {
-				var message = new DMCheckResultMessage();
-				message.result = !reject;
-				Program.connection.SendMessage(message);
-			} else {
-				var message = new UserDeterminResultMessage();
-				message.result = reject ? 1 : 0;
-				Program.connection.SendMessage(message);
-			}
+			var message = new DMCheckResultMessage();
+			message.result = !reject;
+			Program.connection.SendMessage(message);
 			this.Visible = false;
 		}
 

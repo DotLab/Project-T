@@ -1,10 +1,10 @@
-﻿using GameLib.Utilities.Network.ClientMessages;
-using GameLib.Utilities.Network.ServerMessages;
-using GameLib.Utilities.Network.Streamable;
+﻿using GameUtil.Network.ClientMessages;
+using GameUtil.Network.ServerMessages;
+using GameUtil.Network.Streamable;
 using System;
 using System.Collections.Generic;
 
-namespace GameLib.Utilities.Network {
+namespace GameUtil.Network {
 	public abstract class Message : IStreamable {
 		#region Message Creator
 		public static Message New(int messageType) {
@@ -69,14 +69,14 @@ namespace GameLib.Utilities.Network {
 					return new AspectDataMessage();
 				case ConsequenceDataMessage.MESSAGE_TYPE:
 					return new ConsequenceDataMessage();
-				case SkillLevelMessage.MESSAGE_TYPE:
-					return new SkillLevelMessage();
+				case SkillDataMessage.MESSAGE_TYPE:
+					return new SkillDataMessage();
 				case StuntDataMessage.MESSAGE_TYPE:
 					return new StuntDataMessage();
 				case ExtraDataMessage.MESSAGE_TYPE:
 					return new ExtraDataMessage();
-				case DirectResistSkillsDataMessage.MESSAGE_TYPE:
-					return new DirectResistSkillsDataMessage();
+				case DirectResistSkillsListMessage.MESSAGE_TYPE:
+					return new DirectResistSkillsListMessage();
 				case SkillTypeListDataMessage.MESSAGE_TYPE:
 					return new SkillTypeListDataMessage();
 				case StorySceneCheckerPanelShowMessage.MESSAGE_TYPE:
@@ -169,6 +169,12 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneActionAffectableAreasMessage();
 				case BattleSceneActionTargetCountMessage.MESSAGE_TYPE:
 					return new BattleSceneActionTargetCountMessage();
+				case DirectResistStuntsListMessage.MESSAGE_TYPE:
+					return new DirectResistStuntsListMessage();
+				case BattleSceneObjectUsableStuntListOnInteractMessage.MESSAGE_TYPE:
+					return new BattleSceneObjectUsableStuntListOnInteractMessage();
+				case BattleSceneDisplayUsingStuntMessage.MESSAGE_TYPE:
+					return new BattleSceneDisplayUsingStuntMessage();
 
 				// client message
 				case ClientInitMessage.MESSAGE_TYPE:
@@ -191,8 +197,8 @@ namespace GameLib.Utilities.Network {
 					return new GetAspectDataMessage();
 				case GetConsequenceDataMessage.MESSAGE_TYPE:
 					return new GetConsequenceDataMessage();
-				case GetSkillLevelMessage.MESSAGE_TYPE:
-					return new GetSkillLevelMessage();
+				case GetSkillDataMessage.MESSAGE_TYPE:
+					return new GetSkillDataMessage();
 				case GetStuntDataMessage.MESSAGE_TYPE:
 					return new GetStuntDataMessage();
 				case GetExtraDataMessage.MESSAGE_TYPE:
@@ -213,8 +219,8 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneActableObjectMoveMessage();
 				case BattleSceneActableObjectDoActionMessage.MESSAGE_TYPE:
 					return new BattleSceneActableObjectDoActionMessage();
-				case BattleSceneActableObjectDoSpecialActionMessage.MESSAGE_TYPE:
-					return new BattleSceneActableObjectDoSpecialActionMessage();
+				case BattleSceneActableObjectDoInteractMessage.MESSAGE_TYPE:
+					return new BattleSceneActableObjectDoInteractMessage();
 				case BattleSceneTakeExtraMovePointMessage.MESSAGE_TYPE:
 					return new BattleSceneTakeExtraMovePointMessage();
 				case BattleSceneGetGridObjectDataMessage.MESSAGE_TYPE:
@@ -237,6 +243,10 @@ namespace GameLib.Utilities.Network {
 					return new BattleSceneGetActionAffectableAreasMessage();
 				case BattleSceneGetActionTargetCountMessage.MESSAGE_TYPE:
 					return new BattleSceneGetActionTargetCountMessage();
+				case GetDirectResistStuntsMessage.MESSAGE_TYPE:
+					return new GetDirectResistStuntsMessage();
+				case BattleSceneGetInitiativeUsableStuntListOnInteractMessage.MESSAGE_TYPE:
+					return new BattleSceneGetInitiativeUsableStuntListOnInteractMessage();
 
 				default:
 					throw new NotImplementedException();

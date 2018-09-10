@@ -1,22 +1,49 @@
-﻿using GameLib.Campaign;
-using GameLib.Container;
-using GameLib.Container.StoryComponent;
-using GameLib.Core;
-using GameLib.Core.ScriptSystem;
-using GameLib.Utilities;
+﻿using GameServer.Campaign;
+using GameServer.Container;
+using GameServer.Container.StoryComponent;
+using GameServer.Core;
+using GameServer.Core.ScriptSystem;
+using GameUtil;
 using System;
 using System.Collections.Generic;
 
-namespace GameLib.CharacterSystem {
+namespace GameServer.CharacterSystem {
 	public interface ICharacterProperty : IIdentifiable, IAttachable<Character> { }
 	
 	public class CharacterPropertyList<T> : AttachableList<Character, T> where T : class, ICharacterProperty {
-		public CharacterPropertyList(Character owner) : base(owner) { }
+		private new class JSAPI : AttachableList<Character, T>.JSAPI, IJSAPI<CharacterPropertyList<T>> {
+			private readonly CharacterPropertyList<T> _outer;
+
+			public JSAPI(CharacterPropertyList<T> outer) : base(outer) {
+				_outer = outer;
+			}
+
+			CharacterPropertyList<T> IJSAPI<CharacterPropertyList<T>>.Origin(JSContextHelper proof) {
+				try {
+					if (proof == JSContextHelper.Instance) {
+						return _outer;
+					}
+					return null;
+				} catch (Exception) {
+					return null;
+				}
+			}
+		}
+
+		private readonly JSAPI _apiObj;
+
+		public CharacterPropertyList(Character owner) : base(owner) {
+			_apiObj = new JSAPI(this);
+		}
+
+		public override IJSContext GetContext() {
+			return _apiObj;
+		}
 	}
 
 	public abstract class Character : IIdentifiable, IExtraProperty {
 		#region Javascript API class
-		protected class JSAPI : IJSAPI<Character> {
+		private sealed class JSAPI : IJSAPI<Character> {
 			private readonly Character _outer;
 
 			public JSAPI(Character outer) {
@@ -85,23 +112,31 @@ namespace GameLib.CharacterSystem {
 				}
 			}
 
-			public BattleMapSkillProperty getSkillProperty(string skillID) {
+			public void resetSkill(IJSAPI<SkillType> skillType) {
 				try {
-					return _outer.GetSkillMapProperty(SkillType.SkillTypes[skillID]);
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-					return new BattleMapSkillProperty();
-				}
-			}
-
-			public void setSkillProperty(string skillID, BattleMapSkillProperty property) {
-				try {
-					_outer.SetSkillMapProperty(SkillType.SkillTypes[skillID], property);
+					_outer.ResetSkill(JSContextHelper.Instance.GetAPIOrigin(skillType));
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 				}
 			}
 
+			public void setSkill(IJSAPI<SkillType> skillType, IJSAPI<Skill> skill) {
+				try {
+					_outer.SetSkill(JSContextHelper.Instance.GetAPIOrigin(skillType), JSContextHelper.Instance.GetAPIOrigin(skill));
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public IJSAPI<Skill> getSkill(IJSAPI<SkillType> skillType) {
+				try {
+					return (IJSAPI<Skill>)_outer.GetSkill(JSContextHelper.Instance.GetAPIOrigin(skillType)).GetContext();
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
+			
 			public IJSAPI<CharacterPropertyList<Stunt>> getStuntList() {
 				try {
 					if (_outer.Stunts == null) return null;
@@ -234,6 +269,25 @@ namespace GameLib.CharacterSystem {
 				}
 			}
 
+			public IJSAPI<Extra> findExtraByID(string id) {
+				try {
+					var ret = _outer.FindExtraByID(id);
+					if (ret == null) return null;
+					return (IJSAPI<Extra>)ret.GetContext();
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
+
+			public void recover(int val, bool mental) {
+				try {
+					_outer.Recover(val, mental);
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
 			public Character Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {
@@ -248,41 +302,6 @@ namespace GameLib.CharacterSystem {
 		#endregion
 		private readonly JSAPI _apiObj;
 		
-		protected sealed class Skill : IDescribable {
-			private readonly SkillType _skillType;
-			private int _level;
-			private bool _levelUseRef = true;
-			private BattleMapSkillProperty _skillProperty;
-			private bool _skillPropertyUseRef = true;
-			private SkillSituationLimit _situationLimit;
-			private bool _situationLimitUseRef = true;
-			
-			public string Name { get => _skillType.Name; set { } }
-			public string Description { get => ""; set { } }
-			public SkillType SkillType => _skillType;
-			public int Level { get => _levelUseRef ? _skillType.Level : _level; set { _level = value; _levelUseRef = false; } }
-			public BattleMapSkillProperty SkillProperty { get => _skillPropertyUseRef ? _skillType.SkillProperty : _skillProperty; set { _skillProperty = value; _skillPropertyUseRef = false; } }
-			public SkillSituationLimit SituationLimit { get => _situationLimitUseRef ? _skillType.SituationLimit : _situationLimit; set { _situationLimit = value; _situationLimitUseRef = false; } }
-			
-			public Skill(SkillType skillType) {
-				_skillType = skillType ?? throw new ArgumentNullException(nameof(skillType));
-				_level = skillType.Level;
-				_skillProperty = skillType.SkillProperty;
-				_situationLimit = skillType.SituationLimit;
-			}
-
-			public Skill Clone() {
-				var ret = new Skill(_skillType);
-				ret._level = _level;
-				ret._levelUseRef = _levelUseRef;
-				ret._skillProperty = _skillProperty;
-				ret._skillPropertyUseRef = _skillPropertyUseRef;
-				ret._situationLimit = _situationLimit;
-				ret._situationLimitUseRef = _situationLimitUseRef;
-				return ret;
-			}
-		}
-
 		private readonly string _id;
 		private string _name = "";
 		private string _description = "";
@@ -291,7 +310,7 @@ namespace GameLib.CharacterSystem {
 		private Player _controlPlayer = null;
 		private bool _dead = false;
 
-		protected readonly List<Skill> _skills;
+		protected readonly Dictionary<SkillType, Skill> _skills;
 		private readonly CharacterPropertyList<Aspect> _aspects;
 		private int _physicsStress = 0;
 		private int _physicsStressMax = 0;
@@ -324,7 +343,7 @@ namespace GameLib.CharacterSystem {
 		protected Character(string id, CharacterView view) {
 			_id = id ?? throw new ArgumentNullException(nameof(id));
 			_view = view ?? throw new ArgumentNullException(nameof(view));
-			_skills = new List<Skill>();
+			_skills = new Dictionary<SkillType, Skill>();
 			_aspects = new CharacterPropertyList<Aspect>(this);
 			_apiObj = new JSAPI(this);
 		}
@@ -335,80 +354,44 @@ namespace GameLib.CharacterSystem {
 		public abstract CharacterPropertyList<Extra> Extras { get; }
 		public abstract CharacterPropertyList<Consequence> Consequences { get; }
 		
-		public int GetSkillLevel(SkillType skillType) {
-			foreach (var skill in _skills) {
-				if (skill.SkillType == skillType) {
-					return skill.Level;
-				}
-			}
-			return skillType.Level;
+		public void ResetSkill(SkillType skillType) {
+			_skills.Remove(skillType);
 		}
 
-		public void SetSkillLevel(SkillType skillType, int level) {
-			foreach (var skill in _skills) {
-				if (skill.SkillType == skillType) {
-					skill.Level = level;
-					return;
-				}
-			}
-			var newSkill = new Skill(skillType);
-			newSkill.Level = level;
-			_skills.Add(newSkill);
+		public void SetSkill(SkillType skillType, Skill skill) {
+			_skills[skillType] = skill;
 		}
 
-		public BattleMapSkillProperty GetSkillMapProperty(SkillType skillType) {
-			foreach (var skill in _skills) {
-				if (skill.SkillType == skillType) {
-					return skill.SkillProperty;
-				}
+		public Skill GetSkill(SkillType skillType) {
+			Skill ret;
+			if (_skills.TryGetValue(skillType, out var skill)) {
+				ret = skill;
+			} else {
+				ret = new Skill(skillType);
+				_skills.Add(skillType, ret);
 			}
-			return skillType.SkillProperty;
-		}
-
-		public void SetSkillMapProperty(SkillType skillType, BattleMapSkillProperty property) {
-			foreach (var skill in _skills) {
-				if (skill.SkillType == skillType) {
-					skill.SkillProperty = property;
-					return;
-				}
-			}
-			var newSkill = new Skill(skillType);
-			newSkill.SkillProperty = property;
-			_skills.Add(newSkill);
-		}
-
-		public SkillSituationLimit GetSkillSituationLimit(SkillType skillType) {
-			foreach (var skill in _skills) {
-				if (skill.SkillType == skillType) {
-					return skill.SituationLimit;
-				}
-			}
-			var ret = skillType.SituationLimit;
 			if (skillType == SkillType.Shoot) {
+				bool hasLongRangeWeapon = false;
 				if (this.Extras != null) {
 					foreach (var extra in this.Extras) {
 						if (extra.IsLongRangeWeapon) {
-							ret.canAttack = true;
+							var limit = ret.SituationLimit;
+							limit.canAttack = true;
+							ret.SituationLimit = limit;
+							hasLongRangeWeapon = true;
 							break;
 						}
 					}
 				}
+				if (!hasLongRangeWeapon) {
+					var limit = ret.SituationLimit;
+					limit.canAttack = false;
+					ret.SituationLimit = limit;
+				}
 			}
 			return ret;
 		}
-
-		public void SetSkillSituationLimit(SkillType skillType, SkillSituationLimit situation) {
-			foreach (var skill in _skills) {
-				if (skill.SkillType == skillType) {
-					skill.SituationLimit = situation;
-					return;
-				}
-			}
-			var newSkill = new Skill(skillType);
-			newSkill.SituationLimit = situation;
-			_skills.Add(newSkill);
-		}
-
+		
 		public void Damage(int val, bool mental, Character whoCause, string causeMsg) {
 			if (val < 0) throw new ArgumentOutOfRangeException("Damage is less than 0.", nameof(val));
 			int count_level_2 = 0;
@@ -425,12 +408,14 @@ namespace GameLib.CharacterSystem {
 						var slight = new Consequence();
 						slight.Name = whoCause.Name + " " + causeMsg;
 						slight.CounteractLevel = 2;
+						slight.ActualDamage = val;
 						slight.MentalDamage = mental;
 						this.Consequences.Add(slight);
 					} else if (val <= 4 && count_level_4 < 1) {
 						var medium = new Consequence();
 						medium.Name = whoCause.Name + " " + causeMsg;
 						medium.CounteractLevel = 4;
+						medium.ActualDamage = val;
 						medium.MentalDamage = mental;
 						this.Consequences.Add(medium);
 					} else if (val <= 6 && count_level_6 < 1) {
@@ -438,6 +423,7 @@ namespace GameLib.CharacterSystem {
 						serious.Name = whoCause.Name + " " + causeMsg;
 						serious.PersistenceType = PersistenceType.Fixed;
 						serious.CounteractLevel = 6;
+						serious.ActualDamage = val;
 						serious.MentalDamage = mental;
 						this.Consequences.Add(serious);
 					} else break;
@@ -448,6 +434,107 @@ namespace GameLib.CharacterSystem {
 				_mentalStress += val;
 			} else {
 				_physicsStress += val;
+			}
+		}
+
+		public void Recover(int val, bool mental) {
+			if (val < 0) throw new ArgumentOutOfRangeException("Recover is less than 0.", nameof(val));
+			if (mental) {
+				if (_mentalStress > 0) {
+					_mentalStress -= val;
+					val = _mentalStress < 0 ? -_mentalStress : 0;
+				}
+				if (val > 0) {
+					int count_level_2 = 0;
+					int count_level_4 = 0;
+					int count_level_6 = 0;
+					if (this.Consequences != null) {
+						foreach (var consequence in this.Consequences) {
+							if (consequence.CounteractLevel == 2 && consequence.MentalDamage) ++count_level_2;
+							else if (consequence.CounteractLevel == 4 && consequence.MentalDamage) ++count_level_4;
+							else if (consequence.CounteractLevel == 6 && consequence.MentalDamage) ++count_level_6;
+						}
+						if (count_level_6 > 0) {
+							for (int i = this.Consequences.Count - 1; i >= 0; --i) {
+								var consequence = this.Consequences[i];
+								if (consequence.CounteractLevel == 6 && consequence.MentalDamage) {
+									if (val - consequence.ActualDamage >= 0) {
+										val -= consequence.ActualDamage;
+										this.Consequences.RemoveAt(i);
+									}
+								}
+							}
+						} else if (val > 0 && count_level_4 > 0) {
+							for (int i = this.Consequences.Count - 1; i >= 0; --i) {
+								var consequence = this.Consequences[i];
+								if (consequence.CounteractLevel == 4 && consequence.MentalDamage) {
+									if (val - consequence.ActualDamage >= 0) {
+										val -= consequence.ActualDamage;
+										this.Consequences.RemoveAt(i);
+									}
+								}
+							}
+						} else if (val > 0 && count_level_2 > 0) {
+							for (int i = this.Consequences.Count - 1; i >= 0; --i) {
+								var consequence = this.Consequences[i];
+								if (consequence.CounteractLevel == 2 && consequence.MentalDamage) {
+									if (val - consequence.ActualDamage >= 0) {
+										val -= consequence.ActualDamage;
+										this.Consequences.RemoveAt(i);
+									}
+								}
+							}
+						}
+					}
+				}
+			} else {
+				if (_physicsStress > 0) {
+					_physicsStress -= val;
+					val = _physicsStress < 0 ? -_physicsStress : 0;
+				}
+				if (val > 0) {
+					int count_level_2 = 0;
+					int count_level_4 = 0;
+					int count_level_6 = 0;
+					if (this.Consequences != null) {
+						foreach (var consequence in this.Consequences) {
+							if (consequence.CounteractLevel == 2 && !consequence.MentalDamage) ++count_level_2;
+							else if (consequence.CounteractLevel == 4 && !consequence.MentalDamage) ++count_level_4;
+							else if (consequence.CounteractLevel == 6 && !consequence.MentalDamage) ++count_level_6;
+						}
+						if (count_level_6 > 0) {
+							for (int i = this.Consequences.Count - 1; i >= 0; --i) {
+								var consequence = this.Consequences[i];
+								if (consequence.CounteractLevel == 6 && !consequence.MentalDamage) {
+									if (val - consequence.ActualDamage >= 0) {
+										val -= consequence.ActualDamage;
+										this.Consequences.RemoveAt(i);
+									}
+								}
+							}
+						} else if (val > 0 && count_level_4 > 0) {
+							for (int i = this.Consequences.Count - 1; i >= 0; --i) {
+								var consequence = this.Consequences[i];
+								if (consequence.CounteractLevel == 4 && !consequence.MentalDamage) {
+									if (val - consequence.ActualDamage >= 0) {
+										val -= consequence.ActualDamage;
+										this.Consequences.RemoveAt(i);
+									}
+								}
+							}
+						} else if (val > 0 && count_level_2 > 0) {
+							for (int i = this.Consequences.Count - 1; i >= 0; --i) {
+								var consequence = this.Consequences[i];
+								if (consequence.CounteractLevel == 2 && !consequence.MentalDamage) {
+									if (val - consequence.ActualDamage >= 0) {
+										val -= consequence.ActualDamage;
+										this.Consequences.RemoveAt(i);
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -529,9 +616,9 @@ namespace GameLib.CharacterSystem {
 				};
 				this.Aspects.Add(clone);
 			}
-			foreach (Skill skill in template._skills) {
-				Skill clone = skill.Clone();
-				_skills.Add(skill);
+			foreach (var skill in template._skills) {
+				Skill clone = skill.Value.Clone();
+				_skills.Add(skill.Key, clone);
 			}
 			this.PhysicsStress = template.PhysicsStress;
 			this.PhysicsStressMax = template.PhysicsStressMax;
@@ -602,6 +689,15 @@ namespace GameLib.CharacterSystem {
 				}
 			}
 
+			public IJSAPI<Aspect> createAspect() {
+				try {
+					return (IJSAPI<Aspect>)new Aspect().GetContext();
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+					return null;
+				}
+			}
+			
 			public CharacterManager Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {

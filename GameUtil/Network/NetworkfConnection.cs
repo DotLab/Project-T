@@ -1,12 +1,12 @@
-﻿using GameLib.Utilities.Network.Streamable;
-using GameLib.Utilities.Network.ServerMessages;
+﻿using GameUtil.Network.Streamable;
+using GameUtil.Network.ServerMessages;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Bit = Networkf.BitHelper;
 
-namespace GameLib.Utilities.Network {
+namespace GameUtil.Network {
 	public sealed class NetworkfMessage : Networkf.Message {
 		private readonly Message _innerMessage;
 

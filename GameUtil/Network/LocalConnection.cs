@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace GameLib.Utilities.Network {
+namespace GameUtil.Network {
 	public class LocalConnection : Connection {
 		private MemoryStream _memoryStream;
 

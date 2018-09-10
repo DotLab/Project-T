@@ -1,7 +1,7 @@
-﻿using GameLib.Core.ScriptSystem;
-using GameLib.Utilities;
+﻿using GameServer.Core.ScriptSystem;
+using GameUtil;
 
-namespace GameLib.Core {
+namespace GameServer.Core {
 	public interface IDescribable {
 		string Name { get; set; }
 		string Description { get; set; }

@@ -57,11 +57,11 @@
     <Compile Include="CharacterInfo.Designer.cs">
       <DependentUpon>CharacterInfo.cs</DependentUpon>
     </Compile>
-    <Compile Include="CheckForm.cs">
+    <Compile Include="DMCheckForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="CheckForm.Designer.cs">
-      <DependentUpon>CheckForm.cs</DependentUpon>
+    <Compile Include="DMCheckForm.Designer.cs">
+      <DependentUpon>DMCheckForm.cs</DependentUpon>
     </Compile>
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
@@ -83,6 +83,12 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UserCheckForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UserCheckForm.Designer.cs">
+      <DependentUpon>UserCheckForm.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="AdvancedConsole.resx">
       <DependentUpon>AdvancedConsole.cs</DependentUpon>
     </EmbeddedResource>
@@ -92,8 +98,8 @@
     <EmbeddedResource Include="CharacterInfo.resx">
       <DependentUpon>CharacterInfo.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="CheckForm.resx">
-      <DependentUpon>CheckForm.cs</DependentUpon>
+    <EmbeddedResource Include="DMCheckForm.resx">
+      <DependentUpon>DMCheckForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
@@ -110,6 +116,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="UserCheckForm.resx">
+      <DependentUpon>UserCheckForm.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

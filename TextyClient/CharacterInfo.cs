@@ -1,5 +1,5 @@
-﻿using GameLib.Utilities.Network.ClientMessages;
-using GameLib.Utilities.Network.ServerMessages;
+﻿using GameUtil.Network.ClientMessages;
+using GameUtil.Network.ServerMessages;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -41,19 +41,45 @@ namespace TextyClient {
 				var resp = result as CharacterAspectsDescriptionMessage;
 				if (resp != null) {
 					foreach (var aspect in resp.properties) {
-						this.aspectListBox.Items.Add(aspect.describable.name);
+						var aspectReq = new GetAspectDataMessage() {
+							characterID = resp.characterID,
+							aspectID = aspect.propertyID
+						};
+						Program.connection.Request(aspectReq, result2 => {
+							var resp2 = result2 as AspectDataMessage;
+							if (resp2 != null) {
+								string persistence = "";
+								if (resp2.persistenceType == 0) persistence = "核心概念";
+								else if (resp2.persistenceType == 1) persistence = "情境特征";
+								else if (resp2.persistenceType == 2) persistence = "增益";
+								if (resp2.benefiterID == "" || resp2.benefitTimes <= 0) {
+									this.aspectListBox.Items.Add(persistence + " - " + aspect.describable.name);
+								} else {
+									var benifiterReq = new GetCharacterDataMessage() {
+										characterID = resp2.benefiterID,
+										dataType = GetCharacterDataMessage.DataType.INFO
+									};
+									Program.connection.Request(benifiterReq, result3 => {
+										var resp3 = result3 as CharacterInfoDataMessage;
+										if (resp3 != null) {
+											this.aspectListBox.Items.Add(persistence + " - " + aspect.describable.name + " 受益者：" + resp3.describable.name + " 免费次数：" + resp2.benefitTimes);
+										}
+									});
+								}
+							}
+						});
 					}
 				}
 			});
 			foreach (var skillType in Program.skillTypes) {
-				var skillReq = new GetSkillLevelMessage() {
+				var skillReq = new GetSkillDataMessage() {
 					characterID = characterID,
 					skillTypeID = skillType.propertyID
 				};
 				Program.connection.Request(skillReq, result => {
-					var resp = result as SkillLevelMessage;
+					var resp = result as SkillDataMessage;
 					if (resp != null) {
-						this.skillListBox.Items.Add(skillType.name + " " + (resp.level >= 0 ? "+" : "") + resp.level);
+						this.skillListBox.Items.Add(resp.customName + " " + (resp.level >= 0 ? "+" : "-") + resp.level);
 					}
 				});
 			}

@@ -1,0 +1,13 @@
+(function () {
+	var stunt = $__this__.getBelongStunt();
+	if (stunt != null) {
+		var me = stunt.getBelong();
+		var dataBackup = stunt.getCustomData();
+		var skillType = $__eventArgs__.passiveSkillType;
+		if (me == $__eventArgs__.passive.getCharacterRef()
+			&& skillType.getID() == "Physique"
+			&& dataBackup != null) {
+			me.setSkill(skillType, dataBackup);
+		}
+	}
+})();

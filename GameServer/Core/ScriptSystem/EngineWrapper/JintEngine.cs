@@ -5,7 +5,7 @@ using Jint.Runtime;
 using Jint.Runtime.Interop;
 using System;
 
-namespace GameLib.Core.ScriptSystem.EngineWrapper {
+namespace GameServer.Core.ScriptSystem.EngineWrapper {
 	public sealed class JintEngine : IJSEngineRaw {
 		private readonly Engine _jsEngine;
 
@@ -19,7 +19,7 @@ namespace GameLib.Core.ScriptSystem.EngineWrapper {
 			} catch (ParserException e) {
 				throw new JSException(0, JSException.JSErrorType.Compile, e.Message);
 			} catch (JavaScriptException e) {
-				throw new JSException(0, JSException.JSErrorType.Runtime, e.Message);
+				throw new JSException(0, JSException.JSErrorType.Runtime, "Line " + e.LineNumber + ":" + e.Message);
 			} catch (RecursionDepthOverflowException e) {
 				throw new JSException(1, JSException.JSErrorType.Runtime, e.Message);
 			} catch (StatementsCountOverflowException e) {

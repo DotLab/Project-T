@@ -1,0 +1,20 @@
+(function () {
+	var stunt = $__this__.getBelongStunt();
+	var aspect = $__eventArgs__.createdAspect;
+	var thisObj = $__eventArgs__.to;
+	if (stunt != null) {
+		var me = stunt.getBelong();
+		if (me != null) {
+			$.campaignManager.askPlayer(me, "你要花费1命运点来声明你带着备用武器，使缴械特征变成增益吗？（1是，0否）", function(result) {
+				if (result == 1) {
+					$.campaignManager.askDM(me, "允许" + me.getName() + "使用" + stunt.getName() + "吗？", function(dmResult) {
+						if (dmResult) {
+							thisObj.displayUsingStunt(stunt);
+							aspect.setPersistenceType(2);
+						}
+					});
+				}
+			});
+		}
+	}
+})();

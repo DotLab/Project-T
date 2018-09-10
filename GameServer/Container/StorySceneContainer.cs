@@ -1,12 +1,12 @@
-﻿using GameLib.CharacterSystem;
-using GameLib.Container.StoryComponent;
-using GameLib.Core;
-using GameLib.Core.ScriptSystem;
-using GameLib.Utilities;
+﻿using GameServer.CharacterSystem;
+using GameServer.Container.StoryComponent;
+using GameServer.Core;
+using GameServer.Core.ScriptSystem;
+using GameUtil;
 using System;
 using System.Collections.Generic;
 
-namespace GameLib.Container {
+namespace GameServer.Container {
 	public sealed class StorySceneContainer : IJSContextProvider {
 		#region Javascript API class
 		private sealed class JSAPI : IJSAPI<StorySceneContainer> {
@@ -246,10 +246,10 @@ namespace GameLib.Container {
 		}
 
 		public void InitiativeUseSkill(SkillType skillType, bool force, bool bigone, int[] fixedDicePoints = null) {
-			if (force || SkillChecker.Instance.Action == CharacterAction.ATTACK) {
+			if (force || SkillChecker.Instance.CheckingAction == CharacterAction.ATTACK) {
 				this.InitiativeSelectSkill(skillType, bigone, fixedDicePoints);
-			} else if (SkillChecker.Instance.Action == CharacterAction.CREATE_ASPECT || SkillChecker.Instance.Action == CharacterAction.HINDER) {
-				Game.DM.DMClient.RequestCheck(SkillChecker.Instance.Initiative.Controller,
+			} else if (SkillChecker.Instance.CheckingAction == CharacterAction.CREATE_ASPECT || SkillChecker.Instance.CheckingAction == CharacterAction.HINDER) {
+				Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Initiative.Controller,
 					SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
 					result => { if (result) this.InitiativeSelectSkill(skillType, bigone, fixedDicePoints); });
 			}
@@ -257,11 +257,13 @@ namespace GameLib.Container {
 
 		public void InitiativeUseStunt(Stunt stunt) {
 			if (stunt.Belong != SkillChecker.Instance.Initiative) throw new ArgumentException("This stunt is not belong to initiative character.", nameof(stunt));
+			/*
 			if (stunt.NeedDMCheck)
-				Game.DM.DMClient.RequestCheck(SkillChecker.Instance.Initiative.Controller,
+				Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Initiative.Controller,
 					SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + stunt.Name + ",可以吗？",
-					result => { if (result) stunt.Effect.DoAction(); });
-			else stunt.Effect.DoAction();
+					result => { if (result) stunt.Effect.TakeEffect(); });
+			else stunt.Effect.TakeEffect();
+			*/
 		}
 
 		private void PassiveSelectSkill(SkillType skillType, bool bigone, int[] fixedDicePoints) {
@@ -282,10 +284,10 @@ namespace GameLib.Container {
 			if (force) {
 				this.PassiveSelectSkill(skillType, bigone, fixedDicePoints);
 			} else {
-				if (SkillChecker.CanResistSkillWithoutDMCheck(SkillChecker.Instance.InitiativeSkillType, skillType, SkillChecker.Instance.Action)) {
+				if (SkillChecker.CanResistSkillWithoutDMCheck(SkillChecker.Instance.InitiativeSkillType, skillType, SkillChecker.Instance.CheckingAction)) {
 					this.PassiveSelectSkill(skillType, bigone, fixedDicePoints);
 				} else {
-					Game.DM.DMClient.RequestCheck(SkillChecker.Instance.Passive.Controller,
+					Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Passive.Controller,
 						SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
 						result => { if (result) this.PassiveSelectSkill(skillType, bigone, fixedDicePoints); });
 				}
@@ -294,11 +296,13 @@ namespace GameLib.Container {
 
 		public void PassiveUseStunt(Stunt stunt) {
 			if (stunt.Belong != SkillChecker.Instance.Passive) throw new ArgumentException("This stunt is not belong to passive character.", nameof(stunt));
+			/*
 			if (stunt.NeedDMCheck)
-				Game.DM.DMClient.RequestCheck(SkillChecker.Instance.Passive.Controller,
+				Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Passive.Controller,
 					SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + stunt.Name + ",可以吗？",
-					result => { if (result) stunt.Effect.DoAction(); });
-			else stunt.Effect.DoAction();
+					result => { if (result) stunt.Effect.TakeEffect(); });
+			else stunt.Effect.TakeEffect();
+			*/
 		}
 
 		public void InitiativeUseAspect(Aspect aspect, bool reroll) {
@@ -306,7 +310,7 @@ namespace GameLib.Container {
 				player.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(true, aspect);
 			}
 			Game.DM.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(true, aspect);
-			Game.DM.DMClient.RequestCheck(SkillChecker.Instance.Initiative.Controller,
+			Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Initiative.Controller,
 				SkillChecker.Instance.Initiative.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
 				result => {
 					if (result) {
@@ -328,7 +332,7 @@ namespace GameLib.Container {
 				player.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(false, aspect);
 			}
 			Game.DM.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(false, aspect);
-			Game.DM.DMClient.RequestCheck(SkillChecker.Instance.Passive.Controller,
+			Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Passive.Controller,
 				SkillChecker.Instance.Passive.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
 				result => {
 					if (result) {
@@ -353,7 +357,7 @@ namespace GameLib.Container {
 	}
 }
 
-namespace GameLib.Container.StoryComponent {
+namespace GameServer.Container.StoryComponent {
 	public interface ISceneObject : IIdentifiable {
 		void OnInteract();
 		void OnCreateAspect();

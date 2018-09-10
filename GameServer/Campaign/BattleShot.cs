@@ -1,6 +1,6 @@
-﻿using GameLib.Container;
+﻿using GameServer.Container;
 
-namespace GameLib.Campaign {
+namespace GameServer.Campaign {
 	public sealed class BattleShot : Shot {
 		public override ShotType Type => ShotType.BATTLE;
 		public override StoryShot Story => null;

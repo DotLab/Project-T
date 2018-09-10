@@ -1,8 +1,7 @@
-﻿using GameLib.Utilities;
-using GameLib.Utilities.Network;
-using GameLib.Utilities.Network.ClientMessages;
-using GameLib.Utilities.Network.ServerMessages;
-using GameLib.Utilities.Network.Streamable;
+﻿using GameUtil;
+using GameUtil.Network;
+using GameUtil.Network.ClientMessages;
+using GameUtil.Network.ServerMessages;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -138,8 +137,8 @@ namespace TextyClient {
 		private ReachablePlace _selectedMoveDst = null;
 		private bool _createAspectReady = false;
 		private bool _attackReady = false;
-		private bool _specialActionReady = false;
-		private bool _isUsingSkill = false;
+		private bool _interactReady = false;
+		private bool _isUsingSkillOrStunt = false;
 		private string _usingSkillOrStuntID = null;
 		private bool _isStunt = false;
 		private Dictionary<GridPos, List<GridPos>> _affectableAreas = null;
@@ -154,7 +153,7 @@ namespace TextyClient {
 		private GridObject _currentPassiveObj = null;
 		private List<ReachablePlace> _targetPlaces = null;
 
-		public void MessageReceived(GameLib.Utilities.Network.Message message) {
+		public void MessageReceived(GameUtil.Network.Message message) {
 			var printer = Program.mainForm.AdvancedConsole.TextBoxPrinter;
 			switch (message.MessageType) {
 				case ShowSceneMessage.MESSAGE_TYPE: {
@@ -374,6 +373,12 @@ namespace TextyClient {
 						}
 					}
 					break;
+				case BattleSceneDisplayUsingStuntMessage.MESSAGE_TYPE: {
+						var msg = (BattleSceneDisplayUsingStuntMessage)message;
+						var gridObject = GetGridObject(msg.obj, out bool highland);
+						printer.WriteLine(gridObject + " 使用特技 " + msg.stunt.describable.name);
+					}
+					break;
 				case BattleSceneStartCheckMessage.MESSAGE_TYPE: {
 						var msg = (BattleSceneStartCheckMessage)message;
 						var initiativeObject = GetGridObject(msg.initiativeObj, out bool highland);
@@ -421,12 +426,16 @@ namespace TextyClient {
 				case BattleSceneCheckerDisplaySkillReadyMessage.MESSAGE_TYPE: {
 						var msg = (BattleSceneCheckerDisplaySkillReadyMessage)message;
 						var gridObject = GetGridObject(msg.obj, out bool highland);
-						foreach (var skillType in Program.skillTypes) {
-							if (skillType.propertyID == msg.skillTypeID) {
-								printer.WriteLine(gridObject + " 将要使用 " + skillType.name);
-								break;
+						var nameReq = new GetSkillDataMessage() {
+							characterID = gridObject.id,
+							skillTypeID = msg.skillTypeID
+						};
+						Program.connection.Request(nameReq, result => {
+							var resp = result as SkillDataMessage;
+							if (resp != null) {
+								printer.WriteLine(gridObject + " 将要使用 " + resp.customName);
 							}
-						}
+						});
 					}
 					break;
 				case BattleSceneCheckerDisplayUsingAspectMessage.MESSAGE_TYPE: {
@@ -462,7 +471,7 @@ namespace TextyClient {
 							var resp = result as BattleSceneObjectUsableSkillListMessage;
 							if (resp != null) {
 								Program.connection.Request(getDirectResistRequest, result2 => {
-									var resp2 = result2 as DirectResistSkillsDataMessage;
+									var resp2 = result2 as DirectResistSkillsListMessage;
 									if (resp2 != null) {
 										foreach (var skillType in resp.skillTypes) {
 											bool contain = false;
@@ -492,23 +501,39 @@ namespace TextyClient {
 						Program.connection.Request(getUsableActionRequest, result => {
 							var resp = result as BattleSceneObjectUsableStuntListMessage;
 							if (resp != null) {
-								foreach (var stunt in resp.stunts) {
-									var stuntDataRequest = new GetStuntDataMessage() {
-										characterID = selectSkillMsg.passiveObj.id,
-										stuntID = stunt.propertyID
-									};
-									Program.connection.Request(stuntDataRequest, dataResult => {
-										var dataResp = dataResult as StuntDataMessage;
-										if (dataResp != null) {
-											_selectionList2.Add(new CharacterPropertyInfo() {
-												name = stunt.describable.name,
-												description = stunt.describable.description,
-												propertyID = stunt.propertyID,
-												extraMessage = dataResp.needDMCheck ? "*" : ""
-											});
+								var getDirectStuntsRequest = new GetDirectResistStuntsMessage() {
+									passiveCharacterID = selectSkillMsg.passiveObj.id,
+									actionType = selectSkillMsg.action,
+									initiativeSkillTypeID = selectSkillMsg.initiativeSkillType.id
+								};
+								Program.connection.Request(getDirectStuntsRequest, listResult => {
+									var listResp = listResult as DirectResistStuntsListMessage;
+									if (listResp != null) {
+										foreach (var stunt in resp.stunts) {
+											bool contain = false;
+											foreach (var match in listResp.stunts) {
+												if (match.propertyID == stunt.propertyID) {
+													_selectionList2.Add(new CharacterPropertyInfo() {
+														name = stunt.describable.name,
+														description = stunt.describable.description,
+														propertyID = stunt.propertyID,
+													});
+													contain = true;
+													break;
+												}
+											}
+											if (!contain) {
+												_selectionList2.Add(new CharacterPropertyInfo() {
+													name = stunt.describable.name,
+													description = stunt.describable.description,
+													propertyID = stunt.propertyID,
+													extraMessage = "*"
+												});
+											}
 										}
-									});
-								}
+									}
+								});
+								
 							}
 						});
 						printer.WriteLine("进行被动对抗");
@@ -519,16 +544,16 @@ namespace TextyClient {
 						if (completeMsg.failure) {
 							printer.WriteLine("失败" + completeMsg.extraMessage);
 							if (_checkingStateAsPassive == PassiveCheckingState.IDLE && _canActing && _initiativeState == InitiativeState.ACTING && completeMsg.isInitiative) {
-								_createAspectReady = _attackReady = _specialActionReady = false;
+								_createAspectReady = _attackReady = _interactReady = false;
 								menuItemCreateAspect.Text = "创造优势";
 								menuItemAttack.Text = "攻击";
-								menuItemSpecialAction.Text = "特殊行动";
+								menuItemInteract.Text = "其他动作";
 								_selectionList.Clear();
 								_selectionList2.Clear();
 								selectionTypeLbl.Text = "";
 								selectionListBox.DataSource = _selectionList;
 								selectionTypeGroupPanel.Visible = false;
-								_isUsingSkill = false;
+								_isUsingSkillOrStunt = false;
 								_usingSkillOrStuntID = null;
 								_isSelectingTarget = false;
 								confirmTargetBtn.Visible = false;
@@ -546,16 +571,16 @@ namespace TextyClient {
 								_checkingStateAsPassive = PassiveCheckingState.IDLE;
 							} else if (_checkingStateAsPassive == PassiveCheckingState.IDLE) {
 								if (_canActing && _initiativeState == InitiativeState.ACTING && completeMsg.isInitiative) {
-									_createAspectReady = _attackReady = _specialActionReady = false;
+									_createAspectReady = _attackReady = _interactReady = false;
 									menuItemCreateAspect.Text = "创造优势";
 									menuItemAttack.Text = "攻击";
-									menuItemSpecialAction.Text = "特殊行动";
+									menuItemInteract.Text = "其他动作";
 									_selectionList.Clear();
 									_selectionList2.Clear();
 									selectionTypeLbl.Text = "";
 									selectionListBox.DataSource = _selectionList;
 									selectionTypeGroupPanel.Visible = false;
-									_isUsingSkill = false;
+									_isUsingSkillOrStunt = false;
 									_usingSkillOrStuntID = null;
 									_isSelectingTarget = false;
 									confirmTargetBtn.Visible = false;
@@ -630,6 +655,7 @@ namespace TextyClient {
 			Program.connection.AddMessageReceiver(BattleSceneUpdateMovePointMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneDisplayActableObjectMovingMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneDisplayTakeExtraMovePointMessage.MESSAGE_TYPE, this);
+			Program.connection.AddMessageReceiver(BattleSceneDisplayUsingStuntMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneStartCheckMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(CheckerCheckResultMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneCheckNextoneMessage.MESSAGE_TYPE, this);
@@ -661,7 +687,7 @@ namespace TextyClient {
 			}
 		}
 
-		private GridObject GetGridObject(GameLib.Utilities.Network.Streamable.BattleSceneObject messageObj, out bool highland) {
+		private GridObject GetGridObject(GameUtil.Network.Streamable.BattleSceneObject messageObj, out bool highland) {
 			return this.GetGridObject(messageObj.row, messageObj.col, messageObj.id, out highland);
 		}
 
@@ -763,7 +789,7 @@ namespace TextyClient {
 				}
 			}
 
-			if (_isUsingSkill && !_isSelectingTarget) {
+			if (_isUsingSkillOrStunt && !_isSelectingTarget) {
 				_isSelectingAffectCenter = false;
 				foreach (var area in _affectableAreas) {
 					if (area.Key.row == newRow && area.Key.col == newCol && area.Key.highland == newHighland) {
@@ -837,8 +863,6 @@ namespace TextyClient {
 		private void BattleSceneObjectPresent(GridObject gridObject, Graphics g, PointF[] gridPoints) {
 			if (gridObject.view.battle == "地面") {
 				g.FillPolygon(Brushes.LightGray, gridPoints);
-			} else if (gridObject.view.battle == "障碍") {
-				g.FillPolygon(Brushes.DarkGray, gridPoints);
 			} else {
 				g.DrawString(gridObject.ToString(), new Font("宋体", 12), Brushes.Black, new PointF(gridPoints[0].X - 12, gridPoints[0].Y + 12));
 			}
@@ -901,7 +925,7 @@ namespace TextyClient {
 					}
 				}
 			}
-			if (_isUsingSkill && !_isSelectingTarget) {
+			if (_isUsingSkillOrStunt && !_isSelectingTarget) {
 				var transpRed = new SolidBrush(Color.FromArgb(80, 255, 0, 0));
 				foreach (var area in _affectableAreas) {
 					var areaGrid = area.Key;
@@ -937,7 +961,7 @@ namespace TextyClient {
 					}
 				}
 			}
-			if (_isUsingSkill && _isSelectingAffectCenter) {
+			if (_isUsingSkillOrStunt && _isSelectingAffectCenter) {
 				var transpYellow = new SolidBrush(Color.FromArgb(80, 255, 255, 0));
 				foreach (var areaGrid in _affectableAreas[_selectedAffectCenter]) {
 					int row = areaGrid.row;
@@ -1227,10 +1251,10 @@ namespace TextyClient {
 				return;
 			}
 			menuItemConfirmGrid.Enabled = false;
-			if (_isUsingSkill && _isSelectingAffectCenter) {
+			if (_isUsingSkillOrStunt && _isSelectingAffectCenter) {
 				menuItemConfirmGrid.Enabled = true;
 			}
-			menuItemMove.Enabled = menuItemExtraMovePoint.Enabled = menuItemCreateAspect.Enabled = menuItemAttack.Enabled = menuItemSpecialAction.Enabled = menuItemRoundOver.Enabled = false;
+			menuItemMove.Enabled = menuItemExtraMovePoint.Enabled = menuItemCreateAspect.Enabled = menuItemAttack.Enabled = menuItemInteract.Enabled = menuItemRoundOver.Enabled = false;
 			if (!_isChecking) {
 				if (_movePathInfo != null) {
 					menuItemMove.Enabled = menuItemConfirmGrid.Enabled = true;
@@ -1238,10 +1262,10 @@ namespace TextyClient {
 					menuItemCreateAspect.Enabled = true;
 				} else if (_attackReady) {
 					menuItemAttack.Enabled = true;
-				} else if (_specialActionReady) {
-					menuItemSpecialAction.Enabled = true;
+				} else if (_interactReady) {
+					menuItemInteract.Enabled = true;
 				} else if (_canActing && sceneObject.id == _actingObjID && sceneObject.Actable) {
-					menuItemCreateAspect.Enabled = menuItemAttack.Enabled = menuItemSpecialAction.Enabled = menuItemRoundOver.Enabled = true;
+					menuItemCreateAspect.Enabled = menuItemAttack.Enabled = menuItemInteract.Enabled = menuItemRoundOver.Enabled = true;
 					if (sceneObject.Movable) menuItemMove.Enabled = menuItemExtraMovePoint.Enabled = true;
 				}
 			}
@@ -1313,7 +1337,7 @@ namespace TextyClient {
 		private void menuItemCreateAspect_Click(object sender, EventArgs e) {
 			if (_createAspectReady) {
 				_createAspectReady = false;
-				_isUsingSkill = false;
+				_isUsingSkillOrStunt = false;
 				menuItemCreateAspect.Text = "创造优势";
 				_selectionList.Clear();
 				_selectionList2.Clear();
@@ -1361,7 +1385,7 @@ namespace TextyClient {
 		private void menuItemAttack_Click(object sender, EventArgs e) {
 			if (_attackReady) {
 				_attackReady = false;
-				_isUsingSkill = false;
+				_isUsingSkillOrStunt = false;
 				menuItemAttack.Text = "攻击";
 				_selectionList.Clear();
 				_selectionList2.Clear();
@@ -1406,17 +1430,17 @@ namespace TextyClient {
 			}
 		}
 
-		private void menuItemSpecialAction_Click(object sender, EventArgs e) {
-			if (_specialActionReady) {
-				_specialActionReady = false;
-				_isUsingSkill = false;
-				menuItemSpecialAction.Text = "特殊行动";
+		private void menuItemInteract_Click(object sender, EventArgs e) {
+			if (_interactReady) {
+				_interactReady = false;
+				_isUsingSkillOrStunt = false;
+				menuItemInteract.Text = "其他动作";
 				_selectionList.Clear();
 				_selectionList2.Clear();
 				selectionTypeGroupPanel.Visible = false;
 			} else {
-				_specialActionReady = true;
-				menuItemSpecialAction.Text = "取消特殊行动";
+				_interactReady = true;
+				menuItemInteract.Text = "取消其他动作";
 				_selectionList.Clear();
 				_selectionList2.Clear();
 				selectionTypeGroupPanel.Visible = true;
@@ -1424,16 +1448,14 @@ namespace TextyClient {
 				stuntRbn.Checked = false;
 				selectionTypeLbl.Text = "技能选择";
 				selectionListBox.DataSource = _selectionList;
-				var request = new GetCharacterDataMessage();
-				request.characterID = _actingObjID;
-				request.dataType = GetCharacterDataMessage.DataType.STUNTS;
+				var request = new BattleSceneGetInitiativeUsableStuntListOnInteractMessage();
 				foreach (var skillType in Program.skillTypes) {
 					_selectionList.Add(skillType);
 				}
 				Program.connection.Request(request, result => {
-					var resp = result as CharacterStuntsDescriptionMessage;
+					var resp = result as BattleSceneObjectUsableStuntListOnInteractMessage;
 					if (resp != null) {
-						foreach (var stunt in resp.properties) {
+						foreach (var stunt in resp.stunts) {
 							_selectionList2.Add(new CharacterPropertyInfo() {
 								name = stunt.describable.name,
 								description = stunt.describable.description,
@@ -1461,7 +1483,7 @@ namespace TextyClient {
 				_selectedMoveDst = null;
 				menuItemMove.Text = "移动";
 			}
-			if (_isUsingSkill && _isSelectingAffectCenter) {
+			if (_isUsingSkillOrStunt && _isSelectingAffectCenter) {
 				if (_isSelectingTarget) {
 					_isSelectingTarget = false;
 					_targets.Clear();
@@ -1533,10 +1555,10 @@ namespace TextyClient {
 				message.aspectID = selectedAspect.propertyID;
 				message.reroll = dr == DialogResult.No;
 				Program.connection.SendMessage(message);
-			} else if (_canActing && (_createAspectReady || _attackReady || _specialActionReady)) {
-				if (_isUsingSkill && _isSelectingTarget && _isSelectingAffectCenter) {
-					if (_specialActionReady) {
-						var message = new BattleSceneActableObjectDoSpecialActionMessage();
+			} else if (_canActing && (_createAspectReady || _attackReady || _interactReady)) {
+				if (_isUsingSkillOrStunt && _isSelectingTarget && _isSelectingAffectCenter) {
+					if (_interactReady) {
+						var message = new BattleSceneActableObjectDoInteractMessage();
 						message.isStunt = stuntRbn.Checked;
 						message.dstCenter.row = _selectedAffectCenter.row;
 						message.dstCenter.col = _selectedAffectCenter.col;
@@ -1572,8 +1594,9 @@ namespace TextyClient {
 								_affectableAreas.Add(resp.centers[i], new List<GridPos>(resp.areas[i]));
 							}
 							_usingSkillOrStuntID = request.skillTypeOrStuntID;
-							_isUsingSkill = true;
+							_isUsingSkillOrStunt = true;
 							_isStunt = request.isStunt;
+							_isSelectingAffectCenter = false;
 						}
 					});
 				} else if (stuntRbn.Checked) {
@@ -1588,8 +1611,9 @@ namespace TextyClient {
 								_affectableAreas.Add(resp.centers[i], new List<GridPos>(resp.areas[i]));
 							}
 							_usingSkillOrStuntID = request.skillTypeOrStuntID;
-							_isUsingSkill = true;
+							_isUsingSkillOrStunt = true;
 							_isStunt = request.isStunt;
+							_isSelectingAffectCenter = false;
 						}
 					});
 				}
@@ -1617,6 +1641,7 @@ namespace TextyClient {
 				var req = new GetStuntTargetSelectableMessage();
 				if (_createAspectReady) req.action = CharacterAction.CREATE_ASPECT;
 				else if (_attackReady) req.action = CharacterAction.ATTACK;
+				else if (_interactReady) req.isInteract = true;
 				req.stuntID = _usingSkillOrStuntID;
 				req.targetID = selectedObject.id;
 				Program.connection.Request(req, result => {

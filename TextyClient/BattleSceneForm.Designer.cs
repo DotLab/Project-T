@@ -31,13 +31,13 @@
 			this.components = new System.ComponentModel.Container();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
 			this.gridObjectSelectionListBox = new System.Windows.Forms.ListBox();
-			this.battleScene = new TextyClient.GameScene();
 			this.battleSceneMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+			this.menuItemGeneralAction = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuItemMove = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuItemExtraMovePoint = new System.Windows.Forms.ToolStripMenuItem();
+			this.menuItemInteract = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuItemCreateAspect = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuItemAttack = new System.Windows.Forms.ToolStripMenuItem();
-			this.menuItemSpecialAction = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuItemRoundOver = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
 			this.menuItemConfirmGrid = new System.Windows.Forms.ToolStripMenuItem();
@@ -66,6 +66,7 @@
 			this.mouseGridPosLbl = new System.Windows.Forms.Label();
 			this.roundInfoListBox = new System.Windows.Forms.ListBox();
 			this.label2 = new System.Windows.Forms.Label();
+			this.battleScene = new TextyClient.GameScene();
 			this.groupBox1.SuspendLayout();
 			this.battleSceneMenuStrip.SuspendLayout();
 			this.groupBox2.SuspendLayout();
@@ -97,98 +98,88 @@
 			this.gridObjectSelectionListBox.Visible = false;
 			this.gridObjectSelectionListBox.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.gridObjectSelectionList_MouseDoubleClick);
 			// 
-			// battleScene
-			// 
-			this.battleScene.ContextMenuStrip = this.battleSceneMenuStrip;
-			this.battleScene.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.battleScene.Location = new System.Drawing.Point(3, 17);
-			this.battleScene.Name = "battleScene";
-			this.battleScene.Size = new System.Drawing.Size(799, 561);
-			this.battleScene.TabIndex = 6;
-			this.battleScene.UpdateInterval = 16;
-			this.battleScene.ViewerRectangleLeft = 0;
-			this.battleScene.ViewerRectangleLeftTop = new System.Drawing.Point(0, 0);
-			this.battleScene.ViewerRectangleTop = 0;
-			this.battleScene.CanvasDrawing += new System.EventHandler<TextyClient.CanvasDrawingEventArgs>(this.battleScene_CanvasDrawing);
-			this.battleScene.CanvasMouseDown += new System.EventHandler<System.Windows.Forms.MouseEventArgs>(this.battleScene_CanvasMouseDown);
-			this.battleScene.SizeChanged += new System.EventHandler(this.battleScene_SizeChanged);
-			this.battleScene.MouseClick += new System.Windows.Forms.MouseEventHandler(this.battleScene_MouseClick);
-			this.battleScene.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.battleScene_MouseDoubleClick);
-			// 
 			// battleSceneMenuStrip
 			// 
 			this.battleSceneMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.menuItemMove,
-            this.menuItemExtraMovePoint,
+            this.menuItemGeneralAction,
             this.menuItemCreateAspect,
             this.menuItemAttack,
-            this.menuItemSpecialAction,
             this.menuItemRoundOver,
             this.toolStripSeparator1,
             this.menuItemConfirmGrid,
             this.menuItemViewData});
 			this.battleSceneMenuStrip.Name = "battleSceneMenuStrip";
-			this.battleSceneMenuStrip.Size = new System.Drawing.Size(149, 186);
+			this.battleSceneMenuStrip.Size = new System.Drawing.Size(181, 164);
 			this.battleSceneMenuStrip.Opening += new System.ComponentModel.CancelEventHandler(this.battleSceneMenuStrip_Opening);
+			// 
+			// menuItemGeneralAction
+			// 
+			this.menuItemGeneralAction.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.menuItemMove,
+            this.menuItemExtraMovePoint,
+            this.menuItemInteract});
+			this.menuItemGeneralAction.Name = "menuItemGeneralAction";
+			this.menuItemGeneralAction.Size = new System.Drawing.Size(180, 22);
+			this.menuItemGeneralAction.Text = "一般动作";
 			// 
 			// menuItemMove
 			// 
 			this.menuItemMove.Name = "menuItemMove";
-			this.menuItemMove.Size = new System.Drawing.Size(148, 22);
+			this.menuItemMove.Size = new System.Drawing.Size(180, 22);
 			this.menuItemMove.Text = "移动";
 			this.menuItemMove.Click += new System.EventHandler(this.menuItemMove_Click);
 			// 
 			// menuItemExtraMovePoint
 			// 
 			this.menuItemExtraMovePoint.Name = "menuItemExtraMovePoint";
-			this.menuItemExtraMovePoint.Size = new System.Drawing.Size(148, 22);
-			this.menuItemExtraMovePoint.Text = "额外移动点数";
+			this.menuItemExtraMovePoint.Size = new System.Drawing.Size(180, 22);
+			this.menuItemExtraMovePoint.Text = "获得额外移动点";
 			this.menuItemExtraMovePoint.Click += new System.EventHandler(this.menuItemExtraMovePoint_Click);
+			// 
+			// menuItemInteract
+			// 
+			this.menuItemInteract.Name = "menuItemInteract";
+			this.menuItemInteract.Size = new System.Drawing.Size(180, 22);
+			this.menuItemInteract.Text = "其他动作";
+			this.menuItemInteract.Click += new System.EventHandler(this.menuItemInteract_Click);
 			// 
 			// menuItemCreateAspect
 			// 
 			this.menuItemCreateAspect.Name = "menuItemCreateAspect";
-			this.menuItemCreateAspect.Size = new System.Drawing.Size(148, 22);
+			this.menuItemCreateAspect.Size = new System.Drawing.Size(180, 22);
 			this.menuItemCreateAspect.Text = "创造优势";
 			this.menuItemCreateAspect.Click += new System.EventHandler(this.menuItemCreateAspect_Click);
 			// 
 			// menuItemAttack
 			// 
 			this.menuItemAttack.Name = "menuItemAttack";
-			this.menuItemAttack.Size = new System.Drawing.Size(148, 22);
+			this.menuItemAttack.Size = new System.Drawing.Size(180, 22);
 			this.menuItemAttack.Text = "攻击";
 			this.menuItemAttack.Click += new System.EventHandler(this.menuItemAttack_Click);
-			// 
-			// menuItemSpecialAction
-			// 
-			this.menuItemSpecialAction.Name = "menuItemSpecialAction";
-			this.menuItemSpecialAction.Size = new System.Drawing.Size(148, 22);
-			this.menuItemSpecialAction.Text = "特殊行动";
-			this.menuItemSpecialAction.Click += new System.EventHandler(this.menuItemSpecialAction_Click);
 			// 
 			// menuItemRoundOver
 			// 
 			this.menuItemRoundOver.Name = "menuItemRoundOver";
-			this.menuItemRoundOver.Size = new System.Drawing.Size(148, 22);
+			this.menuItemRoundOver.Size = new System.Drawing.Size(180, 22);
 			this.menuItemRoundOver.Text = "回合结束";
 			this.menuItemRoundOver.Click += new System.EventHandler(this.menuItemRoundOver_Click);
 			// 
 			// toolStripSeparator1
 			// 
 			this.toolStripSeparator1.Name = "toolStripSeparator1";
-			this.toolStripSeparator1.Size = new System.Drawing.Size(145, 6);
+			this.toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
 			// 
 			// menuItemConfirmGrid
 			// 
 			this.menuItemConfirmGrid.Name = "menuItemConfirmGrid";
-			this.menuItemConfirmGrid.Size = new System.Drawing.Size(148, 22);
+			this.menuItemConfirmGrid.Size = new System.Drawing.Size(180, 22);
 			this.menuItemConfirmGrid.Text = "确认位置";
 			this.menuItemConfirmGrid.Click += new System.EventHandler(this.menuItemConfirmGrid_Click);
 			// 
 			// menuItemViewData
 			// 
 			this.menuItemViewData.Name = "menuItemViewData";
-			this.menuItemViewData.Size = new System.Drawing.Size(148, 22);
+			this.menuItemViewData.Size = new System.Drawing.Size(180, 22);
 			this.menuItemViewData.Text = "查看角色信息";
 			this.menuItemViewData.Click += new System.EventHandler(this.menuItemViewData_Click);
 			// 
@@ -434,6 +425,24 @@
 			this.label2.TabIndex = 6;
 			this.label2.Text = "行动顺序";
 			// 
+			// battleScene
+			// 
+			this.battleScene.ContextMenuStrip = this.battleSceneMenuStrip;
+			this.battleScene.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.battleScene.Location = new System.Drawing.Point(3, 17);
+			this.battleScene.Name = "battleScene";
+			this.battleScene.Size = new System.Drawing.Size(799, 561);
+			this.battleScene.TabIndex = 6;
+			this.battleScene.UpdateInterval = 16;
+			this.battleScene.ViewerRectangleLeft = 0;
+			this.battleScene.ViewerRectangleLeftTop = new System.Drawing.Point(0, 0);
+			this.battleScene.ViewerRectangleTop = 0;
+			this.battleScene.CanvasDrawing += new System.EventHandler<TextyClient.CanvasDrawingEventArgs>(this.battleScene_CanvasDrawing);
+			this.battleScene.CanvasMouseDown += new System.EventHandler<System.Windows.Forms.MouseEventArgs>(this.battleScene_CanvasMouseDown);
+			this.battleScene.SizeChanged += new System.EventHandler(this.battleScene_SizeChanged);
+			this.battleScene.MouseClick += new System.Windows.Forms.MouseEventHandler(this.battleScene_MouseClick);
+			this.battleScene.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.battleScene_MouseDoubleClick);
+			// 
 			// BattleSceneForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -472,9 +481,7 @@
         private System.Windows.Forms.ListBox gridObjectSelectionListBox;
         private System.Windows.Forms.Label selectedGridObjectLbl;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.ToolStripMenuItem menuItemMove;
         private System.Windows.Forms.ToolStripMenuItem menuItemCreateAspect;
-        private System.Windows.Forms.ToolStripMenuItem menuItemSpecialAction;
         private System.Windows.Forms.ToolStripMenuItem menuItemConfirmGrid;
         private System.Windows.Forms.ToolStripMenuItem menuItemRoundOver;
         private System.Windows.Forms.Button confirmSelectionBtn;
@@ -486,7 +493,6 @@
         private System.Windows.Forms.RadioButton skillRbn;
         private System.Windows.Forms.ToolStripMenuItem menuItemAttack;
         private System.Windows.Forms.Button selectAspectOverBtn;
-        private System.Windows.Forms.ToolStripMenuItem menuItemExtraMovePoint;
         private System.Windows.Forms.Button confirmTargetBtn;
 		private System.Windows.Forms.Panel roundInfoPanel;
 		private System.Windows.Forms.Label roundInfoLbl;
@@ -495,5 +501,9 @@
 		private System.Windows.Forms.Label label4;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.Label targetCountLbl;
+		private System.Windows.Forms.ToolStripMenuItem menuItemGeneralAction;
+		private System.Windows.Forms.ToolStripMenuItem menuItemMove;
+		private System.Windows.Forms.ToolStripMenuItem menuItemExtraMovePoint;
+		private System.Windows.Forms.ToolStripMenuItem menuItemInteract;
 	}
 }

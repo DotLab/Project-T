@@ -1,4 +1,4 @@
-﻿using GameLib.Utilities;
+﻿using GameUtil;
 using System;
 using System.Collections.Generic;
 using System.Text;

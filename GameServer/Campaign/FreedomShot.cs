@@ -1,9 +1,9 @@
-﻿using GameLib.Container.StoryComponent;
-using GameLib.Core;
-using GameLib.Utilities;
+﻿using GameServer.Container.StoryComponent;
+using GameServer.Core;
+using GameUtil;
 using System.Collections.Generic;
 
-namespace GameLib.Campaign {
+namespace GameServer.Campaign {
 	public sealed class FreedomShot : Shot {
 		private readonly IdentifiedObjList<ISceneObject> _objList;
 		private readonly IdentifiedObjList<ISceneObject> _objInSceneList;

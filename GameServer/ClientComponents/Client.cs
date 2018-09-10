@@ -1,11 +1,11 @@
-﻿using GameLib.Campaign;
-using GameLib.Core;
-using GameLib.Utilities.Network;
-using GameLib.Utilities.Network.ClientMessages;
-using GameLib.Utilities.Network.ServerMessages;
+﻿using GameServer.Campaign;
+using GameServer.Core;
+using GameUtil.Network;
+using GameUtil.Network.ClientMessages;
+using GameUtil.Network.ServerMessages;
 using System;
 
-namespace GameLib.ClientComponents {
+namespace GameServer.ClientComponents {
 	public abstract class ClientComponent : IMessageReceiver {
 		protected readonly Connection _connection;
 		protected readonly User _owner;
@@ -42,9 +42,11 @@ namespace GameLib.ClientComponents {
 				}
 			} else if (message.MessageType == UserDeterminResultMessage.MESSAGE_TYPE) {
 				var msg = (UserDeterminResultMessage)message;
-				if (_determinCallback != null) _determinCallback(msg.result);
+				Action<int> callback = null;
+				if (_determinCallback != null) callback = _determinCallback;
 				_determinCallback = null;
 				_isDetermining = false;
+				if (callback != null) callback(msg.result);
 			}
 		}
 		
@@ -129,11 +131,13 @@ namespace GameLib.ClientComponents {
 		public override void MessageReceived(Message message) {
 			base.MessageReceived(message);
 			var msg = message as DMCheckResultMessage;
-			if (msg != null && _resultCallback != null) {
-				_resultCallback(msg.result);
+			Action<bool> callback = null;
+			if (msg != null) {
+				if (_resultCallback != null) callback = _resultCallback;
+				_resultCallback = null;
+				_isChecking = false;
 			}
-			_resultCallback = null;
-			_isChecking = false;
+			if (callback != null) callback(msg.result);
 		}
 
 		public DMClient(Connection connection, DM owner) :
@@ -141,7 +145,7 @@ namespace GameLib.ClientComponents {
 			_connection.AddMessageReceiver(DMCheckResultMessage.MESSAGE_TYPE, this);
 		}
 
-		public void RequestCheck(User invoker, string text, Action<bool> result) {
+		public void RequestDMCheck(User invoker, string text, Action<bool> result) {
 			if (_isChecking) {
 				result(false);
 				return;

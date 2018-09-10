@@ -1,17 +1,17 @@
-﻿using GameLib.CharacterSystem;
-using GameLib.Container;
-using GameLib.Container.BattleComponent;
-using GameLib.Core;
-using GameLib.Core.DataSystem;
-using GameLib.Utilities;
-using GameLib.Utilities.Network;
-using GameLib.Utilities.Network.ClientMessages;
-using GameLib.Utilities.Network.ServerMessages;
-using GameLib.Utilities.Network.Streamable;
+﻿using GameServer.CharacterSystem;
+using GameServer.Container;
+using GameServer.Container.BattleComponent;
+using GameServer.Core;
+using GameServer.Core.DataSystem;
+using GameUtil;
+using GameUtil.Network;
+using GameUtil.Network.ClientMessages;
+using GameUtil.Network.ServerMessages;
+using GameUtil.Network.Streamable;
 using System;
 using System.Collections.Generic;
 
-namespace GameLib.ClientComponents {
+namespace GameServer.ClientComponents {
 	public class BattleScene : ClientComponent, IRequestHandler {
 		protected bool _canOperate = false;
 		protected bool _skipSelectAspect = false;
@@ -73,7 +73,7 @@ namespace GameLib.ClientComponents {
 								if (container.CurrentActable.CharacterRef.Stunts != null) {
 									foreach (var stunt in container.CurrentActable.CharacterRef.Stunts) {
 										if (container.CurrentActable.CanUseStuntInAction(stunt, reqMsg.action)
-											&& container.CurrentActable.IsActionPointEnough(stunt.SkillProperty)) {
+											&& container.CurrentActable.IsActionPointEnough(stunt.BattleMapProperty)) {
 											candoList.Add(stunt);
 										}
 									}
@@ -87,9 +87,9 @@ namespace GameLib.ClientComponents {
 								var resp = new BattleSceneObjectUsableSkillListMessage();
 								var candoList = new List<SkillType>();
 								foreach (var skillType in SkillType.SkillTypes) {
-									var skillProperty = container.CurrentActable.CharacterRef.GetSkillMapProperty(skillType.Value);
+									var battleMapProperty = container.CurrentActable.CharacterRef.GetSkill(skillType.Value).BattleMapProperty;
 									if (container.CurrentActable.CanUseSkillInAction(skillType.Value, reqMsg.action)
-										&& container.CurrentActable.IsActionPointEnough(skillProperty)) {
+										&& container.CurrentActable.IsActionPointEnough(battleMapProperty)) {
 										candoList.Add(skillType.Value);
 									}
 								}
@@ -99,6 +99,25 @@ namespace GameLib.ClientComponents {
 								}
 								return resp;
 							}
+						}
+					case BattleSceneGetInitiativeUsableStuntListOnInteractMessage.MESSAGE_TYPE: {
+							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) break;
+							var reqMsg = (BattleSceneGetInitiativeUsableStuntListOnInteractMessage)request;
+							var resp = new BattleSceneObjectUsableStuntListOnInteractMessage();
+							var candoList = new List<Stunt>();
+							if (container.CurrentActable.CharacterRef.Stunts != null) {
+								foreach (var stunt in container.CurrentActable.CharacterRef.Stunts) {
+									if (container.CurrentActable.CanUseStuntOnInteract(stunt)
+										&& container.CurrentActable.IsActionPointEnough(stunt.BattleMapProperty)) {
+										candoList.Add(stunt);
+									}
+								}
+							}
+							resp.stunts = new CharacterPropertyDescription[candoList.Count];
+							for (int i = 0; i < candoList.Count; ++i) {
+								resp.stunts[i] = StreamableFactory.CreateCharacterPropertyDescription(candoList[i]);
+							}
+							return resp;
 						}
 					case BattleSceneGetActionAffectableAreasMessage.MESSAGE_TYPE: {
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) break;
@@ -133,11 +152,10 @@ namespace GameLib.ClientComponents {
 							var resp = new BattleSceneActionTargetCountMessage();
 							if (reqMsg.isStunt) {
 								var stunt = container.CurrentActable.CharacterRef.FindStuntByID(reqMsg.skillTypeOrStuntID);
-								resp.count = stunt.SkillProperty.targetCount;
+								resp.count = stunt.BattleMapProperty.targetMaxCount;
 							} else {
 								var skillType = SkillType.SkillTypes[reqMsg.skillTypeOrStuntID];
-								var skillProperty = container.CurrentActable.CharacterRef.GetSkillMapProperty(skillType);
-								resp.count = skillProperty.targetCount;
+								resp.count = container.CurrentActable.CharacterRef.GetSkill(skillType).BattleMapProperty.targetMaxCount;
 							}
 							return resp;
 						}
@@ -148,7 +166,7 @@ namespace GameLib.ClientComponents {
 							var stunt = container.CurrentActable.CharacterRef.FindStuntByID(reqMsg.stuntID);
 							if (target != null && stunt != null) {
 								var resp = new StuntTargetSelectableMessage();
-								resp.result = container.CurrentActable.CanUseStuntOnTarget(target, stunt, reqMsg.action);
+								resp.result = container.CurrentActable.CanUseStuntOnTarget(target, stunt, reqMsg.isInteract, reqMsg.action);
 								return resp;
 							} else break;
 						}
@@ -240,10 +258,30 @@ namespace GameLib.ClientComponents {
 							}
 						}
 						break;
-					case BattleSceneActableObjectDoSpecialActionMessage.MESSAGE_TYPE: {
+					case BattleSceneActableObjectDoInteractMessage.MESSAGE_TYPE: {
 							if (container.IsChecking) return;
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) return;
-
+							var msg = (BattleSceneActableObjectDoInteractMessage)message;
+							if (msg.isStunt) {
+								Stunt selectedStunt = container.CurrentActable.CharacterRef.FindStuntByID(msg.skillTypeOrStuntID);
+								List<SceneObject> targets = new List<SceneObject>();
+								foreach (var msgTarget in msg.targets) {
+									var target = container.FindObject(msgTarget);
+									if (target != null)
+										targets.Add(target);
+								}
+								if (selectedStunt != null)
+									container.CurrentActable.UseStuntOnInteract(selectedStunt, msg.dstCenter, targets);
+							} else {
+								var skillType = SkillType.SkillTypes[msg.skillTypeOrStuntID];
+								List<SceneObject> targets = new List<SceneObject>();
+								foreach (var msgTarget in msg.targets) {
+									var target = container.FindObject(msgTarget);
+									if (target != null)
+										targets.Add(target);
+								}
+								container.CurrentActable.UseSkillOnInteract(skillType, msg.dstCenter, targets);
+							}
 						}
 						break;
 					case BattleSceneSetSkipSelectAspectMessage.MESSAGE_TYPE: {
@@ -300,6 +338,7 @@ namespace GameLib.ClientComponents {
 						}
 						break;
 					case BattleSceneTurnOverMessage.MESSAGE_TYPE: {
+							if (container.IsChecking) return;
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) return;
 							container.CurrentTurnOver();
 						}
@@ -320,6 +359,7 @@ namespace GameLib.ClientComponents {
 			connection.SetRequestHandler(BattleSceneGetMovePathInfoMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetCanExtraMoveMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetInitiativeUsableSkillOrStuntListMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(BattleSceneGetInitiativeUsableStuntListOnInteractMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetActionAffectableAreasMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetActionTargetCountMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetStuntTargetSelectableMessage.MESSAGE_TYPE, this);
@@ -328,7 +368,7 @@ namespace GameLib.ClientComponents {
 			connection.AddMessageReceiver(BattleSceneActableObjectMoveMessage.MESSAGE_TYPE, this);
 			connection.AddMessageReceiver(BattleSceneTakeExtraMovePointMessage.MESSAGE_TYPE, this);
 			connection.AddMessageReceiver(BattleSceneActableObjectDoActionMessage.MESSAGE_TYPE, this);
-			connection.AddMessageReceiver(BattleSceneActableObjectDoSpecialActionMessage.MESSAGE_TYPE, this);
+			connection.AddMessageReceiver(BattleSceneActableObjectDoInteractMessage.MESSAGE_TYPE, this);
 			connection.AddMessageReceiver(BattleSceneSetSkipSelectAspectMessage.MESSAGE_TYPE, this);
 			connection.AddMessageReceiver(CheckerSkillSelectedMessage.MESSAGE_TYPE, this);
 			connection.AddMessageReceiver(CheckerStuntSelectedMessage.MESSAGE_TYPE, this);
@@ -379,7 +419,7 @@ namespace GameLib.ClientComponents {
 
 		public void RemoveGridObject(GridObject gridObject) {
 			var message = new BattleSceneRemoveGridObjectMessage();
-			message.gridObj = StreamableFactory.CreateBattleSceneObj(gridObject);
+			message.gridObj = StreamableFactory.CreateBattleSceneObject(gridObject);
 			_connection.SendMessage(message);
 		}
 
@@ -392,7 +432,7 @@ namespace GameLib.ClientComponents {
 
 		public void RemoveLadderObject(LadderObject ladderObject) {
 			var message = new BattleSceneRemoveLadderObjectMessage();
-			message.ladderObj = StreamableFactory.CreateBattleSceneObj(ladderObject);
+			message.ladderObj = StreamableFactory.CreateBattleSceneObject(ladderObject);
 			_connection.SendMessage(message);
 		}
 
@@ -409,7 +449,7 @@ namespace GameLib.ClientComponents {
 			var message = new BattleSceneSetActingOrderMessage();
 			message.objOrder = new BattleSceneObject[actableObjects.Count];
 			for (int i = 0; i < actableObjects.Count; ++i) {
-				message.objOrder[i] = StreamableFactory.CreateBattleSceneObj(actableObjects[i]);
+				message.objOrder[i] = StreamableFactory.CreateBattleSceneObject(actableObjects[i]);
 			}
 			_connection.SendMessage(message);
 		}
@@ -419,14 +459,14 @@ namespace GameLib.ClientComponents {
 			_canOperate = actable.CharacterRef.Controller == _owner;
 			var message = new BattleSceneChangeTurnMessage();
 			message.canOperate = _canOperate;
-			message.gridObj = StreamableFactory.CreateBattleSceneObj(actable);
+			message.gridObj = StreamableFactory.CreateBattleSceneObject(actable);
 			_connection.SendMessage(message);
 		}
 
 		public void DisplayActableObjectMove(ActableGridObject actable, BattleMapDirection direction, bool stairway) {
 			if (!_isUsing) return;
 			var message = new BattleSceneDisplayActableObjectMovingMessage();
-			message.obj = StreamableFactory.CreateBattleSceneObj(actable);
+			message.obj = StreamableFactory.CreateBattleSceneObject(actable);
 			message.direction = direction;
 			message.stairway = stairway;
 			_connection.SendMessage(message);
@@ -435,7 +475,7 @@ namespace GameLib.ClientComponents {
 		public void DisplayTakeExtraMovePoint(ActableGridObject actable, SkillType usingSkillType) {
 			if (!_isUsing) return;
 			var message = new BattleSceneDisplayTakeExtraMovePointMessage();
-			message.obj = StreamableFactory.CreateBattleSceneObj(actable);
+			message.obj = StreamableFactory.CreateBattleSceneObject(actable);
 			message.moveSkillType = StreamableFactory.CreateSkillTypeDescription(usingSkillType);
 			message.newMovePoint = actable.MovePoint;
 			_connection.SendMessage(message);
@@ -444,8 +484,8 @@ namespace GameLib.ClientComponents {
 		public void NotifyPassiveSelectSkillOrStunt(CharacterAction action, SceneObject passive, SceneObject initiative, SkillType initiativeSkillType) {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_SKILL) return;
 			var message = new BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage();
-			message.passiveObj = StreamableFactory.CreateBattleSceneObj(passive);
-			message.initiativeObj = StreamableFactory.CreateBattleSceneObj(initiative);
+			message.passiveObj = StreamableFactory.CreateBattleSceneObject(passive);
+			message.initiativeObj = StreamableFactory.CreateBattleSceneObject(initiative);
 			message.initiativeSkillType = StreamableFactory.CreateSkillTypeDescription(initiativeSkillType);
 			message.action = action;
 			_connection.SendMessage(message);
@@ -471,6 +511,9 @@ namespace GameLib.ClientComponents {
 
 		public void NotifyInitiativeSelectAspect() {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.INITIATIVE_ASPECT) return;
+			if (BattleSceneContainer.Instance.Initiative.CharacterRef.Controller == _owner) {
+				
+			}
 			var message = new BattleSceneCheckerNotifySelectAspectMessage();
 			message.isInitiative = true;
 			_connection.SendMessage(message);
@@ -546,7 +589,7 @@ namespace GameLib.ClientComponents {
 		public void UpdateSumPoint(SceneObject sceneObject, int point) {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new BattleSceneCheckerUpdateSumPointMessage();
-			message.obj = StreamableFactory.CreateBattleSceneObj(sceneObject);
+			message.obj = StreamableFactory.CreateBattleSceneObject(sceneObject);
 			message.point = point;
 			_connection.SendMessage(message);
 		}
@@ -554,17 +597,25 @@ namespace GameLib.ClientComponents {
 		public void DisplaySkillReady(SceneObject sceneObject, SkillType skillType, bool bigone) {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new BattleSceneCheckerDisplaySkillReadyMessage();
-			message.obj = StreamableFactory.CreateBattleSceneObj(sceneObject);
+			message.obj = StreamableFactory.CreateBattleSceneObject(sceneObject);
 			message.skillTypeID = skillType.ID;
 			message.bigone = bigone;
+			_connection.SendMessage(message);
+		}
+
+		public void DisplayUsingStunt(SceneObject sceneObject, Stunt stunt) {
+			if (!_isUsing) return;
+			var message = new BattleSceneDisplayUsingStuntMessage();
+			message.obj = StreamableFactory.CreateBattleSceneObject(sceneObject);
+			message.stunt = StreamableFactory.CreateCharacterPropertyDescription(stunt);
 			_connection.SendMessage(message);
 		}
 
 		public void DisplayUsingAspect(SceneObject userSceneObject, SceneObject ownerSceneObject, Aspect aspect) {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new BattleSceneCheckerDisplayUsingAspectMessage();
-			message.userObj = StreamableFactory.CreateBattleSceneObj(userSceneObject);
-			message.aspectOwnerObj = StreamableFactory.CreateBattleSceneObj(ownerSceneObject);
+			message.userObj = StreamableFactory.CreateBattleSceneObject(userSceneObject);
+			message.aspectOwnerObj = StreamableFactory.CreateBattleSceneObject(ownerSceneObject);
 			message.aspect = StreamableFactory.CreateCharacterPropertyDescription(aspect);
 			_connection.SendMessage(message);
 		}
@@ -590,7 +641,7 @@ namespace GameLib.ClientComponents {
 		public void UpdateActionPoint(ActableGridObject actable) {
 			if (!_isUsing) return;
 			var message = new BattleSceneUpdateActionPointMessage();
-			message.obj = StreamableFactory.CreateBattleSceneObj(actable);
+			message.obj = StreamableFactory.CreateBattleSceneObject(actable);
 			message.newActionPoint = actable.ActionPoint;
 			_connection.SendMessage(message);
 		}
@@ -598,7 +649,7 @@ namespace GameLib.ClientComponents {
 		public void UpdateMovePoint(ActableGridObject actable) {
 			if (!_isUsing) return;
 			var message = new BattleSceneUpdateMovePointMessage();
-			message.obj = StreamableFactory.CreateBattleSceneObj(actable);
+			message.obj = StreamableFactory.CreateBattleSceneObject(actable);
 			message.newMovePoint = actable.MovePoint;
 			_connection.SendMessage(message);
 		}
@@ -606,7 +657,7 @@ namespace GameLib.ClientComponents {
 		public void StartCheck(SceneObject initiative, SkillType initiativeSkillType, CharacterAction action, IEnumerable<SceneObject> targets) {
 			if (!_isUsing) return;
 			var message = new BattleSceneStartCheckMessage();
-			message.initiativeObj = StreamableFactory.CreateBattleSceneObj(initiative);
+			message.initiativeObj = StreamableFactory.CreateBattleSceneObject(initiative);
 			message.initiativeSkillType = StreamableFactory.CreateSkillTypeDescription(initiativeSkillType);
 			message.action = action;
 			int count = 0;
@@ -614,7 +665,7 @@ namespace GameLib.ClientComponents {
 			message.targets = new BattleSceneObject[count];
 			int i = 0;
 			foreach (var target in targets) {
-				message.targets[i++] = StreamableFactory.CreateBattleSceneObj(target);
+				message.targets[i++] = StreamableFactory.CreateBattleSceneObject(target);
 			}
 			_connection.SendMessage(message);
 		}
@@ -630,7 +681,7 @@ namespace GameLib.ClientComponents {
 		public void CheckNextone(SceneObject nextone) {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new BattleSceneCheckNextoneMessage();
-			message.nextone = StreamableFactory.CreateBattleSceneObj(nextone);
+			message.nextone = StreamableFactory.CreateBattleSceneObject(nextone);
 			_connection.SendMessage(message);
 		}
 

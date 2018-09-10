@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace GameLib.Persistent {
+namespace GameServer.Persistent {
 
 	public sealed class CampaignFile { // persistent
 		public struct AddChara {

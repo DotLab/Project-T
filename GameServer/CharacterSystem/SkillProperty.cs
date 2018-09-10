@@ -1,8 +1,8 @@
-﻿using GameLib.Utilities;
+﻿using GameUtil;
 using System;
 using System.Collections.Generic;
 
-namespace GameLib.CharacterSystem {
+namespace GameServer.CharacterSystem {
 	public struct SkillSituationLimit {
 		public bool canAttack;
 		public bool damageMental;
@@ -12,19 +12,19 @@ namespace GameLib.CharacterSystem {
 	public struct StuntSituationLimit {
 		public CharacterAction usableSituation;
 		public CharacterAction resistableSituation;
-		public bool canUseInSpecialAction;
+		public bool canUseOnInteract;
 	}
 
-	public struct BattleMapSkillProperty {
-		public static readonly BattleMapSkillProperty INIT = new BattleMapSkillProperty {
+	public struct SkillBattleMapProperty {
+		public static readonly SkillBattleMapProperty INIT = new SkillBattleMapProperty() {
 			actionPointCost = 1,
-			useRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
+			useRange = new Range() { lowOpen = false, low = 0, highOpen = false, high = 0 },
 			affectRange = new Range { lowOpen = false, low = 0, highOpen = false, high = 0 },
 			islinearUse = false,
 			islinearAffect = false,
 			linearAffectDirection = BattleMapDirection.POSITIVE_ROW | BattleMapDirection.POSITIVE_COL | BattleMapDirection.NEGATIVE_ROW | BattleMapDirection.NEGATIVE_COL,
 			linearUseDirection = BattleMapDirection.POSITIVE_ROW | BattleMapDirection.POSITIVE_COL | BattleMapDirection.NEGATIVE_ROW | BattleMapDirection.NEGATIVE_COL,
-			targetCount = 1
+			targetMaxCount = 1
 		};
 
 		public int actionPointCost;
@@ -34,6 +34,6 @@ namespace GameLib.CharacterSystem {
 		public Range affectRange;
 		public bool islinearAffect;
 		public BattleMapDirection linearAffectDirection;
-		public int targetCount;
+		public int targetMaxCount;
 	}
 }

@@ -1,10 +1,10 @@
-﻿using GameLib.Core;
-using GameLib.Core.ScriptSystem;
-using GameLib.EventSystem.Events;
+﻿using GameServer.Core;
+using GameServer.Core.ScriptSystem;
+using GameServer.EventSystem.Events;
 using System;
 using System.Collections.Generic;
 
-namespace GameLib.EventSystem {
+namespace GameServer.EventSystem {
 	public sealed class GameEventBus : IJSContextProvider {
 		#region Javascript API class
 		private sealed class JSAPI : IJSAPI<GameEventBus> {
@@ -75,39 +75,54 @@ namespace GameLib.EventSystem {
 
 		private Queue<Trigger> _waitForAdding;
 		private Queue<Trigger> _waitForRemoving;
+		private Queue<Event> _waitForPublishing;
 		private bool _publishing = false;
+		private bool _publishingCachedEvents = false;
 
 		private GameEventBus() {
 			_triggerPools = new Dictionary<string, List<Trigger>>();
 			_apiObj = new JSAPI(this);
 			_waitForAdding = new Queue<Trigger>();
 			_waitForRemoving = new Queue<Trigger>();
+			_waitForPublishing = new Queue<Event>();
 		}
 
 		public void Publish(Event e) {
-			_publishing = true;
-			string[] eventIDs = e.NotifyList;
-			foreach (string id in eventIDs) {
-				if (_triggerPools.TryGetValue(id, out List<Trigger> triggers)) {
-					foreach (Trigger trigger in triggers) {
-						if (trigger.Active) {
-							e.TransmitContext();
-							trigger.Notify();
-							e.RetrieveContext();
-							if (e.Swallowed) return;
+			if (_publishing) {
+				_waitForPublishing.Enqueue(e);
+			} else {
+				_publishing = true;
+				string[] eventIDs = e.NotifyList;
+				foreach (string id in eventIDs) {
+					if (_triggerPools.TryGetValue(id, out List<Trigger> triggers)) {
+						foreach (Trigger trigger in triggers) {
+							if (trigger.Active) {
+								e.TransmitContext();
+								trigger.Notify();
+								e.RetrieveContext();
+								if (e.Swallowed) return;
+							}
 						}
 					}
 				}
+				_publishing = false;
+				foreach (var trigger in _waitForAdding) {
+					this.Register(trigger);
+				}
+				_waitForAdding.Clear();
+				foreach (var trigger in _waitForRemoving) {
+					this.Unregister(trigger);
+				}
+				_waitForRemoving.Clear();
+				if (!_publishingCachedEvents) {
+					_publishingCachedEvents = true;
+					while (_waitForPublishing.Count > 0) {
+						var e1 = _waitForPublishing.Dequeue();
+						this.Publish(e1);
+					}
+					_publishingCachedEvents = false;
+				}
 			}
-			_publishing = false;
-			foreach (Trigger trigger in _waitForAdding) {
-				this.Register(trigger);
-			}
-			_waitForAdding.Clear();
-			foreach (Trigger trigger in _waitForRemoving) {
-				this.Unregister(trigger);
-			}
-			_waitForRemoving.Clear();
 		}
 
 		public void Register(Trigger trigger) {

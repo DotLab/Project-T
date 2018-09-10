@@ -1,0 +1,17 @@
+(function () {
+	var stunt = $__this__.getBelongStunt();
+	if (stunt != null) {
+		var me = stunt.getBelong();
+		if (me == $__eventArgs__.passive.getCharacterRef()
+			&& $__eventArgs__.passiveCheckResult == 3) {
+			$__eventArgs__.passive.displayUsingStunt(stunt);
+			var enemy = $__eventArgs__.initiative;
+			var boost = $.characterManager.createAspect();
+			boost.setPersistenceType(2);
+			boost.setName("яётн");
+			boost.setBenefiter(me);
+			boost.setBenefitTimes(1);
+			enemy.getCharacterRef().getAspectList().add(boost);
+		}
+	}
+})();

@@ -1,9 +1,9 @@
-﻿using GameLib.Core.ScriptSystem;
+﻿using GameServer.Core.ScriptSystem;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace GameLib.Core {
+namespace GameServer.Core {
 	public interface IAttachable<T> : IJSContextProvider where T : class, IJSContextProvider {
 		T Belong { get; }
 		void SetBelong(T belong);
@@ -95,9 +95,13 @@ namespace GameLib.Core {
 				}
 			}
 
-			public void forEach(Action<TItem> action) {
+			public void forEach(Action<IJSAPI<TItem>> action) {
 				try {
-					_outer.ForEach(action);
+					var action_origin = new Action<TItem>(target => {
+						var item_api = (IJSAPI<TItem>)target.GetContext();
+						action(item_api);
+					});
+					_outer.ForEach(action_origin);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 				}
