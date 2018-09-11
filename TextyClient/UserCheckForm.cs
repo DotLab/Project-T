@@ -11,6 +11,8 @@ using System.Windows.Forms;
 
 namespace TextyClient {
 	public partial class UserCheckForm : Form {
+		public int ReturnValue { get; set; }
+
 		public UserCheckForm() {
 			InitializeComponent();
 		}
@@ -21,19 +23,12 @@ namespace TextyClient {
 
 		private void YesBtn_Click(object sender, EventArgs e) {
 			if (int.TryParse(selectionTbx.Text, out int result)) {
-				SendResult(result);
+				this.ReturnValue = result;
+				this.DialogResult = DialogResult.OK;
+				this.Close();
+			} else {
+				MessageBox.Show("请输入数字", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
-		}
-		
-		private void SendResult(int result) {
-			var message = new UserDeterminResultMessage();
-			message.result = result;
-			Program.connection.SendMessage(message);
-			this.Visible = false;
-		}
-
-		private void CheckForm_FormClosing(object sender, FormClosingEventArgs e) {
-			e.Cancel = true;
 		}
 	}
 }

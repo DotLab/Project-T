@@ -106,7 +106,6 @@ namespace GameServer.CharacterSystem {
 
 		private Character _belong = null;
 		private readonly Character _item;
-		private bool _isTool;
 		private bool _isLongRangeWeapon;
 		private bool _isVehicle;
 		private readonly ExtraPropertyList<PassiveEffect> _passiveEffects;
@@ -126,9 +125,8 @@ namespace GameServer.CharacterSystem {
 		public string Description { get => _item.Description; set => _item.Description = value; }
 		public Character Belong => _belong;
 		public Character Item => _item;
-		public bool IsTool { get => _isTool; set { _isTool = value; if (!value) _isLongRangeWeapon = _isVehicle = false; } }
-		public bool IsLongRangeWeapon { get => _isLongRangeWeapon; set { _isLongRangeWeapon = value; if (value) _isTool = true; } }
-		public bool IsVehicle { get => _isVehicle; set { _isVehicle = value; if (value) _isTool = true; } }
+		public bool IsLongRangeWeapon { get => _isLongRangeWeapon; set => _isLongRangeWeapon = value; }
+		public bool IsVehicle { get => _isVehicle; set => _isVehicle = value; }
 		public ExtraPropertyList<PassiveEffect> Effects => _passiveEffects;
 
 		public void SetBelong(Character belong) {

@@ -277,6 +277,7 @@ namespace TextyClient {
 						foreach (var obj in orderMessage.objOrder) {
 							var gridObject = GetGridObject(obj.row, obj.col, obj.id, out bool highland);
 							var objWithAP = new ActableObjWithAP { actable = gridObject };
+							if (_actingObjID == gridObject.id) objWithAP.currentActing = true;
 							_actingOrder.Add(objWithAP);
 						}
 					}
@@ -1448,10 +1449,20 @@ namespace TextyClient {
 				stuntRbn.Checked = false;
 				selectionTypeLbl.Text = "技能选择";
 				selectionListBox.DataSource = _selectionList;
-				var request = new BattleSceneGetInitiativeUsableStuntListOnInteractMessage();
-				foreach (var skillType in Program.skillTypes) {
-					_selectionList.Add(skillType);
-				}
+				var request = new BattleSceneGetInitiativeUsableSkillOrStuntListOnInteractMessage();
+				request.stunt = false;
+				Program.connection.Request(request, result => {
+					var resp = result as BattleSceneObjectUsableSkillListOnInteractMessage;
+					if (resp != null) {
+						foreach (var skillType in resp.skillTypes) {
+							_selectionList.Add(new CharacterPropertyInfo() {
+								name = skillType.name,
+								propertyID = skillType.id
+							});
+						}
+					}
+				});
+				request.stunt = true;
 				Program.connection.Request(request, result => {
 					var resp = result as BattleSceneObjectUsableStuntListOnInteractMessage;
 					if (resp != null) {
@@ -1553,6 +1564,7 @@ namespace TextyClient {
 				var message = new CheckerAspectSelectedMessage();
 				message.characterID = selectedAspect.ownerID;
 				message.aspectID = selectedAspect.propertyID;
+				message.isConsequence = selectedAspect.extraMessage == "伤痕";
 				message.reroll = dr == DialogResult.No;
 				Program.connection.SendMessage(message);
 			} else if (_canActing && (_createAspectReady || _attackReady || _interactReady)) {

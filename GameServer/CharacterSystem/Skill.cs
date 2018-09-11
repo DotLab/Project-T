@@ -219,23 +219,21 @@ namespace GameServer.CharacterSystem {
 		public static Dictionary<string, SkillType> SkillTypes => skillTypes;
 
 		static SkillType() {
-			Athletics._situationLimit.canDefend = true;
-			Athletics._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 1, highOpen = false };
-			Fight._situationLimit.canAttack = true;
-			Fight._situationLimit.canDefend = true;
+			Athletics._situationLimit.resistableSituation |= CharacterAction.ATTACK;
+			Fight._situationLimit.usableSituation |= CharacterAction.ATTACK;
+			Fight._situationLimit.resistableSituation |= CharacterAction.ATTACK;
 			Fight._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 1, highOpen = false };
-			Physique._situationLimit.canDefend = true;
+			Physique._situationLimit.resistableSituation |= CharacterAction.ATTACK;
 			Physique._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 1, highOpen = false };
-			Provoke._situationLimit.canAttack = true;
+			Provoke._situationLimit.usableSituation |= CharacterAction.ATTACK;
 			Provoke._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 8, highOpen = false };
-			Will._situationLimit.canDefend = true;
+			Will._situationLimit.resistableSituation |= CharacterAction.ATTACK;
 			Will._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 1, highOpen = false };
 			Lore._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 8, highOpen = false };
 			Burglary._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 1, highOpen = false };
 			Contacts._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 8, highOpen = false };
 			Crafts._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 1, highOpen = false };
 			Deceive._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 8, highOpen = false };
-			Drive._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 1, highOpen = false };
 			Empathy._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 8, highOpen = false };
 			Investigate._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 1, highOpen = false };
 			Notice._battleMapProperty.useRange = new Range() { low = 0, lowOpen = false, high = 8, highOpen = false };
@@ -269,7 +267,7 @@ namespace GameServer.CharacterSystem {
 		private readonly string _name;
 		private int _level = 0;
 		private SkillBattleMapProperty _battleMapProperty = SkillBattleMapProperty.INIT;
-		private SkillSituationLimit _situationLimit = new SkillSituationLimit() { canAttack = false, canDefend = false, damageMental = false };
+		private SkillSituationLimit _situationLimit = SkillSituationLimit.INIT;
 
 		public string ID => _id;
 		public string Name => _name;
@@ -294,15 +292,7 @@ namespace GameServer.CharacterSystem {
 		public override int GetHashCode() {
 			return _id.GetHashCode();
 		}
-
-		public static bool operator ==(SkillType a, SkillType b) {
-			return a.Equals(b);
-		}
-
-		public static bool operator !=(SkillType a, SkillType b) {
-			return !(a == b);
-		}
-
+		
 		public IJSContext GetContext() {
 			return _apiObj;
 		}

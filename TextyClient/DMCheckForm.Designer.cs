@@ -57,19 +57,19 @@
 			this.NoBtn.UseVisualStyleBackColor = true;
 			this.NoBtn.Click += new System.EventHandler(this.NoBtn_Click);
 			// 
-			// CheckForm
+			// DMCheckForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(495, 127);
+			this.ControlBox = false;
 			this.Controls.Add(this.NoBtn);
 			this.Controls.Add(this.YesBtn);
 			this.Controls.Add(this.messageLbl);
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
-			this.Name = "CheckForm";
+			this.Name = "DMCheckForm";
 			this.Text = "DM确认";
-			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.CheckForm_FormClosing);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 

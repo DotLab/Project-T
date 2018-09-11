@@ -78,17 +78,20 @@ namespace GameUtil.Network.ClientMessages {
 
 		public string characterID;
 		public string aspectID;
+		public bool isConsequence;
 		public bool reroll;
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(characterID);
 			stream.WriteString(aspectID);
+			stream.WriteBoolean(isConsequence);
 			stream.WriteBoolean(reroll);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			characterID = stream.ReadString();
 			aspectID = stream.ReadString();
+			isConsequence = stream.ReadBoolean();
 			reroll = stream.ReadBoolean();
 		}
 	}
@@ -561,12 +564,19 @@ namespace GameUtil.Network.ClientMessages {
 		}
 	}
 	
-	public sealed class BattleSceneGetInitiativeUsableStuntListOnInteractMessage : Message {
+	public sealed class BattleSceneGetInitiativeUsableSkillOrStuntListOnInteractMessage : Message {
 		public const int MESSAGE_TYPE = 35;
 		public override int MessageType => MESSAGE_TYPE;
 
-		public override void ReadFrom(IDataInputStream stream) { }
-		public override void WriteTo(IDataOutputStream stream) { }
+		public bool stunt;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			stunt = stream.ReadBoolean();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteBoolean(stunt);
+		}
 	}
 
 }

@@ -1,5 +1,5 @@
 (function () {
-	var thisEffect = $__this__;
+	var completeFunc = $__this__.getCompleteFunc();
 	var situation = $__this__.getSituation();
 	if (situation.isInStoryScene()) {
 	
@@ -20,11 +20,11 @@
 					$.campaignManager.askDM(thisCharacter, "允许 " + thisCharacter.getName() + " 使用 " + stunt.getName() + " 将目标摔死吗？", function(dmResult) {
 						if (dmResult) {
 							for (var i = 0; i < targets.length; ++i) {
-								targets[i].markDead();
+								targets[i].markDestroyed();
 							}
-							thisEffect.notifyResult(true, "");
+							completeFunc(true, "");
 						} else {
-							thisEffect.notifyResult(false, "DM拒绝你摔死目标");
+							completeFunc(false, "DM拒绝你摔死目标");
 						}
 					});
 				} else {
@@ -32,8 +32,7 @@
 					fight.setName("战斗（运动）");
 					fight.setLevel(athletics.getLevel());
 					fight.setBattleMapProperty(athletics.getBattleMapProperty());
-					thisEffect.notifyResult(true, "");
-					me.useSkill(fightSkillType, action, targets, false, true, 0, null);
+					me.useSkillWithStuntComplete(fightSkillType, action, targets, completeFunc);
 				}
 			});
 		}

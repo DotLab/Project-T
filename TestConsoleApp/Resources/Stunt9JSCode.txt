@@ -1,5 +1,5 @@
 (function () {
-	var thisEffect = $__this__;
+	var completeFunc = $__this__.getCompleteFunc();
 	var stunt = $__this__.getBelongStunt();
 	var situation = $__this__.getSituation();
 	if (situation.isInStoryScene()) {
@@ -10,8 +10,7 @@
 			var targets = situation.getTargetsBS();
 			var action = situation.getAction();
 			var skillType = $.characterManager.getSkillType("Shoot");
-			thisEffect.notifyResult(true, "");
-			me.useSkill(skillType, action, targets, false, true, 2, null);
+			me.useSkillWithStuntComplete(skillType, action, targets, completeFunc, false, true, 2, null);
 		}
 	}
 })();

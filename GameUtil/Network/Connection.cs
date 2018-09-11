@@ -175,6 +175,8 @@ namespace GameUtil.Network {
 					return new BattleSceneObjectUsableStuntListOnInteractMessage();
 				case BattleSceneDisplayUsingStuntMessage.MESSAGE_TYPE:
 					return new BattleSceneDisplayUsingStuntMessage();
+				case BattleSceneObjectUsableSkillListOnInteractMessage.MESSAGE_TYPE:
+					return new BattleSceneObjectUsableSkillListOnInteractMessage();
 
 				// client message
 				case ClientInitMessage.MESSAGE_TYPE:
@@ -245,8 +247,8 @@ namespace GameUtil.Network {
 					return new BattleSceneGetActionTargetCountMessage();
 				case GetDirectResistStuntsMessage.MESSAGE_TYPE:
 					return new GetDirectResistStuntsMessage();
-				case BattleSceneGetInitiativeUsableStuntListOnInteractMessage.MESSAGE_TYPE:
-					return new BattleSceneGetInitiativeUsableStuntListOnInteractMessage();
+				case BattleSceneGetInitiativeUsableSkillOrStuntListOnInteractMessage.MESSAGE_TYPE:
+					return new BattleSceneGetInitiativeUsableSkillOrStuntListOnInteractMessage();
 
 				default:
 					throw new NotImplementedException();

@@ -303,11 +303,12 @@ namespace GameServer.CharacterSystem {
 				}
 			}
 
-			public void notifyResult(bool success, string message) {
+			public Action<bool, string> getCompleteFunc() {
 				try {
-					_outer.NotifyResult(success, message);
+					return _outer._resultCallback;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
+					return null;
 				}
 			}
 
@@ -329,7 +330,6 @@ namespace GameServer.CharacterSystem {
 		private readonly Command _command;
 		private Situation _situation = null;
 		private Action<bool, string> _resultCallback = null;
-		private bool _performing = false;
 
 		public Stunt Belong => _belong;
 		public Situation Situation { get => _situation; set => _situation = value; }
@@ -344,23 +344,12 @@ namespace GameServer.CharacterSystem {
 		}
 
 		public void TakeEffect(Action<bool, string> resultCallback) {
-			if (!_performing) {
-				_resultCallback = resultCallback;
-				_performing = true;
-				JSEngineManager.Engine.SynchronizeContext("$__this__", this);
-				_command.DoAction();
-				JSEngineManager.Engine.RemoveContext("$__this__");
-			}
+			_resultCallback = resultCallback;
+			JSEngineManager.Engine.SynchronizeContext("$__this__", this);
+			_command.DoAction();
+			JSEngineManager.Engine.RemoveContext("$__this__");
 		}
-
-		private void NotifyResult(bool success, string message) {
-			if (_performing && _resultCallback != null) {
-				_resultCallback(success, message);
-				_resultCallback = null;
-				_performing = false;
-			} else throw new InvalidOperationException("Stunt effect is not performing");
-		}
-
+		
 		public IJSContext GetContext() {
 			return _apiObj;
 		}

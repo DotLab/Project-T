@@ -1,5 +1,6 @@
 (function () {
 	var situation = $__this__.getSituation();
+	var completeFunc = $__this__.getCompleteFunc();
 	if (situation.isInStoryScene()) {
 	
 	} else {
@@ -18,7 +19,7 @@
 			physique.setName("体格（意志）");
 			physique.setLevel(will.getLevel());
 			physique.setBattleMapProperty(will.getBattleMapProperty());
-			$.battleScene.currentPassiveUseSkill(physiqueSkillType, false, 0, null);
+			$.battleScene.currentPassiveUseSkillWithStuntComplete(physiqueSkillType, completeFunc);
 		}
 	}
 })();

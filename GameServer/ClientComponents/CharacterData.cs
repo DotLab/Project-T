@@ -227,8 +227,6 @@ namespace GameServer.ClientComponents {
 			var message = new ExtraDataMessage();
 			message.characterID = extra.Belong == null ? "" : extra.Belong.ID;
 			message.extraID = extra.ID;
-			message.itemID = extra.Item.ID;
-			message.isTool = extra.IsTool;
 			message.isLongRangeWeapon = extra.IsLongRangeWeapon;
 			message.isVehicle = extra.IsVehicle;
 			return message;

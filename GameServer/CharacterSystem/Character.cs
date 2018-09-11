@@ -308,7 +308,7 @@ namespace GameServer.CharacterSystem {
 		private Extra _belong = null;
 		private readonly CharacterView _view;
 		private Player _controlPlayer = null;
-		private bool _dead = false;
+		private bool _destroyed = false;
 
 		protected readonly Dictionary<SkillType, Skill> _skills;
 		private readonly CharacterPropertyList<Aspect> _aspects;
@@ -326,7 +326,7 @@ namespace GameServer.CharacterSystem {
 		public CharacterView View => _view;
 		public Player ControlPlayer { get => _controlPlayer; set => _controlPlayer = value; }
 		public User Controller => _controlPlayer ?? (User)Game.DM;
-		public bool Dead => _dead;
+		public bool Destroyed => _destroyed;
 		
 		public CharacterPropertyList<Aspect> Aspects => _aspects;
 		public int PhysicsStress { get => _physicsStress; set => _physicsStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Physics stress is less than 0."); }
@@ -376,7 +376,8 @@ namespace GameServer.CharacterSystem {
 					foreach (var extra in this.Extras) {
 						if (extra.IsLongRangeWeapon) {
 							var limit = ret.SituationLimit;
-							limit.canAttack = true;
+							limit.usableSituation |= CharacterAction.ATTACK | CharacterAction.CREATE_ASPECT | CharacterAction.HINDER;
+							limit.canUseOnInteract = true;
 							ret.SituationLimit = limit;
 							hasLongRangeWeapon = true;
 							break;
@@ -385,7 +386,32 @@ namespace GameServer.CharacterSystem {
 				}
 				if (!hasLongRangeWeapon) {
 					var limit = ret.SituationLimit;
-					limit.canAttack = false;
+					limit.usableSituation = 0;
+					limit.resistableSituation = 0;
+					limit.canUseOnInteract = false;
+					ret.SituationLimit = limit;
+				}
+			}
+			if (skillType == SkillType.Drive) {
+				bool hasVehicle = false;
+				if (this.Extras != null) {
+					foreach (var extra in this.Extras) {
+						if (extra.IsVehicle) {
+							var limit = ret.SituationLimit;
+							limit.usableSituation |= CharacterAction.CREATE_ASPECT | CharacterAction.HINDER;
+							limit.resistableSituation |= CharacterAction.CREATE_ASPECT | CharacterAction.HINDER;
+							limit.canUseOnInteract = true;
+							ret.SituationLimit = limit;
+							hasVehicle = true;
+							break;
+						}
+					}
+				}
+				if (!hasVehicle) {
+					var limit = ret.SituationLimit;
+					limit.usableSituation = 0;
+					limit.resistableSituation = 0;
+					limit.canUseOnInteract = false;
 					ret.SituationLimit = limit;
 				}
 			}
@@ -407,6 +433,8 @@ namespace GameServer.CharacterSystem {
 					if (val <= 2 && count_level_2 < 2) {
 						var slight = new Consequence();
 						slight.Name = whoCause.Name + " " + causeMsg;
+						slight.Benefiter = whoCause;
+						slight.BenefitTimes = 1;
 						slight.CounteractLevel = 2;
 						slight.ActualDamage = val;
 						slight.MentalDamage = mental;
@@ -414,6 +442,8 @@ namespace GameServer.CharacterSystem {
 					} else if (val <= 4 && count_level_4 < 1) {
 						var medium = new Consequence();
 						medium.Name = whoCause.Name + " " + causeMsg;
+						medium.Benefiter = whoCause;
+						medium.BenefitTimes = 1;
 						medium.CounteractLevel = 4;
 						medium.ActualDamage = val;
 						medium.MentalDamage = mental;
@@ -421,6 +451,8 @@ namespace GameServer.CharacterSystem {
 					} else if (val <= 6 && count_level_6 < 1) {
 						var serious = new Consequence();
 						serious.Name = whoCause.Name + " " + causeMsg;
+						serious.Benefiter = whoCause;
+						serious.BenefitTimes = 1;
 						serious.PersistenceType = PersistenceType.Fixed;
 						serious.CounteractLevel = 6;
 						serious.ActualDamage = val;
@@ -538,8 +570,8 @@ namespace GameServer.CharacterSystem {
 			}
 		}
 
-		public void MarkDead() {
-			_dead = true;
+		public void MarkDestroyed() {
+			_destroyed = true;
 		}
 
 		public Aspect FindAspectByID(string id) {

@@ -156,7 +156,6 @@ namespace GameUtil.Network.Streamable {
 		public bool obstacle;
 		public bool highland;
 		public int stagnate;
-		public bool terrain;
 		public BattleMapDirection direction;
 		public bool actable;
 		public ActableObjectData actableObjData;
@@ -166,7 +165,6 @@ namespace GameUtil.Network.Streamable {
 			obstacle = stream.ReadBoolean();
 			highland = stream.ReadBoolean();
 			stagnate = stream.ReadInt32();
-			terrain = stream.ReadBoolean();
 			direction = (BattleMapDirection)stream.ReadByte();
 			actable = stream.ReadBoolean();
 			if (actable) {
@@ -179,7 +177,6 @@ namespace GameUtil.Network.Streamable {
 			stream.WriteBoolean(obstacle);
 			stream.WriteBoolean(highland);
 			stream.WriteInt32(stagnate);
-			stream.WriteBoolean(terrain);
 			stream.WriteByte((byte)direction);
 			stream.WriteBoolean(actable);
 			if (actable) {

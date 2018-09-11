@@ -19,9 +19,6 @@ namespace GameServer.ClientComponents {
 	}
 
 	public class Client : ClientComponent {
-		protected bool _isDetermining = false;
-		protected Action<int> _determinCallback = null;
-
 		protected readonly CharacterData _characterData;
 		protected readonly StoryScene _storyScene;
 		protected readonly BattleScene _battleScene;
@@ -40,20 +37,12 @@ namespace GameServer.ClientComponents {
 					ShowScene(ContainerType.STORY);
 
 				}
-			} else if (message.MessageType == UserDeterminResultMessage.MESSAGE_TYPE) {
-				var msg = (UserDeterminResultMessage)message;
-				Action<int> callback = null;
-				if (_determinCallback != null) callback = _determinCallback;
-				_determinCallback = null;
-				_isDetermining = false;
-				if (callback != null) callback(msg.result);
 			}
 		}
 		
 		protected Client(Connection connection, User owner, StoryScene storyScene, BattleScene battleScene) :
 			base(connection, owner) {
 			_connection.AddMessageReceiver(ClientInitMessage.MESSAGE_TYPE, this);
-			_connection.AddMessageReceiver(UserDeterminResultMessage.MESSAGE_TYPE, this);
 			_characterData = new CharacterData(connection, owner);
 			_storyScene = storyScene;
 			_battleScene = battleScene;
@@ -98,16 +87,18 @@ namespace GameServer.ClientComponents {
 			_connection.SendMessage(message);
 		}
 
-		public void RequestDetermin(string text, Action<int> result) {
-			if (_isDetermining) {
-				result(0);
-				return;
-			}
-			_determinCallback = result;
-			_isDetermining = true;
-			var message = new UserDeterminMessage();
-			message.text = text;
-			_connection.SendMessage(message);
+		public void RequestDetermin(string text, Action<int> callback) {
+			if (callback == null) throw new ArgumentNullException(nameof(callback));
+			var request = new UserDeterminMessage();
+			request.text = text ?? throw new ArgumentNullException(nameof(text));
+			_connection.Request(request, resp => {
+				var result = resp as UserDeterminResultMessage;
+				if (result != null) {
+					callback(result.result);
+				} else {
+					callback(0);
+				}
+			});
 		}
 	}
 
@@ -122,43 +113,31 @@ namespace GameServer.ClientComponents {
 	}
 
 	public sealed class DMClient : Client {
-		private bool _isChecking = false;
-		private Action<bool> _resultCallback = null;
-
 		public DMStoryScene DMStoryScene => (DMStoryScene)_storyScene;
 		public DMBattleScene DMBattleScene => (DMBattleScene)_battleScene;
-
-		public override void MessageReceived(Message message) {
-			base.MessageReceived(message);
-			var msg = message as DMCheckResultMessage;
-			Action<bool> callback = null;
-			if (msg != null) {
-				if (_resultCallback != null) callback = _resultCallback;
-				_resultCallback = null;
-				_isChecking = false;
-			}
-			if (callback != null) callback(msg.result);
-		}
-
+		
 		public DMClient(Connection connection, DM owner) :
 			base(connection, owner, new DMStoryScene(connection, owner), new DMBattleScene(connection, owner)) {
-			_connection.AddMessageReceiver(DMCheckResultMessage.MESSAGE_TYPE, this);
+
 		}
 
-		public void RequestDMCheck(User invoker, string text, Action<bool> result) {
-			if (_isChecking) {
-				result(false);
-				return;
-			}
+		public void RequestDMCheck(User invoker, string text, Action<bool> callback) {
+			if (invoker == null) throw new ArgumentNullException(nameof(invoker));
+			if (callback == null) throw new ArgumentNullException(nameof(callback));
 			if (invoker.IsDM) {
-				result(true);
+				callback(true);
 				return;
 			}
-			_resultCallback = result;
-			_isChecking = true;
-			var message = new DMCheckMessage();
-			message.text = text;
-			_connection.SendMessage(message);
+			var request = new DMCheckMessage();
+			request.text = text ?? throw new ArgumentNullException(nameof(text));
+			_connection.Request(request, resp => {
+				var result = resp as DMCheckResultMessage;
+				if (result != null) {
+					callback(result.result);
+				} else {
+					callback(false);
+				}
+			});
 		}
 	}
 

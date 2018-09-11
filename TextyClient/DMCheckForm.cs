@@ -20,23 +20,13 @@ namespace TextyClient {
 		}
 
 		private void YesBtn_Click(object sender, EventArgs e) {
-			SendResult(false);
+			this.DialogResult = DialogResult.Yes;
+			this.Close();
 		}
 
 		private void NoBtn_Click(object sender, EventArgs e) {
-			SendResult(true);
-		}
-
-		private void SendResult(bool reject) {
-			var message = new DMCheckResultMessage();
-			message.result = !reject;
-			Program.connection.SendMessage(message);
-			this.Visible = false;
-		}
-
-		private void CheckForm_FormClosing(object sender, FormClosingEventArgs e) {
-			SendResult(true);
-			e.Cancel = true;
+			this.DialogResult = DialogResult.No;
+			this.Close();
 		}
 	}
 }

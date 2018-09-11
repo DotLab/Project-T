@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace GameUtil {
+	[Flags]
 	public enum BattleMapDirection {
 		POSITIVE_ROW = 0b0001,
 		POSITIVE_COL = 0b0010,
@@ -13,6 +14,7 @@ namespace GameUtil {
 		NEGATIVE_COL = 0b1000
 	}
 
+	[Flags]
 	public enum CharacterAction {
 		CREATE_ASPECT = 0b001,
 		ATTACK = 0b010,

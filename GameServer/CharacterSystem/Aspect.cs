@@ -234,8 +234,14 @@ namespace GameServer.CharacterSystem {
 		private int _actualDamage = 0;
 		private bool _mentalDamage = false;
 
-		public int CounteractLevel { get => _counteractLevel; set => _counteractLevel = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Counteract level is less than 0."); }
-		public int ActualDamage { get => _actualDamage; set => _actualDamage = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Actual damage is less than 0."); }
+		public int CounteractLevel {
+			get => _counteractLevel;
+			set {
+				_counteractLevel = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Counteract level is less than 0.");
+				if (_actualDamage > _counteractLevel) _actualDamage = _counteractLevel;
+			}
+		}
+		public int ActualDamage { get => _actualDamage; set => _actualDamage = (value >= 0 && value <= _counteractLevel) ? value : throw new ArgumentOutOfRangeException(nameof(value)); }
 		public bool MentalDamage { get => _mentalDamage; set => _mentalDamage = value; }
 
 		protected override string BaseID => "Consequence";

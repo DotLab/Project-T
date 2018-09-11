@@ -47,7 +47,6 @@ namespace GameServer.ClientComponents {
 			ret.direction = gridObject.Direction;
 			ret.obstacle = gridObject.Obstacle;
 			ret.stagnate = gridObject.Stagnate;
-			ret.terrain = gridObject.Terrain;
 			bool actable = ret.actable = gridObject is ActableGridObject;
 			if (actable) {
 				var actableObject = (ActableGridObject)gridObject;

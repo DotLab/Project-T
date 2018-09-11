@@ -283,16 +283,20 @@ namespace TestConsoleApp {
 			stelaeView.battle = "石柱";
 			for (int i = 0; i < 8; ++i) {
 				for (int j = 0; j < 8; ++j) {
-					var ground = new GridObject(CharacterManager.Instance.CreateTemporaryCharacter(CharacterManager.DataLevel.Temporary, groundView), true);
+					var ground = new GridObject(CharacterManager.Instance.CreateTemporaryCharacter(CharacterManager.DataLevel.Temporary, groundView));
+					ground.CharacterRef.PhysicsInvincible = true;
+					ground.CharacterRef.MentalInvincible = true;
 					ground.Stagnate = 1;
 					battleScene.PushGridObject(i, j, false, ground);
 				}
 			}
-			var stelae1 = new GridObject(CharacterManager.Instance.CreateTemporaryCharacter(CharacterManager.DataLevel.Temporary, stelaeView), false);
-			var stelae2 = new GridObject(CharacterManager.Instance.CreateTemporaryCharacter(CharacterManager.DataLevel.Temporary, stelaeView), false);
-			var stelae3 = new GridObject(CharacterManager.Instance.CreateTemporaryCharacter(CharacterManager.DataLevel.Temporary, stelaeView), false);
-			var stelae4 = new GridObject(CharacterManager.Instance.CreateTemporaryCharacter(CharacterManager.DataLevel.Temporary, stelaeView), false);
+			var stelae1 = new GridObject(CharacterManager.Instance.CreateTemporaryCharacter(CharacterManager.DataLevel.Temporary, stelaeView));
+			var stelae2 = new GridObject(CharacterManager.Instance.CreateTemporaryCharacter(CharacterManager.DataLevel.Temporary, stelaeView));
+			var stelae3 = new GridObject(CharacterManager.Instance.CreateTemporaryCharacter(CharacterManager.DataLevel.Temporary, stelaeView));
+			var stelae4 = new GridObject(CharacterManager.Instance.CreateTemporaryCharacter(CharacterManager.DataLevel.Temporary, stelaeView));
 			stelae1.Obstacle = stelae2.Obstacle = stelae3.Obstacle = stelae4.Obstacle = true;
+			stelae1.CharacterRef.MentalInvincible = stelae2.CharacterRef.MentalInvincible = stelae3.CharacterRef.MentalInvincible = stelae4.CharacterRef.MentalInvincible = true;
+			stelae1.CharacterRef.PhysicsStressMax = stelae2.CharacterRef.PhysicsStressMax = stelae3.CharacterRef.PhysicsStressMax = stelae4.CharacterRef.PhysicsStressMax = 12;
 			battleScene.PushGridObject(1, 1, false, stelae1);
 			battleScene.PushGridObject(6, 1, false, stelae2);
 			battleScene.PushGridObject(1, 6, false, stelae3);

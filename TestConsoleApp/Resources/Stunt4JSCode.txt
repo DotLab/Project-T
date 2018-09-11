@@ -1,4 +1,5 @@
 (function () {
+	var completeFunc = $__this__.getCompleteFunc();
 	var situation = $__this__.getSituation();
 	if (situation.isInStoryScene()) {
 		
@@ -31,6 +32,9 @@
 					}
 					me.setFatePoint(me.getFatePoint() - 1);
 					stunt.setCustomData(true);
+					completeFunc(true, "");
+				} else {
+					completeFunc(false, "Ñ¡Ôñ´íÎó");
 				}
 			});
 		}

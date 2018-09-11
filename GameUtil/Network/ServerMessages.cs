@@ -491,16 +491,12 @@ namespace GameUtil.Network.ServerMessages {
 
 		public string characterID;
 		public string extraID;
-		public string itemID;
-		public bool isTool;
 		public bool isLongRangeWeapon;
 		public bool isVehicle;
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(characterID);
 			stream.WriteString(extraID);
-			stream.WriteString(itemID);
-			stream.WriteBoolean(isTool);
 			stream.WriteBoolean(isLongRangeWeapon);
 			stream.WriteBoolean(isVehicle);
 		}
@@ -508,8 +504,6 @@ namespace GameUtil.Network.ServerMessages {
 		public override void ReadFrom(IDataInputStream stream) {
 			characterID = stream.ReadString();
 			extraID = stream.ReadString();
-			itemID = stream.ReadString();
-			isTool = stream.ReadBoolean();
 			isLongRangeWeapon = stream.ReadBoolean();
 			isVehicle = stream.ReadBoolean();
 		}
@@ -1518,4 +1512,27 @@ namespace GameUtil.Network.ServerMessages {
 			stunt.ReadFrom(stream);
 		}
 	}
+
+	public sealed class BattleSceneObjectUsableSkillListOnInteractMessage : Message {
+		public const int MESSAGE_TYPE = -82;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public SkillTypeDescription[] skillTypes;
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteInt32(skillTypes.Length);
+			foreach (var skillType in skillTypes) {
+				skillType.WriteTo(stream);
+			}
+		}
+
+		public override void ReadFrom(IDataInputStream stream) {
+			int length = stream.ReadInt32();
+			skillTypes = new SkillTypeDescription[length];
+			for (int i = 0; i < length; ++i) {
+				skillTypes[i].ReadFrom(stream);
+			}
+		}
+	}
+
 }

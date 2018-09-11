@@ -100,24 +100,41 @@ namespace GameServer.ClientComponents {
 								return resp;
 							}
 						}
-					case BattleSceneGetInitiativeUsableStuntListOnInteractMessage.MESSAGE_TYPE: {
+					case BattleSceneGetInitiativeUsableSkillOrStuntListOnInteractMessage.MESSAGE_TYPE: {
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) break;
-							var reqMsg = (BattleSceneGetInitiativeUsableStuntListOnInteractMessage)request;
-							var resp = new BattleSceneObjectUsableStuntListOnInteractMessage();
-							var candoList = new List<Stunt>();
-							if (container.CurrentActable.CharacterRef.Stunts != null) {
-								foreach (var stunt in container.CurrentActable.CharacterRef.Stunts) {
-									if (container.CurrentActable.CanUseStuntOnInteract(stunt)
-										&& container.CurrentActable.IsActionPointEnough(stunt.BattleMapProperty)) {
-										candoList.Add(stunt);
+							var reqMsg = (BattleSceneGetInitiativeUsableSkillOrStuntListOnInteractMessage)request;
+							if (reqMsg.stunt) {
+								var resp = new BattleSceneObjectUsableStuntListOnInteractMessage();
+								var candoList = new List<Stunt>();
+								if (container.CurrentActable.CharacterRef.Stunts != null) {
+									foreach (var stunt in container.CurrentActable.CharacterRef.Stunts) {
+										if (container.CurrentActable.CanUseStuntOnInteract(stunt)
+											&& container.CurrentActable.IsActionPointEnough(stunt.BattleMapProperty)) {
+											candoList.Add(stunt);
+										}
 									}
 								}
+								resp.stunts = new CharacterPropertyDescription[candoList.Count];
+								for (int i = 0; i < candoList.Count; ++i) {
+									resp.stunts[i] = StreamableFactory.CreateCharacterPropertyDescription(candoList[i]);
+								}
+								return resp;
+							} else {
+								var resp = new BattleSceneObjectUsableSkillListOnInteractMessage();
+								var candoList = new List<SkillType>();
+								foreach (var skillType in SkillType.SkillTypes) {
+									var battleMapProperty = container.CurrentActable.CharacterRef.GetSkill(skillType.Value).BattleMapProperty;
+									if (container.CurrentActable.CanUseSkillOnInteract(skillType.Value)
+										&& container.CurrentActable.IsActionPointEnough(battleMapProperty)) {
+										candoList.Add(skillType.Value);
+									}
+								}
+								resp.skillTypes = new SkillTypeDescription[candoList.Count];
+								for (int i = 0; i < candoList.Count; ++i) {
+									resp.skillTypes[i] = StreamableFactory.CreateSkillTypeDescription(candoList[i]);
+								}
+								return resp;
 							}
-							resp.stunts = new CharacterPropertyDescription[candoList.Count];
-							for (int i = 0; i < candoList.Count; ++i) {
-								resp.stunts[i] = StreamableFactory.CreateCharacterPropertyDescription(candoList[i]);
-							}
-							return resp;
 						}
 					case BattleSceneGetActionAffectableAreasMessage.MESSAGE_TYPE: {
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) break;
@@ -209,7 +226,6 @@ namespace GameServer.ClientComponents {
 				return null;
 			} catch (Exception e) {
 				Logger.WriteLine(e.Message);
-				throw e;
 				return null;
 			}
 		}
@@ -315,12 +331,22 @@ namespace GameServer.ClientComponents {
 							if (SkillChecker.Instance.State == SkillChecker.CheckerState.INITIATIVE_ASPECT
 								&& container.Initiative.CharacterRef.Controller == _owner) {
 								var gridObj = container.FindObject(msg.characterID);
-								var aspect = gridObj.CharacterRef.FindAspectByID(msg.aspectID);
+								Aspect aspect;
+								if (msg.isConsequence) {
+									aspect = gridObj.CharacterRef.FindConsequenceByID(msg.aspectID);
+								} else {
+									aspect = gridObj.CharacterRef.FindAspectByID(msg.aspectID);
+								}
 								container.InitiativeSelectAspect(aspect, msg.reroll);
 							} else if (SkillChecker.Instance.State == SkillChecker.CheckerState.PASSIVE_ASPECT
 								  && container.CurrentPassive.CharacterRef.Controller == _owner) {
 								var gridObj = container.FindObject(msg.characterID);
-								var aspect = gridObj.CharacterRef.FindAspectByID(msg.aspectID);
+								Aspect aspect;
+								if (msg.isConsequence) {
+									aspect = gridObj.CharacterRef.FindConsequenceByID(msg.aspectID);
+								} else {
+									aspect = gridObj.CharacterRef.FindAspectByID(msg.aspectID);
+								}
 								container.CurrentPassiveSelectAspect(aspect, msg.reroll);
 							}
 						}
@@ -348,7 +374,6 @@ namespace GameServer.ClientComponents {
 				}
 			} catch (Exception e) {
 				Logger.WriteLine(e.Message);
-				throw e;
 			}
 		}
 
@@ -359,7 +384,7 @@ namespace GameServer.ClientComponents {
 			connection.SetRequestHandler(BattleSceneGetMovePathInfoMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetCanExtraMoveMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetInitiativeUsableSkillOrStuntListMessage.MESSAGE_TYPE, this);
-			connection.SetRequestHandler(BattleSceneGetInitiativeUsableStuntListOnInteractMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(BattleSceneGetInitiativeUsableSkillOrStuntListOnInteractMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetActionAffectableAreasMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(BattleSceneGetActionTargetCountMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetStuntTargetSelectableMessage.MESSAGE_TYPE, this);
@@ -482,7 +507,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public void NotifyPassiveSelectSkillOrStunt(CharacterAction action, SceneObject passive, SceneObject initiative, SkillType initiativeSkillType) {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_SKILL) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage();
 			message.passiveObj = StreamableFactory.CreateBattleSceneObject(passive);
 			message.initiativeObj = StreamableFactory.CreateBattleSceneObject(initiative);
@@ -492,7 +517,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public void NotifyPassiveSelectSkillOrStuntComplete() {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_SKILL) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new CheckerSelectSkillOrStuntCompleteMessage();
 			message.isInitiative = false;
 			message.failure = false;
@@ -501,7 +526,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public void NotifyPassiveSelectSkillOrStuntFailure(string msg) {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_SKILL) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new CheckerSelectSkillOrStuntCompleteMessage();
 			message.isInitiative = false;
 			message.failure = true;
@@ -510,17 +535,14 @@ namespace GameServer.ClientComponents {
 		}
 
 		public void NotifyInitiativeSelectAspect() {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.INITIATIVE_ASPECT) return;
-			if (BattleSceneContainer.Instance.Initiative.CharacterRef.Controller == _owner) {
-				
-			}
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new BattleSceneCheckerNotifySelectAspectMessage();
 			message.isInitiative = true;
 			_connection.SendMessage(message);
 		}
 
 		public void NotifyInitiativeSelectAspectComplete() {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.INITIATIVE_ASPECT) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new CheckerSelectAspectCompleteMessage();
 			message.over = false;
 			message.isInitiative = true;
@@ -530,7 +552,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public void NotifyInitiativeSelectAspectFailure(string msg) {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.INITIATIVE_ASPECT) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new CheckerSelectAspectCompleteMessage();
 			message.over = false;
 			message.isInitiative = true;
@@ -540,7 +562,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public void NotifyInitiativeSelectAspectOver() {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.INITIATIVE_ASPECT) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new CheckerSelectAspectCompleteMessage();
 			message.over = true;
 			message.isInitiative = true;
@@ -550,14 +572,14 @@ namespace GameServer.ClientComponents {
 		}
 
 		public void NotifyPassiveSelectAspect() {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_ASPECT) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new BattleSceneCheckerNotifySelectAspectMessage();
 			message.isInitiative = false;
 			_connection.SendMessage(message);
 		}
 
 		public void NotifyPassiveSelectAspectComplete() {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_ASPECT) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new CheckerSelectAspectCompleteMessage();
 			message.over = false;
 			message.isInitiative = false;
@@ -567,7 +589,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public void NotifyPassiveSelectAspectFailure(string msg) {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_ASPECT) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new CheckerSelectAspectCompleteMessage();
 			message.over = false;
 			message.isInitiative = false;
@@ -577,7 +599,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public void NotifyPassiveSelectAspectOver() {
-			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking || SkillChecker.Instance.State != SkillChecker.CheckerState.PASSIVE_ASPECT) return;
+			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new CheckerSelectAspectCompleteMessage();
 			message.over = true;
 			message.isInitiative = false;

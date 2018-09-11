@@ -1,4 +1,5 @@
 (function () {
+	var completeFunc = $__this__.getCompleteFunc();
 	var situation = $__this__.getSituation();
 	if (situation.isInStoryScene()) {
 	
@@ -18,7 +19,7 @@
 			notice.setName("¶´²ì£¨µ÷²é£©");
 			notice.setLevel(investigate.getLevel());
 			notice.setBattleMapProperty(investigate.getBattleMapProperty());
-			$.battleScene.currentPassiveUseSkill(noticeSkillType, false, 0, null);
+			$.battleScene.currentPassiveUseSkillWithStuntComplete(noticeSkillType, completeFunc);
 		}
 	}
 })();

@@ -4,12 +4,24 @@ using System.Collections.Generic;
 
 namespace GameServer.CharacterSystem {
 	public struct SkillSituationLimit {
-		public bool canAttack;
+		public static readonly SkillSituationLimit INIT = new SkillSituationLimit() {
+			usableSituation = CharacterAction.CREATE_ASPECT | CharacterAction.HINDER,
+			resistableSituation = CharacterAction.CREATE_ASPECT | CharacterAction.HINDER,
+			canUseOnInteract = true,
+			damageMental = false
+		};
+		public CharacterAction usableSituation;
+		public CharacterAction resistableSituation;
+		public bool canUseOnInteract;
 		public bool damageMental;
-		public bool canDefend;
 	}
 
 	public struct StuntSituationLimit {
+		public static readonly StuntSituationLimit INIT = new StuntSituationLimit() {
+			canUseOnInteract = false,
+			usableSituation = 0,
+			resistableSituation = 0
+		};
 		public CharacterAction usableSituation;
 		public CharacterAction resistableSituation;
 		public bool canUseOnInteract;
