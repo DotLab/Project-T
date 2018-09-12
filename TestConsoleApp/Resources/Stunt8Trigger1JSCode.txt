@@ -1,0 +1,19 @@
+(function () {
+	var stunt = $__this__.getBelongStunt();
+	var damage = $__eventArgs__.damage;
+	var mentalDamage = $__eventArgs__.mental;
+	var me = stunt.getBelong();
+	var thisObj = $__eventArgs__.to;
+	if (me == $__eventArgs__.to.getCharacterRef()) {
+		$.campaignManager.askPlayer(me, "你认为这次攻击能对 " + me.getName() + " 造成伤害吗？(1能，0不能）", function(result) {
+			if (result == 0) {
+				$.campaignManager.askDM(me, "允许" + me.getName() + "使用" + stunt.getName() + "吗？", function(dmResult) {
+					if (dmResult) {
+						thisObj.displayUsingStunt(stunt);
+						me.recover(damage, mentalDamage);
+					}
+				});
+			}
+		});
+	}
+})();

@@ -1,0 +1,13 @@
+(function () {
+	var situation = $__this__.getSituation();
+	if (situation.isInStoryScene()) {
+		
+	} else {
+		var maybeMe = situation.getPassiveBS();
+		if (maybeMe.getCharacterRef() == $__this__.getBelongStunt().getBelong()) {
+			$__this__.setResult(true);
+		} else {
+			$__this__.setResult(false);
+		}
+	}
+})();

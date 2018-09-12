@@ -1,0 +1,27 @@
+(function () {
+	var situation = $__this__.getSituation();
+	var stunt = $__this__.getBelongStunt();
+	if (stunt.getCustomData() == true) {
+		$__this__.setResult(false);
+		return;
+	}
+	if (situation.isInStoryScene()) {
+		
+	} else {
+		var me = situation.getInitiativeBS().getCharacterRef();
+		if (me.getFatePoint() > 0) {
+			var consequences = me.getConsequenceList();
+			var lv2Count = 0;
+			var lv4Count = 0;
+			consequences.forEach(function (item) {
+				if (item.getCounteractLevel() == 2 && !item.isMentalDamage()) ++lv2Count;
+				else if (item.getCounteractLevel() == 4 && !item.isMentalDamage()) ++lv4Count;
+			});
+			if (lv2Count > 0 || lv4Count > 0) {
+				$__this__.setResult(true);
+			} else {
+				$__this__.setResult(false);
+			}
+		}
+	}
+})();
