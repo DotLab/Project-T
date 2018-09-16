@@ -130,6 +130,7 @@ namespace TextyClient {
 		private bool _canActing = false;
 		private InitiativeState _initiativeState = InitiativeState.ACTING;
 		private PassiveCheckingState _checkingStateAsPassive = PassiveCheckingState.IDLE;
+		private CharacterAction _checkingAction = 0;
 		private readonly BindingList<CharacterPropertyInfo> _selectionList = new BindingList<CharacterPropertyInfo>();
 		private readonly BindingList<CharacterPropertyInfo> _selectionList2 = new BindingList<CharacterPropertyInfo>();
 
@@ -383,6 +384,7 @@ namespace TextyClient {
 				case BattleSceneStartCheckMessage.MESSAGE_TYPE: {
 						var msg = (BattleSceneStartCheckMessage)message;
 						var initiativeObject = GetGridObject(msg.initiativeObj, out bool highland);
+						_checkingAction = msg.action;
 						_targetPlaces = new List<ReachablePlace>();
 						printer.Write(initiativeObject + " 对 ");
 						foreach (var target in msg.targets) {
@@ -417,6 +419,7 @@ namespace TextyClient {
 					break;
 				case BattleSceneEndCheckMessage.MESSAGE_TYPE: {
 						if (_currentCheckPlace != null) _targetPlaces.Remove(_currentCheckPlace);
+						_checkingAction = 0;
 						_currentPassiveObj = null;
 						_currentCheckPlace = null;
 						_targetPlaces = null;
@@ -595,6 +598,9 @@ namespace TextyClient {
 					break;
 				case BattleSceneCheckerNotifySelectAspectMessage.MESSAGE_TYPE: {
 						var selectAspectMsg = (BattleSceneCheckerNotifySelectAspectMessage)message;
+						if (_checkingAction == CharacterAction.HINDER) {
+							selectAspectMsg.isInitiative = !selectAspectMsg.isInitiative;
+						}
 						if (selectAspectMsg.isInitiative) {
 							if (!_canActing || _initiativeState == InitiativeState.CHECKING_SELECT_ASPECT) return;
 							_initiativeState = InitiativeState.CHECKING_SELECT_ASPECT;
@@ -612,6 +618,9 @@ namespace TextyClient {
 				case CheckerSelectAspectCompleteMessage.MESSAGE_TYPE: {
 						var completeMsg = (CheckerSelectAspectCompleteMessage)message;
 						if (completeMsg.over) {
+							if (_checkingAction == CharacterAction.HINDER) {
+								completeMsg.isInitiative = !completeMsg.isInitiative;
+							}
 							if (completeMsg.isInitiative) {
 								if (_initiativeState != InitiativeState.CHECKING_SELECT_ASPECT) return;
 								_selectionList.Clear();

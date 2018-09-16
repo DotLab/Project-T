@@ -465,7 +465,7 @@ namespace GameServer.ClientComponents {
 			if (!_isUsing) return;
 			var message = new DisplayDicePointsMessage();
 			message.dicePoints = dicePoints;
-			message.userID = who.Id;
+			message.userID = who.ID;
 			_connection.SendMessage(message);
 		}
 

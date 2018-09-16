@@ -1,20 +1,14 @@
 ﻿using GameUtil.Network.Streamable;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GameUtil {
-	[Flags]
 	public enum BattleMapDirection {
 		POSITIVE_ROW = 0b0001,
 		POSITIVE_COL = 0b0010,
 		NEGATIVE_ROW = 0b0100,
 		NEGATIVE_COL = 0b1000
 	}
-
-	[Flags]
+	
 	public enum CharacterAction {
 		CREATE_ASPECT = 0b001,
 		ATTACK = 0b010,
@@ -172,16 +166,25 @@ namespace GameUtil {
 		}
 	}
 
-	public struct GridPos : IStreamable {
+	public struct GridPos : IStreamable, IEquatable<GridPos> {
 		public int row;
 		public int col;
 		public bool highland;
 
+		public override bool Equals(object obj) {
+			if (!(obj is GridPos)) return false;
+			else return Equals((GridPos)obj);
+		}
+
+		public bool Equals(GridPos other) {
+			return row == other.row && col == other.col && highland == other.highland;
+		}
+
 		public override int GetHashCode() {
 			int hash = ((row << 8) & 0xFF00) | (col & 0xFF);
-			return highland ? (hash ^ 0xFFFF) : hash;
+			return highland ? (hash ^ 0xFFFF) & 0xFFFF : hash;
 		}
-		
+
 		public void ReadFrom(IDataInputStream stream) {
 			row = stream.ReadInt32();
 			col = stream.ReadInt32();

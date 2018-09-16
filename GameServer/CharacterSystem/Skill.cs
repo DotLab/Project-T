@@ -215,6 +215,8 @@ namespace GameServer.CharacterSystem {
 		public static readonly SkillType Stealth = new SkillType("Stealth", "潜行");
 		public static readonly SkillType Will = new SkillType("Will", "意志");
 
+		public static readonly SkillType Hinder = new SkillType("Hinder", "阻碍");
+
 		private static readonly Dictionary<string, SkillType> skillTypes = new Dictionary<string, SkillType>();
 		public static Dictionary<string, SkillType> SkillTypes => skillTypes;
 
@@ -261,6 +263,13 @@ namespace GameServer.CharacterSystem {
 			skillTypes.Add(Shoot.ID, Shoot);
 			skillTypes.Add(Stealth.ID, Stealth);
 			skillTypes.Add(Will.ID, Will);
+
+			Hinder._situationLimit.usableSituation = 0;
+			Hinder._situationLimit.resistableSituation = 0;
+			Hinder._situationLimit.canUseOnInteract = false;
+			Hinder._situationLimit.damageMental = false;
+
+			skillTypes.Add(Hinder.ID, Hinder);
 		}
 
 		private readonly string _id;

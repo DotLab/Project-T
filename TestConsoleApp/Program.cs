@@ -146,6 +146,7 @@ namespace TestConsoleApp {
 			var pistol = new Extra(CharacterManager.Instance.CreateCharacterWithSaving(CharacterManager.DataLevel.Common, "ItemPistol", new CharacterView() { battle = "手枪", story = "手枪" }));
 			pistol.Name = "M1911手枪";
 			pistol.Description = "一种在1911年起生产的.45 ACP口径半自动手枪。";
+			pistol.IsLongRangeWeapon = true;
 			lily.Extras.Add(pistol);
 
 			var stunt6 = new Stunt(new InitiativeEffect(new Command("洞若观火主动效果", Resource.Stunt6JSCode)));
@@ -261,6 +262,9 @@ namespace TestConsoleApp {
 			lance.GetSkill(SkillType.Resources).Level = 1;
 			*/
 
+			ranbo.MakePartyWith(brught_jackson);
+			lily.MakePartyWith(brught_jackson);
+			emma.MakePartyWith(brught_jackson);
 
 			Player[] players = new Player[2];
 			players[0] = new Player("Player1", "Player1", player1Connection, 1, player1characters);
@@ -273,7 +277,7 @@ namespace TestConsoleApp {
 			NetworkHelper.StartServer(OnConnectionEstablished);
 
 			CampaignManager.Instance.CurrentContainer = ContainerType.BATTLE;
-
+			
 			var battleScene = BattleSceneContainer.Instance;
 			battleScene.Reset(8, 8);
 

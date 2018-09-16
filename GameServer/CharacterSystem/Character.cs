@@ -301,6 +301,23 @@ namespace GameServer.CharacterSystem {
 		}
 		#endregion
 		private readonly JSAPI _apiObj;
+
+		private sealed class CharacterGroup {
+			private static int _autoIncrement = 0;
+
+			private readonly int _thisNumber = 0;
+			private readonly List<Character> _characters = new List<Character>();
+
+			public int ID => _thisNumber;
+			public List<Character> Characters => _characters;
+			public bool Empty => _characters.Count <= 0;
+
+			public CharacterGroup() {
+				_thisNumber = _autoIncrement++;
+			}
+		}
+
+		private static readonly Dictionary<int, CharacterGroup> _characterGroups = new Dictionary<int, CharacterGroup>();
 		
 		private readonly string _id;
 		private string _name = "";
@@ -309,6 +326,7 @@ namespace GameServer.CharacterSystem {
 		private readonly CharacterView _view;
 		private Player _controlPlayer = null;
 		private bool _destroyed = false;
+		private int _groupID = -1;
 
 		protected readonly Dictionary<SkillType, Skill> _skills;
 		private readonly CharacterPropertyList<Aspect> _aspects;
@@ -327,7 +345,7 @@ namespace GameServer.CharacterSystem {
 		public Player ControlPlayer { get => _controlPlayer; set => _controlPlayer = value; }
 		public User Controller => _controlPlayer ?? (User)Game.DM;
 		public bool Destroyed => _destroyed;
-		
+
 		public CharacterPropertyList<Aspect> Aspects => _aspects;
 		public int PhysicsStress { get => _physicsStress; set => _physicsStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Physics stress is less than 0."); }
 		public int PhysicsStressMax { get => _physicsStressMax; set => _physicsStressMax = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max physics stress is less than 1."); }
@@ -353,7 +371,62 @@ namespace GameServer.CharacterSystem {
 		public abstract CharacterPropertyList<Stunt> Stunts { get; }
 		public abstract CharacterPropertyList<Extra> Extras { get; }
 		public abstract CharacterPropertyList<Consequence> Consequences { get; }
-		
+
+		public bool IsPartyWith(Character other) {
+			if (_groupID == -1) return false;
+			else return _groupID == other._groupID;
+		}
+
+		public Character[] PartyMembers() {
+			if (_groupID == -1) return new Character[0];
+			else return _characterGroups[_groupID].Characters.ToArray();
+		}
+
+		public void MakePartyWith(Character other) {
+			if (this == other) return;
+			if (_groupID == other._groupID && _groupID != -1) return;
+			if (_groupID != -1) LeaveParty();
+			if (other._groupID != -1) {
+				_characterGroups[other._groupID].Characters.Add(this);
+				_groupID = other._groupID;
+			} else {
+				bool hasEmptyGroup = false;
+				foreach (var group in _characterGroups) {
+					if (group.Value.Empty) {
+						group.Value.Characters.Add(this);
+						group.Value.Characters.Add(other);
+						_groupID = group.Key;
+						other._groupID = group.Key;
+						hasEmptyGroup = true;
+						break;
+					}
+				}
+				if (!hasEmptyGroup) {
+					var newGroup = new CharacterGroup();
+					newGroup.Characters.Add(this);
+					newGroup.Characters.Add(other);
+					_groupID = newGroup.ID;
+					other._groupID = newGroup.ID;
+					_characterGroups.Add(newGroup.ID, newGroup);
+				}
+			}
+		}
+
+		public void LeaveParty() {
+			if (_groupID == -1) return;
+			_characterGroups[_groupID].Characters.Remove(this);
+			_groupID = -1;
+		}
+
+		public void BreakParty() {
+			if (_groupID == -1) return;
+			var group = _characterGroups[_groupID];
+			foreach (var character in group.Characters) {
+				character._groupID = -1;
+			}
+			group.Characters.Clear();
+		}
+
 		public void ResetSkill(SkillType skillType) {
 			_skills.Remove(skillType);
 		}
@@ -744,7 +817,7 @@ namespace GameServer.CharacterSystem {
 		#endregion
 		private readonly JSAPI _apiObj;
 
-		private ulong _autoIncrement = 0L;
+		private int _autoIncrementalIDNum = 0;
 
 		public enum DataLevel {
 			Temporary,
@@ -755,15 +828,13 @@ namespace GameServer.CharacterSystem {
 		private static readonly CharacterManager _instance = new CharacterManager();
 		public static CharacterManager Instance => _instance;
 
-		private readonly IdentifiedObjList<Character> _savingNPCharacters;
-		private readonly IdentifiedObjList<Character> _playerCharacters;
+		private readonly IdentifiedObjList<Character> _savingNPCharacters = new IdentifiedObjList<Character>();
+		private readonly IdentifiedObjList<Character> _playerCharacters = new IdentifiedObjList<Character>();
 
 		public IdentifiedObjList<Character> SavingNPCharacters => _savingNPCharacters;
 		public IdentifiedObjList<Character> PlayerCharacters => _playerCharacters;
 
 		private CharacterManager() {
-			_savingNPCharacters = new IdentifiedObjList<Character>();
-			_playerCharacters = new IdentifiedObjList<Character>();
 			_apiObj = new JSAPI(this);
 		}
 
@@ -786,7 +857,7 @@ namespace GameServer.CharacterSystem {
 			} else if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
 				var sceneObject = BattleSceneContainer.Instance.FindObject(id);
 				if (sceneObject != null) return sceneObject.CharacterRef;
-				foreach (var sceneObject2 in BattleSceneContainer.Instance.ObjList) {
+				foreach (var sceneObject2 in BattleSceneContainer.Instance.ObjectList) {
 					var item = this.FindItemRecursivelyByID(sceneObject2.CharacterRef, id);
 					if (item != null) return item;
 				}
@@ -826,7 +897,7 @@ namespace GameServer.CharacterSystem {
 		}
 
 		public Character CreateTemporaryCharacter(DataLevel dataLevel, CharacterView view) {
-			string id = "Character_" + _autoIncrement++;
+			string id = "Character_" + _autoIncrementalIDNum++;
 			Character ret = CreateCharacter(dataLevel, id, view);
 			return ret;
 		}

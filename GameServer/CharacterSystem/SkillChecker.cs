@@ -264,23 +264,32 @@ namespace GameServer.CharacterSystem {
 			_state = CheckerState.PASSIVE_ASPECT;
 		}
 
-		public bool CheckInitiativeAspectUsable(Aspect aspect) {
-			if (aspect.Benefiter != _initiative && _initiative.FatePoint - 1 < 0) return false;
-			if (aspect.Benefiter != null && aspect.Benefiter != _initiative && aspect.BenefitTimes > 0 && aspect.PersistenceType == PersistenceType.Temporary) return false;
+		public bool CanInitiativeUseAspect(Aspect aspect) {
+			if ((aspect.Benefiter != _initiative || (aspect.Benefiter != null && !aspect.Benefiter.IsPartyWith(_initiative))) && _initiative.FatePoint - 1 < 0)
+				return false;
+			if (aspect.Benefiter != null && aspect.BenefitTimes > 0
+				&& aspect.Benefiter != _initiative && !aspect.Benefiter.IsPartyWith(_initiative)
+				&& aspect.PersistenceType == PersistenceType.Temporary)
+				return false;
 			return true;
 		}
 
 		public int[] InitiativeUseAspect(Aspect aspect, bool reroll) {
 			if (_state != CheckerState.INITIATIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
-			if (aspect.Benefiter != _initiative && _initiative.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
-			if (aspect.Benefiter != null && aspect.Benefiter != _initiative && aspect.BenefitTimes > 0) {
-				if (aspect.PersistenceType == PersistenceType.Temporary) throw new InvalidOperationException("This boost is not for you.");
-				++aspect.Benefiter.FatePoint;
-			} else if (aspect.Benefiter == null || aspect.BenefitTimes <= 0) {
+			if ((aspect.Benefiter != _initiative || (aspect.Benefiter != null && !aspect.Benefiter.IsPartyWith(_initiative))) && _initiative.FatePoint - 1 < 0)
+				throw new InvalidOperationException("Fate points are not enough.");
+			if (aspect.Benefiter != null && aspect.BenefitTimes > 0) {
+				if (aspect.Benefiter == _initiative || aspect.Benefiter.IsPartyWith(_initiative)) {
+					--aspect.BenefitTimes;
+				} else {
+					if (aspect.PersistenceType == PersistenceType.Temporary) throw new InvalidOperationException("This boost is not for you.");
+					++aspect.Benefiter.FatePoint;
+					--_initiative.FatePoint;
+				}
+			} else {
 				++_passive.FatePoint;
+				--_initiative.FatePoint;
 			}
-			if (aspect.Benefiter != _initiative || aspect.BenefitTimes <= 0) --_initiative.FatePoint;
-			else --aspect.BenefitTimes;
 			_usedAspects.Add(aspect);
 			if (reroll) return this.InitiativeRollDice();
 			else {
@@ -310,23 +319,32 @@ namespace GameServer.CharacterSystem {
 			_state = CheckerState.WAIT_FOR_ENDCHECK;
 		}
 
-		public bool CheckPassiveAspectUsable(Aspect aspect) {
-			if (aspect.Benefiter != _passive && _passive.FatePoint - 1 < 0) return false;
-			if (aspect.Benefiter != null && aspect.Benefiter != _passive && aspect.BenefitTimes > 0 && aspect.PersistenceType == PersistenceType.Temporary) return false;
+		public bool CanPassiveUseAspect(Aspect aspect) {
+			if ((aspect.Benefiter != _passive || (aspect.Benefiter != null && !aspect.Benefiter.IsPartyWith(_passive))) && _passive.FatePoint - 1 < 0)
+				return false;
+			if (aspect.Benefiter != null && aspect.BenefitTimes > 0
+				&& aspect.Benefiter != _passive && !aspect.Benefiter.IsPartyWith(_passive)
+				&& aspect.PersistenceType == PersistenceType.Temporary)
+				return false;
 			return true;
 		}
 
 		public int[] PassiveUseAspect(Aspect aspect, bool reroll) {
 			if (_state != CheckerState.PASSIVE_ASPECT) throw new InvalidOperationException("State incorrect.");
-			if (aspect.Benefiter != _passive && _passive.FatePoint - 1 < 0) throw new InvalidOperationException("Fate points are not enough.");
-			if (aspect.Benefiter != null && aspect.Benefiter != _passive && aspect.BenefitTimes > 0) {
-				if (aspect.PersistenceType == PersistenceType.Temporary) throw new InvalidOperationException("This boost is not for you.");
-				++aspect.Benefiter.FatePoint;
-			} else if (aspect.Benefiter == null || aspect.BenefitTimes <= 0) {
+			if ((aspect.Benefiter != _passive || (aspect.Benefiter != null && !aspect.Benefiter.IsPartyWith(_passive))) && _passive.FatePoint - 1 < 0)
+				throw new InvalidOperationException("Fate points are not enough.");
+			if (aspect.Benefiter != null && aspect.BenefitTimes > 0) {
+				if (aspect.Benefiter == _passive || aspect.Benefiter.IsPartyWith(_passive)) {
+					--aspect.BenefitTimes;
+				} else {
+					if (aspect.PersistenceType == PersistenceType.Temporary) throw new InvalidOperationException("This boost is not for you.");
+					++aspect.Benefiter.FatePoint;
+					--_passive.FatePoint;
+				}
+			} else {
 				++_initiative.FatePoint;
+				--_passive.FatePoint;
 			}
-			if (aspect.Benefiter != _passive || aspect.BenefitTimes <= 0) --_passive.FatePoint;
-			else --aspect.BenefitTimes;
 			_usedAspects.Add(aspect);
 			if (reroll) return this.PassiveRollDice();
 			else {

@@ -3,8 +3,45 @@ using GameServer.ClientComponents;
 using GameUtil.Network;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System;
 
 namespace GameServer.Core {
+	public abstract class User : IEquatable<User> {
+		protected readonly bool _isDM;
+		protected readonly string _id;
+		protected readonly string _name;
+
+		public bool IsDM => _isDM;
+		public DM AsDM => (DM)this;
+		public Player AsPlayer => (Player)this;
+		public string ID => _id;
+		public string Name => _name;
+		public abstract int Index { get; }
+		public abstract Client Client { get; }
+
+		protected User(string id, string name, bool isDM) {
+			_id = id;
+			_name = name;
+			_isDM = isDM;
+		}
+
+		public void UpdateClient() {
+			this.Client.Update();
+		}
+
+		public override bool Equals(object obj) {
+			return Equals(obj as User);
+		}
+
+		public override int GetHashCode() {
+			return _id.GetHashCode();
+		}
+
+		public bool Equals(User other) {
+			return other != null && _id == other._id;
+		}
+	}
+
 	public sealed class Player : User {
 		private readonly PlayerClient _playerClient;
 		private readonly List<Character> _characters;
@@ -42,34 +79,4 @@ namespace GameServer.Core {
 			_dmClient = new DMClient(connection, this);
 		}
 	}
-
-	public abstract class User {
-		protected readonly bool _isDM;
-		protected readonly string _id;
-		protected readonly string _name;
-
-		public bool IsDM => _isDM;
-		public DM AsDM => (DM)this;
-		public Player AsPlayer => (Player)this;
-		public string Id => _id;
-		public string Name => _name;
-		public abstract int Index { get; }
-		public abstract Client Client { get; }
-
-		protected User(string id, string name, bool isDM) {
-			_id = id;
-			_name = name;
-			_isDM = isDM;
-		}
-
-		public void UpdateClient() {
-			if (_isDM) {
-				this.AsDM.Client.Update();
-			} else {
-				this.AsPlayer.Client.Update();
-			}
-		}
-
-	}
-
 }

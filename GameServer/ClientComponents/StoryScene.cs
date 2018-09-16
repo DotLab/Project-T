@@ -136,7 +136,7 @@ namespace GameServer.ClientComponents {
 		public void DisplayDicePoint(bool isInitiative, int[] dicePoints) {
 			if (!_isUsing) return;
 			DisplayDicePointsMessage message = new DisplayDicePointsMessage();
-			message.userID = isInitiative ? SkillChecker.Instance.Initiative.Controller.Id : SkillChecker.Instance.Passive.Controller.Id;
+			message.userID = isInitiative ? SkillChecker.Instance.Initiative.Controller.ID : SkillChecker.Instance.Passive.Controller.ID;
 			message.dicePoints = dicePoints;
 			_connection.SendMessage(message);
 		}
