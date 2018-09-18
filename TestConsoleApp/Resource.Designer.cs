@@ -73,7 +73,7 @@ namespace TestConsoleApp {
         ///			var targets = situation.getTargetsBS();
         ///			var action = situation.getAction();
         ///			var skillType = $.characterManager.getSkillType(&quot;Lore&quot;);
-        ///			$.campaignManager.askDM(me, &quot;允许&quot; + me.getName() + &quot;使用&quot; + stunt.getName() + &quot;吗？&quot;, function(dmResult) {
+        ///			$.campaignManager.requestDMCheck(me, &quot;允许&quot; + me.getName() + &quot;使用&quot; + stunt.getName() + &quot;吗？&quot;, function(dmResult) {
         ///				if ( [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         internal static string Stunt1JSCode {
@@ -222,9 +222,9 @@ namespace TestConsoleApp {
         ///	if (stunt != null) {
         ///		var me = stunt.getBelong();
         ///		if (me != null) {
-        ///			$.campaignManager.askPlayer(me, &quot;你要花费1命运点来声明你带着备用武器，使缴械特征变成增益吗？（1是，0否）&quot;, function(result) {
+        ///			$.campaignManager.askUser(me, &quot;你要花费1命运点来声明你带着备用武器，使缴械特征变成增益吗？（1是，0否）&quot;, function(result) {
         ///				if (result == 1) {
-        ///					$.campaignManager.askDM(me, &quot;允许&quot; + me.getName() + &quot;使用&quot; + stunt.getName() + &quot;吗？&quot;, function(dmResult) {
+        ///					$.campaignManager.requestDMCheck(me, &quot;允许&quot; + me.getName() + &quot;使用&quot; + stunt.getName() + &quot;吗？&quot;, function(dmResult) {
         ///						if (dmResult) {
         ///							aspect.setPersistenceType(2);
         ///						}
@@ -371,7 +371,7 @@ namespace TestConsoleApp {
         ///			var targets = situation.getTargetsBS();
         ///			var action = situation.getAction();
         ///			var skillType = $.characterManager.getSkillType(&quot;Lore&quot;);
-        ///			$.campaignManager.askDM(me, &quot;允许&quot; + me.getName() + &quot;使用&quot; + stunt.getName() + &quot;吗？&quot;, function(dmResult) {
+        ///			$.campaignManager.requestDMCheck(me, &quot;允许&quot; + me.getName() + &quot;使用&quot; + stunt.getName() + &quot;吗？&quot;, function(dmResult) {
         ///				if ( [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         internal static string Stunt9JSCode {

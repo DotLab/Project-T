@@ -96,15 +96,17 @@ namespace GameUtil.Network {
 		}
 
 		public override void UpdateReceiver() {
+			Message[] copiedMsgCache;
 			lock (_receivedMsgCache) {
-				foreach (var message in _receivedMsgCache) {
-					if (_messageReceiverDict.ContainsKey(message.MessageType)) {
-						foreach (var receiver in _messageReceiverDict[message.MessageType]) {
-							receiver.MessageReceived(message);
-						}
+				copiedMsgCache = _receivedMsgCache.ToArray();
+				_receivedMsgCache.Clear();
+			}
+			foreach (var message in copiedMsgCache) {
+				if (_messageReceiverDict.ContainsKey(message.MessageType)) {
+					foreach (var receiver in _messageReceiverDict[message.MessageType]) {
+						receiver.MessageReceived(message);
 					}
 				}
-				_receivedMsgCache.Clear();
 			}
 		}
 

@@ -4,6 +4,7 @@ using GameUtil.Network;
 using GameUtil.Network.ClientMessages;
 using GameUtil.Network.ServerMessages;
 using System;
+using System.Threading;
 
 namespace GameServer.ClientComponents {
 	public abstract class ClientComponent : IMessageReceiver {
@@ -22,9 +23,13 @@ namespace GameServer.ClientComponents {
 		protected readonly CharacterData _characterData;
 		protected readonly StoryScene _storyScene;
 		protected readonly BattleScene _battleScene;
+		protected bool _someoneDeciding = false;
+
+		private int _determinResult = 0;
 
 		public StoryScene StoryScene => _storyScene;
 		public BattleScene BattleScene => _battleScene;
+		public bool SomeoneDeciding => _someoneDeciding;
 
 		public override void MessageReceived(Message message) {
 			if (message.MessageType == ClientInitMessage.MESSAGE_TYPE) {
@@ -87,18 +92,22 @@ namespace GameServer.ClientComponents {
 			_connection.SendMessage(message);
 		}
 
-		public void RequestDetermin(string text, Action<int> callback) {
-			if (callback == null) throw new ArgumentNullException(nameof(callback));
+		public int RequestDetermin(string text) {
 			var request = new UserDeterminMessage();
 			request.text = text ?? throw new ArgumentNullException(nameof(text));
 			_connection.Request(request, resp => {
 				var result = resp as UserDeterminResultMessage;
 				if (result != null) {
-					callback(result.result);
-				} else {
-					callback(0);
+					_determinResult = result.result;
+					_someoneDeciding = false;
 				}
 			});
+			_someoneDeciding = true;
+			while (!Game.GameOver && _someoneDeciding) {
+				Game.Update();
+				Thread.Sleep(100);
+			}
+			return _determinResult;
 		}
 	}
 
@@ -113,31 +122,36 @@ namespace GameServer.ClientComponents {
 	}
 
 	public sealed class DMClient : Client {
+		private bool _dmCheckResult = false;
+
 		public DMStoryScene DMStoryScene => (DMStoryScene)_storyScene;
 		public DMBattleScene DMBattleScene => (DMBattleScene)_battleScene;
-		
+
 		public DMClient(Connection connection, DM owner) :
 			base(connection, owner, new DMStoryScene(connection, owner), new DMBattleScene(connection, owner)) {
 
 		}
 
-		public void RequestDMCheck(User invoker, string text, Action<bool> callback) {
+		public bool RequestDMCheck(User invoker, string text) {
 			if (invoker == null) throw new ArgumentNullException(nameof(invoker));
-			if (callback == null) throw new ArgumentNullException(nameof(callback));
 			if (invoker.IsDM) {
-				callback(true);
-				return;
+				return true;
 			}
 			var request = new DMCheckMessage();
 			request.text = text ?? throw new ArgumentNullException(nameof(text));
 			_connection.Request(request, resp => {
 				var result = resp as DMCheckResultMessage;
 				if (result != null) {
-					callback(result.result);
-				} else {
-					callback(false);
+					_dmCheckResult = result.result;
+					_someoneDeciding = false;
 				}
 			});
+			_someoneDeciding = true;
+			while (!Game.GameOver && _someoneDeciding) {
+				Game.Update();
+				Thread.Sleep(100);
+			}
+			return _dmCheckResult;
 		}
 	}
 

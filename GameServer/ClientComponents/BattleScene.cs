@@ -245,7 +245,7 @@ namespace GameServer.ClientComponents {
 					case BattleSceneTakeExtraMovePointMessage.MESSAGE_TYPE: {
 							if (container.IsChecking) return;
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) return;
-							container.CurrentActable.TakeExtraMove();
+							container.CurrentActable.TakeExtraMovePoint();
 						}
 						break;
 					case BattleSceneActableObjectDoActionMessage.MESSAGE_TYPE: {

@@ -5,16 +5,14 @@
 	if (stunt != null) {
 		var me = stunt.getBelong();
 		if (me != null) {
-			$.campaignManager.askPlayer(me, "你要花费1命运点来声明你带着备用武器，使缴械特征变成增益吗？（1是，0否）", function(result) {
-				if (result == 1) {
-					$.campaignManager.askDM(me, "允许" + me.getName() + "使用" + stunt.getName() + "吗？", function(dmResult) {
-						if (dmResult) {
-							thisObj.displayUsingStunt(stunt);
-							aspect.setPersistenceType(2);
-						}
-					});
+			var result = $.campaignManager.askUser(me, "你要花费1命运点来声明你带着备用武器，使缴械特征变成增益吗？（1是，0否）");
+			if (result == 1) {
+				var dmResult = $.campaignManager.requestDMCheck(me, "允许" + me.getName() + "使用" + stunt.getName() + "吗？");
+				if (dmResult) {
+					thisObj.displayUsingStunt(stunt);
+					aspect.setPersistenceType(2);
 				}
-			});
+			}
 		}
 	}
 })();
