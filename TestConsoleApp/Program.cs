@@ -272,7 +272,7 @@ namespace TestConsoleApp {
 
 			DM dm = new DM("DM", "DM", dmConnection);
 
-			Game.Init(dm, players);
+			Game.InitGame(dm, players);
 
 			NetworkHelper.StartServer(OnConnectionEstablished);
 
@@ -314,16 +314,8 @@ namespace TestConsoleApp {
 			battleScene.PushGridObject(4, 4, false, new ActableGridObject(emma));
 
 			battleScene.NewRound();
-			
-			while (!Game.GameOver) {
-				Game.Update();
-				Thread.Sleep(100);
-			}
 
-			Game.Cleanup();
-
-			Console.WriteLine("Press any key to continue...");
-			Console.ReadKey();
+			Game.RunGameLoop();
 		}
 
 		static void OnConnectionEstablished(NetworkService service) {
@@ -331,19 +323,19 @@ namespace TestConsoleApp {
 			byte[] code = initializer.ServerRequireClientVerify();
 			if (code != null) {
 				if (code.SequenceEqual(dmVerificationCode)) {
-					if (dmConnection.HasAppliedService()) {
+					if (dmConnection.Available()) {
 						initializer.ServerApplyConnection(null);
 					} else {
 						initializer.ServerApplyConnection(dmConnection);
 					}
 				} else if (code.SequenceEqual(player1VerificationCode)) {
-					if (player1Connection.HasAppliedService()) {
+					if (player1Connection.Available()) {
 						initializer.ServerApplyConnection(null);
 					} else {
 						initializer.ServerApplyConnection(player1Connection);
 					}
 				} else if (code.SequenceEqual(player2VerificationCode)) {
-					if (player2Connection.HasAppliedService()) {
+					if (player2Connection.Available()) {
 						initializer.ServerApplyConnection(null);
 					} else {
 						initializer.ServerApplyConnection(player2Connection);

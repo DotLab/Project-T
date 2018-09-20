@@ -29,7 +29,7 @@ namespace TextyClient {
 		/// </summary>
 		[STAThread]
 		static void Main() {
-			connection.EventCaught += Connection_EventCaught;
+			connection.ExceptionCaught += Connection_EventCaught;
 
 			string id;
 			byte[] verificationCode = { };
@@ -78,7 +78,7 @@ namespace TextyClient {
 			Application.Run(mainForm);
 		}
 
-		private static void Connection_EventCaught(object sender, NetworkEventCaughtEventArgs e) {
+		private static void Connection_EventCaught(object sender, NetworkfExceptionCaughtEventArgs e) {
 			MessageBox.Show(e.message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			Application.Exit();
 		}

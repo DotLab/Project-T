@@ -177,6 +177,12 @@ namespace GameUtil.Network {
 					return new BattleSceneDisplayUsingStuntMessage();
 				case BattleSceneObjectUsableSkillListOnInteractMessage.MESSAGE_TYPE:
 					return new BattleSceneObjectUsableSkillListOnInteractMessage();
+				case WaitingForUserDeterminMessage.MESSAGE_TYPE:
+					return new WaitingForUserDeterminMessage();
+				case PartyMemberListMessage.MESSAGE_TYPE:
+					return new PartyMemberListMessage();
+				case AllPartyListMessage.MESSAGE_TYPE:
+					return new AllPartyListMessage();
 
 				// client message
 				case ClientInitMessage.MESSAGE_TYPE:
@@ -249,6 +255,10 @@ namespace GameUtil.Network {
 					return new GetDirectResistStuntsMessage();
 				case BattleSceneGetInitiativeUsableSkillOrStuntListOnInteractMessage.MESSAGE_TYPE:
 					return new BattleSceneGetInitiativeUsableSkillOrStuntListOnInteractMessage();
+				case GetPartyMemberListMessage.MESSAGE_TYPE:
+					return new GetPartyMemberListMessage();
+				case GetAllPartyListMessage.MESSAGE_TYPE:
+					return new GetAllPartyListMessage();
 
 				default:
 					throw new NotImplementedException();
@@ -343,20 +353,10 @@ namespace GameUtil.Network {
 			AddMessageReceiver(IdentifiedMessage.MESSAGE_TYPE, this);
 		}
 
-		protected void OnEventCaught(NetworkEventCaughtEventArgs args) {
-			if (EventCaught != null) EventCaught(this, args);
-		}
-
-		public event EventHandler<NetworkEventCaughtEventArgs> EventCaught; // multiple threads would invoke
-
 		public abstract void SendMessage(Message message);
 		public abstract void AddMessageReceiver(int messageType, IMessageReceiver receiver);
 		public abstract bool RemoveMessageReceiver(int messageType, IMessageReceiver receiver);
-		public abstract void UpdateReceiver();
-	}
-
-	public sealed class NetworkEventCaughtEventArgs : EventArgs {
-		public string message;
-		// ...
+		public abstract void UpdateReceivers();
+		public abstract bool Available();
 	}
 }

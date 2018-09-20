@@ -68,7 +68,7 @@ namespace TextyClient {
 		}
 
 		private void connectionTimer_Tick(object sender, EventArgs e) {
-			Program.connection.UpdateReceiver();
+			Program.connection.UpdateReceivers();
 		}
 	}
 }

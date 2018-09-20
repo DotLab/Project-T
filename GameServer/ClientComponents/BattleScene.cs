@@ -16,6 +16,7 @@ namespace GameServer.ClientComponents {
 		protected bool _canOperate = false;
 		protected bool _skipSelectAspect = false;
 		protected bool _isUsing = false;
+		protected bool _ignoreOperating = false;
 
 		protected BattleSceneMovePathInfoMessage CreateMovePathInfoMessage(List<ReachablePlace> reachablePlaces) {
 			var ret = new BattleSceneMovePathInfoMessage();
@@ -231,7 +232,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public override void MessageReceived(Message message) {
-			if (!_isUsing) return;
+			if (!_isUsing || _ignoreOperating) return;
 			var container = BattleSceneContainer.Instance;
 			try {
 				switch (message.MessageType) {
@@ -711,6 +712,10 @@ namespace GameServer.ClientComponents {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new BattleSceneEndCheckMessage();
 			_connection.SendMessage(message);
+		}
+
+		public override void WaitingForUserDetermin(bool enabled) {
+			_ignoreOperating = enabled;
 		}
 	}
 

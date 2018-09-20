@@ -4,6 +4,7 @@ using GameUtil.Network;
 using GameUtil.Network.ClientMessages;
 using GameUtil.Network.ServerMessages;
 using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace GameServer.ClientComponents {
@@ -16,6 +17,7 @@ namespace GameServer.ClientComponents {
 			_owner = owner;
 		}
 
+		public abstract void WaitingForUserDetermin(bool enabled);
 		public abstract void MessageReceived(Message message);
 	}
 
@@ -23,13 +25,12 @@ namespace GameServer.ClientComponents {
 		protected readonly CharacterData _characterData;
 		protected readonly StoryScene _storyScene;
 		protected readonly BattleScene _battleScene;
-		protected bool _someoneDeciding = false;
+		protected bool _deciding = false;
 
 		private int _determinResult = 0;
 
 		public StoryScene StoryScene => _storyScene;
 		public BattleScene BattleScene => _battleScene;
-		public bool SomeoneDeciding => _someoneDeciding;
 
 		public override void MessageReceived(Message message) {
 			if (message.MessageType == ClientInitMessage.MESSAGE_TYPE) {
@@ -54,7 +55,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public virtual void Update() {
-			_connection.UpdateReceiver();
+			_connection.UpdateReceivers();
 		}
 
 		public void ShowScene(ContainerType scene) {
@@ -70,44 +71,61 @@ namespace GameServer.ClientComponents {
 				default:
 					return;
 			}
-			ShowSceneMessage message = new ShowSceneMessage();
+			var message = new ShowSceneMessage();
 			message.sceneType = (byte)scene;
 			_connection.SendMessage(message);
 		}
 
 		public void PlayBGM(string id) {
-			PlayBGMMessage message = new PlayBGMMessage();
+			var message = new PlayBGMMessage();
 			message.bgmID = id;
 			_connection.SendMessage(message);
 		}
 
 		public void StopBGM() {
-			StopBGMMessage message = new StopBGMMessage();
+			var message = new StopBGMMessage();
 			_connection.SendMessage(message);
 		}
 
 		public void PlaySE(string id) {
-			PlaySEMessage message = new PlaySEMessage();
+			var message = new PlaySEMessage();
 			message.seID = id;
 			_connection.SendMessage(message);
 		}
 
 		public int RequestDetermin(string text) {
+			Debug.Assert(!_deciding, "It's deciding.");
 			var request = new UserDeterminMessage();
 			request.text = text ?? throw new ArgumentNullException(nameof(text));
 			_connection.Request(request, resp => {
 				var result = resp as UserDeterminResultMessage;
 				if (result != null) {
 					_determinResult = result.result;
-					_someoneDeciding = false;
+					_deciding = false;
+					foreach (Player player in Game.Players) {
+						player.Client.WaitingForUserDetermin(false);
+					}
+					Game.DM.Client.WaitingForUserDetermin(false);
 				}
 			});
-			_someoneDeciding = true;
-			while (!Game.GameOver && _someoneDeciding) {
+			_deciding = true;
+			foreach (Player player in Game.Players) {
+				player.Client.WaitingForUserDetermin(true);
+			}
+			Game.DM.Client.WaitingForUserDetermin(true);
+			while (!Game.GameOver && _deciding) {
 				Game.Update();
 				Thread.Sleep(100);
 			}
 			return _determinResult;
+		}
+
+		public override void WaitingForUserDetermin(bool enabled) {
+			var message = new WaitingForUserDeterminMessage();
+			message.enabled = enabled;
+			_connection.SendMessage(message);
+			_storyScene.WaitingForUserDetermin(enabled);
+			_battleScene.WaitingForUserDetermin(enabled);
 		}
 	}
 
@@ -133,6 +151,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public bool RequestDMCheck(User invoker, string text) {
+			Debug.Assert(!_deciding, "It's deciding.");
 			if (invoker == null) throw new ArgumentNullException(nameof(invoker));
 			if (invoker.IsDM) {
 				return true;
@@ -143,11 +162,19 @@ namespace GameServer.ClientComponents {
 				var result = resp as DMCheckResultMessage;
 				if (result != null) {
 					_dmCheckResult = result.result;
-					_someoneDeciding = false;
+					_deciding = false;
+					foreach (Player player in Game.Players) {
+						player.Client.WaitingForUserDetermin(false);
+					}
+					Game.DM.Client.WaitingForUserDetermin(false);
 				}
 			});
-			_someoneDeciding = true;
-			while (!Game.GameOver && _someoneDeciding) {
+			_deciding = true;
+			foreach (Player player in Game.Players) {
+				player.Client.WaitingForUserDetermin(true);
+			}
+			Game.DM.Client.WaitingForUserDetermin(true);
+			while (!Game.GameOver && _deciding) {
 				Game.Update();
 				Thread.Sleep(100);
 			}

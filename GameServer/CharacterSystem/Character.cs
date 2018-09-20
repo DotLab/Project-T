@@ -319,6 +319,17 @@ namespace GameServer.CharacterSystem {
 
 		private static readonly Dictionary<int, CharacterGroup> _characterGroups = new Dictionary<int, CharacterGroup>();
 		
+		public static Character[][] GetAllParties() {
+			var list = new List<Character[]>();
+			foreach (var keyValuePair in _characterGroups) {
+				var characterGroup = keyValuePair.Value;
+				if (!characterGroup.Empty) {
+					list.Add(characterGroup.Characters.ToArray());
+				}
+			}
+			return list.ToArray();
+		}
+
 		private readonly string _id;
 		private string _name = "";
 		private string _description = "";

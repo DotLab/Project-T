@@ -26,6 +26,8 @@ namespace GameServer.ClientComponents {
 			connection.SetRequestHandler(GetDirectResistSkillsMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetDirectResistStuntsMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetSkillTypeListMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(GetPartyMemberListMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(GetAllPartyListMessage.MESSAGE_TYPE, this);
 		}
 
 		public Message MakeResponse(Message request) {
@@ -33,40 +35,40 @@ namespace GameServer.ClientComponents {
 				Message resp = null;
 				switch (request.MessageType) {
 					case GetCharacterDataMessage.MESSAGE_TYPE: {
-							var characterDataMessage = (GetCharacterDataMessage)request;
-							resp = GetCharacterData(CharacterManager.Instance.FindCharacterByID(characterDataMessage.characterID), characterDataMessage.dataType);
+							var req = (GetCharacterDataMessage)request;
+							resp = GetCharacterData(CharacterManager.Instance.FindCharacterByID(req.characterID), req.dataType);
 						}
 						break;
 					case GetAspectDataMessage.MESSAGE_TYPE: {
-							var aspectDataMessage = (GetAspectDataMessage)request;
-							var character = CharacterManager.Instance.FindCharacterByID(aspectDataMessage.characterID);
-							resp = GetAspectData(character.FindAspectByID(aspectDataMessage.aspectID));
+							var req = (GetAspectDataMessage)request;
+							var character = CharacterManager.Instance.FindCharacterByID(req.characterID);
+							resp = GetAspectData(character.FindAspectByID(req.aspectID));
 						}
 						break;
 					case GetConsequenceDataMessage.MESSAGE_TYPE: {
-							var consequenceDataMessage = (GetConsequenceDataMessage)request;
-							var character = CharacterManager.Instance.FindCharacterByID(consequenceDataMessage.characterID);
-							var consequence = character.FindConsequenceByID(consequenceDataMessage.consequenceID);
+							var req = (GetConsequenceDataMessage)request;
+							var character = CharacterManager.Instance.FindCharacterByID(req.characterID);
+							var consequence = character.FindConsequenceByID(req.consequenceID);
 							if (consequence != null) resp = GetConsequenceData(consequence);
 						}
 						break;
 					case GetSkillDataMessage.MESSAGE_TYPE: {
-							var skillDataMessage = (GetSkillDataMessage)request;
-							var character = CharacterManager.Instance.FindCharacterByID(skillDataMessage.characterID);
-							resp = GetSkillData(character, SkillType.SkillTypes[skillDataMessage.skillTypeID]);
+							var req = (GetSkillDataMessage)request;
+							var character = CharacterManager.Instance.FindCharacterByID(req.characterID);
+							resp = GetSkillData(character, SkillType.SkillTypes[req.skillTypeID]);
 						}
 						break;
 					case GetStuntDataMessage.MESSAGE_TYPE: {
-							var stuntDataMessage = (GetStuntDataMessage)request;
-							var character = CharacterManager.Instance.FindCharacterByID(stuntDataMessage.characterID);
-							var stunt = character.FindStuntByID(stuntDataMessage.stuntID);
+							var req = (GetStuntDataMessage)request;
+							var character = CharacterManager.Instance.FindCharacterByID(req.characterID);
+							var stunt = character.FindStuntByID(req.stuntID);
 							if (stunt != null) resp = GetStuntData(stunt);
 						}
 						break;
 					case GetExtraDataMessage.MESSAGE_TYPE: {
-							var extraItemDataMessage = (GetExtraDataMessage)request;
-							var character = CharacterManager.Instance.FindCharacterByID(extraItemDataMessage.characterID);
-							var extra = character.FindExtraByID(extraItemDataMessage.extraID);
+							var req = (GetExtraDataMessage)request;
+							var character = CharacterManager.Instance.FindCharacterByID(req.characterID);
+							var extra = character.FindExtraByID(req.extraID);
 							if (extra != null) resp = GetExtraData(extra);
 						}
 						break;
@@ -81,8 +83,16 @@ namespace GameServer.ClientComponents {
 						}
 						break;
 					case GetSkillTypeListMessage.MESSAGE_TYPE: {
-							var skillTypeListMessage = (GetSkillTypeListMessage)request;
 							resp = GetSkillTypeList();
+						}
+						break;
+					case GetPartyMemberListMessage.MESSAGE_TYPE: {
+							var req = (GetPartyMemberListMessage)request;
+							resp = GetPartyMemberList(CharacterManager.Instance.FindCharacterByID(req.characterID));
+						}
+						break;
+					case GetAllPartyListMessage.MESSAGE_TYPE: {
+							resp = GetAllPartyList();
 						}
 						break;
 					default:
@@ -271,6 +281,29 @@ namespace GameServer.ClientComponents {
 			int i = 0;
 			foreach (var skillType in SkillType.SkillTypes) {
 				message.skillTypes[i++] = StreamableFactory.CreateSkillTypeDescription(skillType.Value);
+			}
+			return message;
+		}
+
+		private Message GetPartyMemberList(Character oneMember) {
+			var message = new PartyMemberListMessage();
+			var members = oneMember.PartyMembers();
+			message.charactersID = new string[members.Length];
+			for (int i = 0; i < members.Length; ++i) {
+				message.charactersID[i] = members[i].ID;
+			}
+			return message;
+		}
+
+		private Message GetAllPartyList() {
+			var message = new AllPartyListMessage();
+			var partis = Character.GetAllParties();
+			message.parties = new string[partis.Length][];
+			for (int i = 0; i < partis.Length; ++i) {
+				message.parties[i] = new string[partis[i].Length];
+				for (int j = 0; j < partis[i].Length; ++j) {
+					message.parties[i][j] = partis[i][j].ID;
+				}
 			}
 			return message;
 		}

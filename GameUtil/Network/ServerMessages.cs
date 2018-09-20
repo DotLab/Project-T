@@ -1535,4 +1535,69 @@ namespace GameUtil.Network.ServerMessages {
 		}
 	}
 
+	public sealed class WaitingForUserDeterminMessage : Message {
+		public const int MESSAGE_TYPE = -83;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public bool enabled;
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteBoolean(enabled);
+		}
+
+		public override void ReadFrom(IDataInputStream stream) {
+			enabled = stream.ReadBoolean();
+		}
+	}
+
+	public sealed class PartyMemberListMessage : Message {
+		public const int MESSAGE_TYPE = -84;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public string[] charactersID;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			int length = stream.ReadInt32();
+			charactersID = new string[length];
+			for (int i = 0; i < length; ++i) {
+				charactersID[i] = stream.ReadString();
+			}
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteInt32(charactersID.Length);
+			foreach (string characterID in charactersID) {
+				stream.WriteString(characterID);
+			}
+		}
+	}
+
+	public sealed class AllPartyListMessage : Message {
+		public const int MESSAGE_TYPE = -85;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public string[][] parties;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			int length = stream.ReadInt32();
+			parties = new string[length][];
+			for (int i = 0; i < length; ++i) {
+				int memberCount = stream.ReadInt32();
+				parties[i] = new string[memberCount];
+				for (int j = 0; j < memberCount; ++j) {
+					parties[i][j] = stream.ReadString();
+				}
+			}
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteInt32(parties.Length);
+			foreach (string[] charactersID in parties) {
+				stream.WriteInt32(charactersID.Length);
+				foreach (string characterID in charactersID) {
+					stream.WriteString(characterID);
+				}
+			}
+		}
+	}
 }

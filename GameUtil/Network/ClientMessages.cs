@@ -579,4 +579,26 @@ namespace GameUtil.Network.ClientMessages {
 		}
 	}
 
+	public sealed class GetPartyMemberListMessage : Message {
+		public const int MESSAGE_TYPE = 36;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public string characterID;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			characterID = stream.ReadString();
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteString(characterID);
+		}
+	}
+
+	public sealed class GetAllPartyListMessage : Message {
+		public const int MESSAGE_TYPE = 37;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public override void ReadFrom(IDataInputStream stream) { }
+		public override void WriteTo(IDataOutputStream stream) { }
+	}
 }
