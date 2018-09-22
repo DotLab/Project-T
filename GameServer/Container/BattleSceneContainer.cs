@@ -107,6 +107,7 @@ namespace GameServer.Container {
 		private readonly BattleMap _battleMap;
 		private ActableGridObject _currentActable = null;
 		private int _roundCount = 0;
+		private bool _isPlaying = false;
 		private bool _isChecking = false;
 
 		private SceneObject _initiative;
@@ -117,7 +118,8 @@ namespace GameServer.Container {
 		private CharacterAction _checkingAction;
 		private List<SceneObject> _passives;
 		private SceneObject _currentPassive;
-		private Action<CheckResult, CheckResult, int> _hinderCheckOverCallback;
+		private Action _checkOverCallback;
+		private Action<CheckResult, CheckResult, int> _onceHinderCheckOverCallback;
 
 		public IReadonlyIdentifiedObjList<SceneObject> ObjectList => _objectList;
 		public IReadOnlyList<ActableGridObject> ActableObjectList => _actableObjectList;
@@ -156,12 +158,20 @@ namespace GameServer.Container {
 					if (grid.NegativeColLadder != null) battleScene.AddLadderObject(grid.NegativeColLadder);
 				}
 			}
+			if (_isPlaying) {
+				battleScene.StartBattle();
+				battleScene.UpdateTurnOrder(_actableObjectList);
+				if (_currentActable != null) {
+					battleScene.NewTurn(_currentActable);
+					battleScene.UpdateActionPoint(_currentActable);
+				}
+			}
 		}
 
 		public void ClientSynchronizeState(BattleScene battleScene) {
-			battleScene.SetActingOrder(_actableObjectList);
+			battleScene.UpdateTurnOrder(_actableObjectList);
 			if (_currentActable != null) {
-				battleScene.ChangeTurn(_currentActable);
+				battleScene.NewTurn(_currentActable);
 				battleScene.UpdateActionPoint(_currentActable);
 				battleScene.DisplayTakeExtraMovePoint(_currentActable, SkillType.Athletics);
 				if (_isChecking) {
@@ -180,7 +190,8 @@ namespace GameServer.Container {
 				player.Client.BattleScene.Reset(rows, cols);
 			}
 			Game.DM.Client.BattleScene.Reset(rows, cols);
-			this.Update();
+			Update();
+			_isPlaying = false;
 		}
 
 		public SceneObject FindObject(string id) {
@@ -200,9 +211,9 @@ namespace GameServer.Container {
 			if (gridObject is ActableGridObject) {
 				_actableObjectList.Add((ActableGridObject)gridObject);
 				foreach (Player player in Game.Players) {
-					player.Client.BattleScene.SetActingOrder(_actableObjectList);
+					player.Client.BattleScene.UpdateTurnOrder(_actableObjectList);
 				}
-				Game.DM.Client.BattleScene.SetActingOrder(_actableObjectList);
+				Game.DM.Client.BattleScene.UpdateTurnOrder(_actableObjectList);
 			}
 			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.PushGridObject(gridObject);
@@ -222,9 +233,9 @@ namespace GameServer.Container {
 				if (ret is ActableGridObject) {
 					_actableObjectList.Remove((ActableGridObject)ret);
 					foreach (Player player in Game.Players) {
-						player.Client.BattleScene.SetActingOrder(_actableObjectList);
+						player.Client.BattleScene.UpdateTurnOrder(_actableObjectList);
 					}
-					Game.DM.Client.BattleScene.SetActingOrder(_actableObjectList);
+					Game.DM.Client.BattleScene.UpdateTurnOrder(_actableObjectList);
 				}
 			}
 			if (ret != null) {
@@ -245,9 +256,9 @@ namespace GameServer.Container {
 			if (gridObject is ActableGridObject) {
 				_actableObjectList.Remove((ActableGridObject)gridObject);
 				foreach (Player player in Game.Players) {
-					player.Client.BattleScene.SetActingOrder(_actableObjectList);
+					player.Client.BattleScene.UpdateTurnOrder(_actableObjectList);
 				}
-				Game.DM.Client.BattleScene.SetActingOrder(_actableObjectList);
+				Game.DM.Client.BattleScene.UpdateTurnOrder(_actableObjectList);
 			}
 			foreach (Player player in Game.Players) {
 				player.Client.BattleScene.RemoveGridObject(gridObject);
@@ -388,6 +399,16 @@ namespace GameServer.Container {
 			return true;
 		}
 
+		public void StartBattle() {
+			Update();
+			_isPlaying = true;
+			foreach (Player player in Game.Players) {
+				player.Client.BattleScene.StartBattle();
+			}
+			Game.DM.Client.BattleScene.StartBattle();
+			NewRound();
+		}
+
 		public void NewRound() {
 			foreach (ActableGridObject actableObject in _actableObjectList) {
 				var notice = actableObject.CharacterRef.GetSkill(SkillType.Notice);
@@ -406,41 +427,41 @@ namespace GameServer.Container {
 			}
 			_actableObjectList.Sort((x, y) => { return y.ActionPriority - x.ActionPriority; });
 			foreach (Player player in Game.Players) {
-				player.Client.BattleScene.SetActingOrder(_actableObjectList);
+				player.Client.BattleScene.UpdateTurnOrder(_actableObjectList);
 			}
-			Game.DM.Client.BattleScene.SetActingOrder(_actableObjectList);
+			Game.DM.Client.BattleScene.UpdateTurnOrder(_actableObjectList);
 			if (_actableObjectList.Count > 0) {
 				_currentActable = _actableObjectList[0];
 				_currentActable.ResetHinderingRecords();
 				foreach (Player player in Game.Players) {
-					player.Client.BattleScene.ChangeTurn(_currentActable);
+					player.Client.BattleScene.NewTurn(_currentActable);
 					player.Client.BattleScene.UpdateActionPoint(_currentActable);
 				}
-				Game.DM.Client.BattleScene.ChangeTurn(_currentActable);
+				Game.DM.Client.BattleScene.NewTurn(_currentActable);
 				Game.DM.Client.BattleScene.UpdateActionPoint(_currentActable);
 				_currentActable.AddMovePoint();
 			} else _currentActable = null;
 			++_roundCount;
-			this.Update();
+			Update();
 		}
 
 		public void CurrentTurnOver() {
 			if (_currentActable == null) throw new InvalidOperationException("Current acting character is null.");
 			int next = _actableObjectList.IndexOf(_currentActable) + 1;
 			if (next >= _actableObjectList.Count) {
-				this.NewRound();
+				NewRound();
 			} else {
 				_currentActable = _actableObjectList[next];
 				_currentActable.ResetHinderingRecords();
 				foreach (Player player in Game.Players) {
-					player.Client.BattleScene.ChangeTurn(_currentActable);
+					player.Client.BattleScene.NewTurn(_currentActable);
 					player.Client.BattleScene.UpdateActionPoint(_currentActable);
 				}
-				Game.DM.Client.BattleScene.ChangeTurn(_currentActable);
+				Game.DM.Client.BattleScene.NewTurn(_currentActable);
 				Game.DM.Client.BattleScene.UpdateActionPoint(_currentActable);
 				_currentActable.AddMovePoint();
 			}
-			this.Update();
+			Update();
 		}
 
 		public void Update() {
@@ -478,13 +499,13 @@ namespace GameServer.Container {
 					RemoveLadderObject(asLadderObject);
 				}
 			}
-
+			// ...
 		}
 
 		public void StartCheck(
 			SceneObject initiative, IEnumerable<SceneObject> passives,
 			CharacterAction action, SkillType initiativeSkillType,
-			Action<CheckResult, CheckResult, int> onceHinderCheckOver = null,
+			Action checkOver, Action<CheckResult, CheckResult, int> onceHinderCheckOver = null,
 			bool bigone = false, int fixedExtraPoint = 0, int[] fixedDicePoints = null
 			) {
 			if (_isChecking) throw new InvalidOperationException("It's in checking state.");
@@ -497,8 +518,9 @@ namespace GameServer.Container {
 			if (!hasElement) throw new ArgumentException("There is no passive character for checking.", nameof(passives));
 			_initiative = initiative ?? throw new ArgumentNullException(nameof(initiative));
 			_initiativeSkillType = initiativeSkillType ?? throw new ArgumentNullException(nameof(initiativeSkillType));
+			_checkOverCallback = checkOver ?? throw new ArgumentNullException(nameof(checkOver));
 			if (action == CharacterAction.HINDER) {
-				_hinderCheckOverCallback = onceHinderCheckOver ?? throw new ArgumentNullException(nameof(onceHinderCheckOver));
+				_onceHinderCheckOverCallback = onceHinderCheckOver ?? throw new ArgumentNullException(nameof(onceHinderCheckOver));
 			}
 			_checkingAction = action;
 			_passives.Clear();
@@ -527,6 +549,7 @@ namespace GameServer.Container {
 				}
 				Game.DM.Client.BattleScene.EndCheck();
 				_isChecking = false;
+				_checkOverCallback();
 				return;
 			}
 			_currentPassive = _passives[_passives.Count - 1];
@@ -671,7 +694,7 @@ namespace GameServer.Container {
 						break;
 				}
 			} else if (_checkingAction == CharacterAction.HINDER) {
-				_hinderCheckOverCallback(initiativeResult, passiveResult, delta);
+				_onceHinderCheckOverCallback(initiativeResult, passiveResult, delta);
 			}
 
 			var checkOverEvent = new BattleSceneOnceCheckOverEvent();
@@ -1295,7 +1318,7 @@ namespace GameServer.Container.BattleComponent {
 								_outer.CharacterRef.Name + "想使用" + _outer.CharacterRef.GetSkill(origin_skillType).Name + ",可以吗？");
 							if (result) {
 								completeFunc(true, "");
-								BattleSceneContainer.Instance.StartCheck(_outer, origin_targets, action, origin_skillType, null, bigone, extraPoint, fixedDicePoints);
+								BattleSceneContainer.Instance.StartCheck(_outer, origin_targets, action, origin_skillType, () => { }, null, bigone, extraPoint, fixedDicePoints);
 							} else {
 								completeFunc(false, "DM拒绝了你的选择");
 							}
@@ -1303,7 +1326,7 @@ namespace GameServer.Container.BattleComponent {
 						}
 					}
 					completeFunc(true, "");
-					BattleSceneContainer.Instance.StartCheck(_outer, origin_targets, action, origin_skillType, null, bigone, extraPoint, fixedDicePoints);
+					BattleSceneContainer.Instance.StartCheck(_outer, origin_targets, action, origin_skillType, () => { }, null, bigone, extraPoint, fixedDicePoints);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 				}
@@ -1568,7 +1591,8 @@ namespace GameServer.Container.BattleComponent {
 		private bool _movable = false;
 		private int _movePoint = 0;
 
-		private readonly List<ActableGridObject> _hinderMovingObjects = new List<ActableGridObject>();
+		private readonly List<ActableGridObject> _hinderMovingObjectsRecord = new List<ActableGridObject>();
+		private bool _hinderMovingSuccess = false;
 
 		public int ActionPriority { get => _actionPriority; set => _actionPriority = value; }
 		public int ActionPoint { get => _actionPoint; set => _actionPoint = value; }
@@ -1584,7 +1608,7 @@ namespace GameServer.Container.BattleComponent {
 		}
 
 		public void ResetHinderingRecords() {
-			_hinderMovingObjects.Clear();
+			_hinderMovingObjectsRecord.Clear();
 		}
 
 		public void AddMovePoint() {
@@ -1673,7 +1697,7 @@ namespace GameServer.Container.BattleComponent {
 							foreach (var obj in objs) {
 								var actableObj = obj as ActableGridObject;
 								if (actableObj != null) {
-									if (actableObj != this && actableObj.Movable && !actableObj.CharacterRef.IsPartyWith(this.CharacterRef) && !_hinderMovingObjects.Contains(actableObj)) {
+									if (actableObj != this && actableObj.Movable && !actableObj.CharacterRef.IsPartyWith(this.CharacterRef) && !_hinderMovingObjectsRecord.Contains(actableObj)) {
 										if (!hinderObjs.ContainsKey(actableObj.CharacterRef.Controller)) {
 											hinderObjs.Add(actableObj.CharacterRef.Controller, new List<ActableGridObject>());
 										}
@@ -1714,21 +1738,27 @@ namespace GameServer.Container.BattleComponent {
 						var hinderObj = list[0];
 						int determin = user.Client.RequestDetermin("要让 " + hinderObj.Name + " 阻扰 " + this.Name + " 的移动吗？（1是，0否）");
 						if (determin == 1) {
+							_hinderMovingObjectsRecord.Add(hinderObj);
 							BattleSceneContainer.Instance.StartCheck(hinderObj, new ActableGridObject[] { this }, CharacterAction.HINDER, SkillType.Physique,
+								() => { if (!_hinderMovingSuccess) MoveTo(dstRow, dstCol, dstHighland); },
 								(initiativeResult, passiveResult, delta) => {
-									_hinderMovingObjects.Add(hinderObj);
-									this.MovePoint = leftMovePoint;
-									foreach (Player player in Game.Players) {
-										player.Client.BattleScene.UpdateMovePoint(this);
-									}
-									Game.DM.Client.BattleScene.UpdateMovePoint(this);
 									if (passiveResult != CheckResult.FAIL) {
+										this.MovePoint = leftMovePoint;
 										foreach (Player player in Game.Players) {
 											player.Client.BattleScene.DisplayActableObjectMove(this, direction, stairway);
+											player.Client.BattleScene.UpdateMovePoint(this);
 										}
 										Game.DM.Client.BattleScene.DisplayActableObjectMove(this, direction, stairway);
+										Game.DM.Client.BattleScene.UpdateMovePoint(this);
 										BattleSceneContainer.Instance.BattleMap.MoveStack(srcRow, srcCol, srcHighland, nextRow, nextCol, nextHighland);
-										MoveTo(dstRow, dstCol, dstHighland);
+										_hinderMovingSuccess = false;
+									} else {
+										this.MovePoint = 0;
+										foreach (Player player in Game.Players) {
+											player.Client.BattleScene.UpdateMovePoint(this);
+										}
+										Game.DM.Client.BattleScene.UpdateMovePoint(this);
+										_hinderMovingSuccess = true;
 									}
 								});
 							return;
@@ -2006,7 +2036,7 @@ namespace GameServer.Container.BattleComponent {
 					}
 					Game.DM.Client.BattleScene.UpdateActionPoint(this);
 					this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntComplete();
-					BattleSceneContainer.Instance.StartCheck(this, targets, action, skillType);
+					BattleSceneContainer.Instance.StartCheck(this, targets, action, skillType, () => { });
 				} else {
 					this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntFailure("DM拒绝了你选择的技能");
 				}
@@ -2017,7 +2047,7 @@ namespace GameServer.Container.BattleComponent {
 				}
 				Game.DM.Client.BattleScene.UpdateActionPoint(this);
 				this.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectSkillOrStuntComplete();
-				BattleSceneContainer.Instance.StartCheck(this, targets, action, skillType);
+				BattleSceneContainer.Instance.StartCheck(this, targets, action, skillType, () => { });
 			}
 		}
 

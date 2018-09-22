@@ -302,34 +302,6 @@ namespace GameServer.CharacterSystem {
 		#endregion
 		private readonly JSAPI _apiObj;
 
-		private sealed class CharacterGroup {
-			private static int _autoIncrement = 0;
-
-			private readonly int _thisNumber = 0;
-			private readonly List<Character> _characters = new List<Character>();
-
-			public int ID => _thisNumber;
-			public List<Character> Characters => _characters;
-			public bool Empty => _characters.Count <= 0;
-
-			public CharacterGroup() {
-				_thisNumber = _autoIncrement++;
-			}
-		}
-
-		private static readonly Dictionary<int, CharacterGroup> _characterGroups = new Dictionary<int, CharacterGroup>();
-		
-		public static Character[][] GetAllParties() {
-			var list = new List<Character[]>();
-			foreach (var keyValuePair in _characterGroups) {
-				var characterGroup = keyValuePair.Value;
-				if (!characterGroup.Empty) {
-					list.Add(characterGroup.Characters.ToArray());
-				}
-			}
-			return list.ToArray();
-		}
-
 		private readonly string _id;
 		private string _name = "";
 		private string _description = "";
@@ -338,6 +310,7 @@ namespace GameServer.CharacterSystem {
 		private Player _controlPlayer = null;
 		private bool _destroyed = false;
 		private int _groupID = -1;
+		private CharacterToken _token = CharacterToken.NEUTRAL;
 
 		protected readonly Dictionary<SkillType, Skill> _skills;
 		private readonly CharacterPropertyList<Aspect> _aspects;
@@ -356,6 +329,8 @@ namespace GameServer.CharacterSystem {
 		public Player ControlPlayer { get => _controlPlayer; set => _controlPlayer = value; }
 		public User Controller => _controlPlayer ?? (User)Game.DM;
 		public bool Destroyed => _destroyed;
+		public int GroupID => _groupID;
+		public CharacterToken Token { get => _token; set => _token = value; }
 
 		public CharacterPropertyList<Aspect> Aspects => _aspects;
 		public int PhysicsStress { get => _physicsStress; set => _physicsStress = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Physics stress is less than 0."); }
@@ -367,6 +342,10 @@ namespace GameServer.CharacterSystem {
 
 		public void SetBelong(Extra belong) {
 			_belong = belong;
+		}
+
+		public void SetGroupID(int val) {
+			_groupID = val;
 		}
 
 		protected Character(string id, CharacterView view) {
@@ -389,53 +368,19 @@ namespace GameServer.CharacterSystem {
 		}
 
 		public Character[] PartyMembers() {
-			if (_groupID == -1) return new Character[0];
-			else return _characterGroups[_groupID].Characters.ToArray();
+			return CharacterManager.Instance.GetPartyMembers(this);
 		}
 
 		public void MakePartyWith(Character other) {
-			if (this == other) return;
-			if (_groupID == other._groupID && _groupID != -1) return;
-			if (_groupID != -1) LeaveParty();
-			if (other._groupID != -1) {
-				_characterGroups[other._groupID].Characters.Add(this);
-				_groupID = other._groupID;
-			} else {
-				bool hasEmptyGroup = false;
-				foreach (var group in _characterGroups) {
-					if (group.Value.Empty) {
-						group.Value.Characters.Add(this);
-						group.Value.Characters.Add(other);
-						_groupID = group.Key;
-						other._groupID = group.Key;
-						hasEmptyGroup = true;
-						break;
-					}
-				}
-				if (!hasEmptyGroup) {
-					var newGroup = new CharacterGroup();
-					newGroup.Characters.Add(this);
-					newGroup.Characters.Add(other);
-					_groupID = newGroup.ID;
-					other._groupID = newGroup.ID;
-					_characterGroups.Add(newGroup.ID, newGroup);
-				}
-			}
+			CharacterManager.Instance.MakeParty(this, other);
 		}
 
 		public void LeaveParty() {
-			if (_groupID == -1) return;
-			_characterGroups[_groupID].Characters.Remove(this);
-			_groupID = -1;
+			CharacterManager.Instance.LeaveParty(this);
 		}
 
 		public void BreakParty() {
-			if (_groupID == -1) return;
-			var group = _characterGroups[_groupID];
-			foreach (var character in group.Characters) {
-				character._groupID = -1;
-			}
-			group.Characters.Clear();
+			CharacterManager.Instance.BreakParty(this);
 		}
 
 		public void ResetSkill(SkillType skillType) {
@@ -828,7 +773,20 @@ namespace GameServer.CharacterSystem {
 		#endregion
 		private readonly JSAPI _apiObj;
 
-		private int _autoIncrementalIDNum = 0;
+		private sealed class CharacterGroup {
+			private static int _autoIncrement = 0;
+
+			private readonly int _thisNumber = 0;
+			private readonly List<Character> _characters = new List<Character>();
+
+			public int ID => _thisNumber;
+			public List<Character> Characters => _characters;
+			public bool Empty => _characters.Count <= 0;
+
+			public CharacterGroup() {
+				_thisNumber = _autoIncrement++;
+			}
+		}
 
 		public enum DataLevel {
 			Temporary,
@@ -839,8 +797,12 @@ namespace GameServer.CharacterSystem {
 		private static readonly CharacterManager _instance = new CharacterManager();
 		public static CharacterManager Instance => _instance;
 
+		private int _autoIncrementalIDNum = 0;
+
 		private readonly IdentifiedObjList<Character> _savingNPCharacters = new IdentifiedObjList<Character>();
 		private readonly IdentifiedObjList<Character> _playerCharacters = new IdentifiedObjList<Character>();
+
+		private readonly Dictionary<int, CharacterGroup> _characterGroups = new Dictionary<int, CharacterGroup>();
 
 		public IdentifiedObjList<Character> SavingNPCharacters => _savingNPCharacters;
 		public IdentifiedObjList<Character> PlayerCharacters => _playerCharacters;
@@ -849,6 +811,66 @@ namespace GameServer.CharacterSystem {
 			_apiObj = new JSAPI(this);
 		}
 
+		public Character[][] GetAllParties() {
+			var list = new List<Character[]>();
+			foreach (var characterGroup in _characterGroups) {
+				if (!characterGroup.Value.Empty) {
+					list.Add(characterGroup.Value.Characters.ToArray());
+				}
+			}
+			return list.ToArray();
+		}
+		
+		public Character[] GetPartyMembers(Character character) {
+			if (character.GroupID == -1) return new Character[0];
+			else return _characterGroups[character.GroupID].Characters.ToArray();
+		}
+
+		public void MakeParty(Character character, Character partyMember) {
+			if (character == partyMember) return;
+			if (character.GroupID == partyMember.GroupID && character.GroupID != -1) return;
+			if (character.GroupID != -1) LeaveParty(character);
+			if (partyMember.GroupID != -1) {
+				_characterGroups[partyMember.GroupID].Characters.Add(character);
+				character.SetGroupID(partyMember.GroupID);
+			} else {
+				bool hasEmptyGroup = false;
+				foreach (var group in _characterGroups) {
+					if (group.Value.Empty) {
+						group.Value.Characters.Add(character);
+						group.Value.Characters.Add(partyMember);
+						character.SetGroupID(group.Key);
+						partyMember.SetGroupID(group.Key);
+						hasEmptyGroup = true;
+						break;
+					}
+				}
+				if (!hasEmptyGroup) {
+					var newGroup = new CharacterGroup();
+					newGroup.Characters.Add(character);
+					newGroup.Characters.Add(partyMember);
+					character.SetGroupID(newGroup.ID);
+					partyMember.SetGroupID(newGroup.ID);
+					_characterGroups.Add(newGroup.ID, newGroup);
+				}
+			}
+		}
+
+		public void LeaveParty(Character character) {
+			if (character.GroupID == -1) return;
+			_characterGroups[character.GroupID].Characters.Remove(character);
+			character.SetGroupID(-1);
+		}
+
+		public void BreakParty(Character partyMember) {
+			if (partyMember.GroupID == -1) return;
+			var group = _characterGroups[partyMember.GroupID];
+			foreach (var member in group.Characters) {
+				member.SetGroupID(-1);
+			}
+			group.Characters.Clear();
+		}
+		
 		public Character FindCharacterOrItemRecursivelyByID(string id) {
 			if (CampaignManager.Instance.CurrentContainer == ContainerType.STORY) {
 				if (StorySceneContainer.Instance.PlayerCharacters.TryGetValue(id, out Character character)) {

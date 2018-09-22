@@ -117,10 +117,10 @@ namespace GameUtil.Network {
 					return new BattleSceneRemoveLadderObjectMessage();
 				case BattleSceneResetMessage.MESSAGE_TYPE:
 					return new BattleSceneResetMessage();
-				case BattleSceneSetActingOrderMessage.MESSAGE_TYPE:
-					return new BattleSceneSetActingOrderMessage();
-				case BattleSceneChangeTurnMessage.MESSAGE_TYPE:
-					return new BattleSceneChangeTurnMessage();
+				case BattleSceneUpdateTurnOrderMessage.MESSAGE_TYPE:
+					return new BattleSceneUpdateTurnOrderMessage();
+				case BattleSceneNewTurnMessage.MESSAGE_TYPE:
+					return new BattleSceneNewTurnMessage();
 				case BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage.MESSAGE_TYPE:
 					return new BattleSceneCheckerNotifyPassiveSelectSkillOrStuntMessage();
 				case BattleSceneCheckerNotifySelectAspectMessage.MESSAGE_TYPE:
@@ -179,10 +179,14 @@ namespace GameUtil.Network {
 					return new BattleSceneObjectUsableSkillListOnInteractMessage();
 				case WaitingForUserDeterminMessage.MESSAGE_TYPE:
 					return new WaitingForUserDeterminMessage();
-				case PartyMemberListMessage.MESSAGE_TYPE:
-					return new PartyMemberListMessage();
+				case CharacterGroupDataMessage.MESSAGE_TYPE:
+					return new CharacterGroupDataMessage();
 				case AllPartyListMessage.MESSAGE_TYPE:
 					return new AllPartyListMessage();
+				case BattleSceneStartBattleMessage.MESSAGE_TYPE:
+					return new BattleSceneStartBattleMessage();
+				case PlayerCharactersMessage.MESSAGE_TYPE:
+					return new PlayerCharactersMessage();
 
 				// client message
 				case ClientInitMessage.MESSAGE_TYPE:
@@ -255,10 +259,10 @@ namespace GameUtil.Network {
 					return new GetDirectResistStuntsMessage();
 				case BattleSceneGetInitiativeUsableSkillOrStuntListOnInteractMessage.MESSAGE_TYPE:
 					return new BattleSceneGetInitiativeUsableSkillOrStuntListOnInteractMessage();
-				case GetPartyMemberListMessage.MESSAGE_TYPE:
-					return new GetPartyMemberListMessage();
 				case GetAllPartyListMessage.MESSAGE_TYPE:
 					return new GetAllPartyListMessage();
+				case GetPlayerCharactersMessage.MESSAGE_TYPE:
+					return new GetPlayerCharactersMessage();
 
 				default:
 					throw new NotImplementedException();

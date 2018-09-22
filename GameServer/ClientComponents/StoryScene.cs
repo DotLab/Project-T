@@ -249,12 +249,10 @@ namespace GameServer.ClientComponents {
 		}
 
 		public void Open() {
-			if (_isUsing) return;
 			_isUsing = true;
 		}
 
 		public void Close() {
-			if (!_isUsing) return;
 			_skillCheckPanel.Close();
 			_isUsing = false;
 		}

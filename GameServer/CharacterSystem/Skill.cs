@@ -120,7 +120,7 @@ namespace GameServer.CharacterSystem {
 		private int _level;
 		private bool _levelUseRef = true;
 		private SkillBattleMapProperty _battleMapProperty;
-		private bool _skillPropertyUseRef = true;
+		private bool _battleMapPropertyUseRef = true;
 		private SkillSituationLimit _situationLimit;
 		private bool _situationLimitUseRef = true;
 
@@ -128,7 +128,7 @@ namespace GameServer.CharacterSystem {
 		public string Description { get => ""; set { } }
 		public SkillType SkillType => _skillType;
 		public int Level { get => _levelUseRef ? _skillType.Level : _level; set { _level = value; _levelUseRef = false; } }
-		public SkillBattleMapProperty BattleMapProperty { get => _skillPropertyUseRef ? _skillType.BattleMapProperty : _battleMapProperty; set { _battleMapProperty = value; _skillPropertyUseRef = false; } }
+		public SkillBattleMapProperty BattleMapProperty { get => _battleMapPropertyUseRef ? _skillType.BattleMapProperty : _battleMapProperty; set { _battleMapProperty = value; _battleMapPropertyUseRef = false; } }
 		public SkillSituationLimit SituationLimit { get => _situationLimitUseRef ? _skillType.SituationLimit : _situationLimit; set { _situationLimit = value; _situationLimitUseRef = false; } }
 
 		public Skill(SkillType skillType) {
@@ -147,10 +147,22 @@ namespace GameServer.CharacterSystem {
 			ret._level = _level;
 			ret._levelUseRef = _levelUseRef;
 			ret._battleMapProperty = _battleMapProperty;
-			ret._skillPropertyUseRef = _skillPropertyUseRef;
+			ret._battleMapPropertyUseRef = _battleMapPropertyUseRef;
 			ret._situationLimit = _situationLimit;
 			ret._situationLimitUseRef = _situationLimitUseRef;
 			return ret;
+		}
+
+		public void ResetLevel() {
+			_levelUseRef = true;
+		}
+
+		public void ResetBattleMapProperty() {
+			_battleMapPropertyUseRef = true;
+		}
+
+		public void ResetSituationLimit() {
+			_situationLimitUseRef = true;
 		}
 
 		public IJSContext GetContext() {

@@ -21,7 +21,7 @@ namespace GameServer.ClientComponents {
 		public abstract void MessageReceived(Message message);
 	}
 
-	public class Client : ClientComponent {
+	public class Client : ClientComponent, IRequestHandler {
 		protected readonly CharacterData _characterData;
 		protected readonly StoryScene _storyScene;
 		protected readonly BattleScene _battleScene;
@@ -31,6 +31,24 @@ namespace GameServer.ClientComponents {
 
 		public StoryScene StoryScene => _storyScene;
 		public BattleScene BattleScene => _battleScene;
+
+		public Message MakeResponse(Message request) {
+			Message ret = null;
+			if (request.MessageType == GetPlayerCharactersMessage.MESSAGE_TYPE) {
+				var resp = new PlayerCharactersMessage();
+				if (_owner.IsDM) {
+					resp.charactersID = new string[0];
+				} else {
+					var characters = _owner.AsPlayer.Characters;
+					resp.charactersID = new string[characters.Count];
+					for (int i = 0; i < characters.Count; ++i) {
+						resp.charactersID[i] = characters[i].ID;
+					}
+				}
+				ret = resp;
+			}
+			return ret;
+		}
 
 		public override void MessageReceived(Message message) {
 			if (message.MessageType == ClientInitMessage.MESSAGE_TYPE) {
@@ -48,6 +66,7 @@ namespace GameServer.ClientComponents {
 		
 		protected Client(Connection connection, User owner, StoryScene storyScene, BattleScene battleScene) :
 			base(connection, owner) {
+			_connection.SetRequestHandler(GetPlayerCharactersMessage.MESSAGE_TYPE, this);
 			_connection.AddMessageReceiver(ClientInitMessage.MESSAGE_TYPE, this);
 			_characterData = new CharacterData(connection, owner);
 			_storyScene = storyScene;

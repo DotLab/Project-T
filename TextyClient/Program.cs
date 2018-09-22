@@ -24,6 +24,8 @@ namespace TextyClient {
 		public static NetworkfConnection connection = new NetworkfConnection();
 		public static List<CharacterPropertyInfo> skillTypes = new List<CharacterPropertyInfo>();
 		public static MainForm mainForm;
+		public static List<string> charactersID = new List<string>();
+
 		/// <summary>
 		/// 应用程序的主入口点。
 		/// </summary>
@@ -56,7 +58,15 @@ namespace TextyClient {
 				service.TeardownService();
 				return;
 			}
-			
+
+			var getCharactersRequest = new GetPlayerCharactersMessage();
+			connection.Request(getCharactersRequest, result => {
+				var resp = result as PlayerCharactersMessage;
+				if (resp != null) {
+					charactersID.AddRange(resp.charactersID);
+				}
+			});
+
 			var getAllSkillTypesRequest = new GetSkillTypeListMessage();
 			connection.Request(getAllSkillTypesRequest, result => {
 				var resp = result as SkillTypeListDataMessage;

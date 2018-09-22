@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace TextyClient {
@@ -13,6 +14,7 @@ namespace TextyClient {
 		private abstract class BattleSceneObject {
 			public readonly string id;
 			public readonly CharacterView view;
+			public Color color = Color.Black;
 
 			public abstract bool Actable { get; }
 			public abstract bool Movable { get; }
@@ -123,6 +125,8 @@ namespace TextyClient {
 		private bool _selectedHighland = false;
 		private BattleSceneObject _specifiedSelectedObject = null;
 
+		private bool _waitingForUserDetermin = false;
+
 		private BindingList<ActableObjWithAP> _actingOrder = new BindingList<ActableObjWithAP>();
 		private string _actingObjID = null;
 		private int _actingObjRow = -1;
@@ -157,6 +161,11 @@ namespace TextyClient {
 		public void MessageReceived(GameUtil.Network.Message message) {
 			var printer = Program.mainForm.AdvancedConsole.TextBoxPrinter;
 			switch (message.MessageType) {
+				case WaitingForUserDeterminMessage.MESSAGE_TYPE: {
+						var msg = (WaitingForUserDeterminMessage)message;
+						_waitingForUserDetermin = msg.enabled;
+					}
+					break;
 				case ShowSceneMessage.MESSAGE_TYPE: {
 						var msg = (ShowSceneMessage)message;
 						if (msg.sceneType == 1) {
@@ -207,6 +216,33 @@ namespace TextyClient {
 						} else {
 							grid.lowland.Add(gridObject);
 						}
+						var req = new GetCharacterDataMessage();
+						req.characterID = gridObject.id;
+						req.dataType = GetCharacterDataMessage.DataType.GROUP;
+						Program.connection.Request(req, resp => {
+							var result = resp as CharacterGroupDataMessage;
+							if (result != null) {
+								switch (result.token) {
+									case CharacterToken.PLAYER:
+										gridObject.color = Color.RoyalBlue;
+										break;
+									case CharacterToken.FRIENDLY:
+										gridObject.color = Color.Green;
+										break;
+									case CharacterToken.NEUTRAL:
+										gridObject.color = Color.Yellow;
+										break;
+									case CharacterToken.NEUTRAL_HOSTILE:
+										gridObject.color = Color.Orange;
+										break;
+									case CharacterToken.HOSTILE:
+										gridObject.color = Color.Red;
+										break;
+									default:
+										break;
+								}
+							}
+						});
 					}
 					break;
 				case BattleSceneRemoveGridObjectMessage.MESSAGE_TYPE: {
@@ -272,8 +308,12 @@ namespace TextyClient {
 						}
 					}
 					break;
-				case BattleSceneSetActingOrderMessage.MESSAGE_TYPE: {
-						var orderMessage = (BattleSceneSetActingOrderMessage)message;
+				case BattleSceneStartBattleMessage.MESSAGE_TYPE: {
+						
+					}
+					break;
+				case BattleSceneUpdateTurnOrderMessage.MESSAGE_TYPE: {
+						var orderMessage = (BattleSceneUpdateTurnOrderMessage)message;
 						_actingOrder.Clear();
 						foreach (var obj in orderMessage.objOrder) {
 							var gridObject = GetGridObject(obj.row, obj.col, obj.id, out bool highland);
@@ -283,8 +323,8 @@ namespace TextyClient {
 						}
 					}
 					break;
-				case BattleSceneChangeTurnMessage.MESSAGE_TYPE: {
-						var orderMessage = (BattleSceneChangeTurnMessage)message;
+				case BattleSceneNewTurnMessage.MESSAGE_TYPE: {
+						var orderMessage = (BattleSceneNewTurnMessage)message;
 						_canActing = orderMessage.canOperate;
 						_actingObjID = orderMessage.gridObj.id;
 						_actingObjRow = orderMessage.gridObj.row;
@@ -651,6 +691,7 @@ namespace TextyClient {
 			roundInfoListBox.DataSource = _actingOrder;
 			selectionListBox.DataSource = _selectionList;
 
+			Program.connection.AddMessageReceiver(WaitingForUserDeterminMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(ShowSceneMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(DisplayDicePointsMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneResetMessage.MESSAGE_TYPE, this);
@@ -659,8 +700,9 @@ namespace TextyClient {
 			Program.connection.AddMessageReceiver(BattleSceneRemoveGridObjectMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneAddLadderObjectMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneRemoveLadderObjectMessage.MESSAGE_TYPE, this);
-			Program.connection.AddMessageReceiver(BattleSceneSetActingOrderMessage.MESSAGE_TYPE, this);
-			Program.connection.AddMessageReceiver(BattleSceneChangeTurnMessage.MESSAGE_TYPE, this);
+			Program.connection.AddMessageReceiver(BattleSceneStartBattleMessage.MESSAGE_TYPE, this);
+			Program.connection.AddMessageReceiver(BattleSceneUpdateTurnOrderMessage.MESSAGE_TYPE, this);
+			Program.connection.AddMessageReceiver(BattleSceneNewTurnMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneUpdateActionPointMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneUpdateMovePointMessage.MESSAGE_TYPE, this);
 			Program.connection.AddMessageReceiver(BattleSceneDisplayActableObjectMovingMessage.MESSAGE_TYPE, this);
@@ -874,8 +916,25 @@ namespace TextyClient {
 			if (gridObject.view.battle == "地面") {
 				g.FillPolygon(Brushes.LightGray, gridPoints);
 			} else {
-				g.DrawString(gridObject.ToString(), new Font("宋体", 12), Brushes.Black, new PointF(gridPoints[0].X - 12, gridPoints[0].Y + 12));
+				var text = gridObject.ToString();
+				var font = new Font("宋体", 12);
+				var loc = new PointF(gridPoints[0].X - 12, gridPoints[0].Y + 12);
+				if (gridObject.view.battle == "石柱") {
+					g.DrawString(text, font, Brushes.Black, loc);
+				} else {
+					using (var path = GetStringPath(g, text, font, loc)) {
+						g.DrawPath(new Pen(gridObject.color, 1), path);
+					}
+					g.DrawString(text, font, Brushes.White, loc);
+				}
 			}
+		}
+
+		private GraphicsPath GetStringPath(Graphics g, string s, Font font, PointF location) {
+			var path = new GraphicsPath();
+			float emSize = g.DpiY * font.SizeInPoints / 72.0f;
+			path.AddString(s, font.FontFamily, (int)font.Style, emSize, location, new StringFormat());
+			return path;
 		}
 
 		#region Canvas Drawing
@@ -1261,11 +1320,11 @@ namespace TextyClient {
 				return;
 			}
 			menuItemConfirmGrid.Enabled = false;
-			if (_isUsingSkillOrStunt && _isSelectingAffectCenter) {
+			if (!_waitingForUserDetermin && _isUsingSkillOrStunt && _isSelectingAffectCenter) {
 				menuItemConfirmGrid.Enabled = true;
 			}
 			menuItemMove.Enabled = menuItemExtraMovePoint.Enabled = menuItemCreateAspect.Enabled = menuItemAttack.Enabled = menuItemInteract.Enabled = menuItemRoundOver.Enabled = false;
-			if (!_isChecking) {
+			if (!_isChecking && !_waitingForUserDetermin) {
 				if (_movePathInfo != null) {
 					menuItemMove.Enabled = menuItemConfirmGrid.Enabled = true;
 				} else if (_createAspectReady) {

@@ -26,7 +26,6 @@ namespace GameServer.ClientComponents {
 			connection.SetRequestHandler(GetDirectResistSkillsMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetDirectResistStuntsMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetSkillTypeListMessage.MESSAGE_TYPE, this);
-			connection.SetRequestHandler(GetPartyMemberListMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetAllPartyListMessage.MESSAGE_TYPE, this);
 		}
 
@@ -86,11 +85,6 @@ namespace GameServer.ClientComponents {
 							resp = GetSkillTypeList();
 						}
 						break;
-					case GetPartyMemberListMessage.MESSAGE_TYPE: {
-							var req = (GetPartyMemberListMessage)request;
-							resp = GetPartyMemberList(CharacterManager.Instance.FindCharacterByID(req.characterID));
-						}
-						break;
 					case GetAllPartyListMessage.MESSAGE_TYPE: {
 							resp = GetAllPartyList();
 						}
@@ -118,6 +112,8 @@ namespace GameServer.ClientComponents {
 					return GetCharacterFatePointData(character);
 				case GetCharacterDataMessage.DataType.STRESS:
 					return GetCharacterStressData(character);
+				case GetCharacterDataMessage.DataType.GROUP:
+					return GetCharacterGroupData(character);
 				default:
 					return null;
 			}
@@ -145,6 +141,19 @@ namespace GameServer.ClientComponents {
 			message.physicsStressMax = character.PhysicsStressMax;
 			message.mentalStress = character.MentalStress;
 			message.mentalStressMax = character.MentalStressMax;
+			return message;
+		}
+
+		private Message GetCharacterGroupData(Character character) {
+			var message = new CharacterGroupDataMessage();
+			message.token = character.Token;
+			message.groupID = character.GroupID;
+			message.controlUserID = character.Controller.ID;
+			var members = character.PartyMembers();
+			message.membersID = new string[members.Length];
+			for (int i = 0; i < members.Length; ++i) {
+				message.membersID[i] = members[i].ID;
+			}
 			return message;
 		}
 
@@ -284,20 +293,10 @@ namespace GameServer.ClientComponents {
 			}
 			return message;
 		}
-
-		private Message GetPartyMemberList(Character oneMember) {
-			var message = new PartyMemberListMessage();
-			var members = oneMember.PartyMembers();
-			message.charactersID = new string[members.Length];
-			for (int i = 0; i < members.Length; ++i) {
-				message.charactersID[i] = members[i].ID;
-			}
-			return message;
-		}
-
+		
 		private Message GetAllPartyList() {
 			var message = new AllPartyListMessage();
-			var partis = Character.GetAllParties();
+			var partis = CharacterManager.Instance.GetAllParties();
 			message.parties = new string[partis.Length][];
 			for (int i = 0; i < partis.Length; ++i) {
 				message.parties[i] = new string[partis[i].Length];

@@ -266,6 +266,10 @@ namespace TestConsoleApp {
 			lily.MakePartyWith(brught_jackson);
 			emma.MakePartyWith(brught_jackson);
 
+			brught_jackson.Token = ranbo.Token = lily.Token = CharacterToken.PLAYER;
+			emma.Token = CharacterToken.FRIENDLY;
+			franz.Token = CharacterToken.HOSTILE;
+
 			Player[] players = new Player[2];
 			players[0] = new Player("Player1", "Player1", player1Connection, 1, player1characters);
 			players[1] = new Player("Player2", "Player2", player2Connection, 2, player2characters);
@@ -313,7 +317,7 @@ namespace TestConsoleApp {
 			battleScene.PushGridObject(4, 3, false, new ActableGridObject(franz));
 			battleScene.PushGridObject(4, 4, false, new ActableGridObject(emma));
 
-			battleScene.NewRound();
+			battleScene.StartBattle();
 
 			Game.RunGameLoop();
 		}
