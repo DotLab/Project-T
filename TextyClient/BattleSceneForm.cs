@@ -154,6 +154,7 @@ namespace TextyClient {
 		private readonly BindingList<BattleSceneObject> _targets = new BindingList<BattleSceneObject>();
 
 		private bool _isChecking = false;
+		private GridObject _currentInitiativeObj = null;
 		private ReachablePlace _currentCheckPlace = null;
 		private GridObject _currentPassiveObj = null;
 		private List<ReachablePlace> _targetPlaces = null;
@@ -424,6 +425,7 @@ namespace TextyClient {
 				case BattleSceneStartCheckMessage.MESSAGE_TYPE: {
 						var msg = (BattleSceneStartCheckMessage)message;
 						var initiativeObject = GetGridObject(msg.initiativeObj, out bool highland);
+						_currentInitiativeObj = initiativeObject;
 						_checkingAction = msg.action;
 						_targetPlaces = new List<ReachablePlace>();
 						printer.Write(initiativeObject + " 对 ");
@@ -439,7 +441,7 @@ namespace TextyClient {
 					break;
 				case CheckerCheckResultMessage.MESSAGE_TYPE: {
 						var msg = (CheckerCheckResultMessage)message;
-						var initiativeObj = GetGridObject(_actingObjRow, _actingObjCol, _actingObjID, out bool highland);
+						var initiativeObj = _currentInitiativeObj;
 						printer.WriteLine(initiativeObj + " 结果为 " + msg.initiative + "， " + _currentPassiveObj + " 结果为 " + msg.passive + "，成功度为" + Math.Abs(msg.delta));
 					}
 					break;
@@ -460,6 +462,7 @@ namespace TextyClient {
 				case BattleSceneEndCheckMessage.MESSAGE_TYPE: {
 						if (_currentCheckPlace != null) _targetPlaces.Remove(_currentCheckPlace);
 						_checkingAction = 0;
+						_currentInitiativeObj = null;
 						_currentPassiveObj = null;
 						_currentCheckPlace = null;
 						_targetPlaces = null;
