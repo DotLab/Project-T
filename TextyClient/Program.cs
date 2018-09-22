@@ -18,7 +18,7 @@ namespace TextyClient {
 			return name + " " + extraMessage;
 		}
 	}
-
+	
 	static class Program {
 		public static bool isDM = false;
 		public static NetworkfConnection connection = new NetworkfConnection();
@@ -32,6 +32,10 @@ namespace TextyClient {
 		[STAThread]
 		static void Main() {
 			connection.ExceptionCaught += Connection_EventCaught;
+
+			string ip;
+			ip = Microsoft.VisualBasic.Interaction.InputBox("输入服务器IP");
+			if (ip == "") return;
 
 			string id;
 			byte[] verificationCode = { };
@@ -51,7 +55,7 @@ namespace TextyClient {
 				}
 			}
 
-			var service = NetworkHelper.StartClient("127.0.0.1");
+			var service = NetworkHelper.StartClient(ip);
 			var initializer = new NSInitializer(service);
 			if (!initializer.ClientInit(verificationCode, connection)) {
 				MessageBox.Show("登陆失败", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);

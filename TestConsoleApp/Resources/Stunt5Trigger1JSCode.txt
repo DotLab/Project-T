@@ -11,6 +11,7 @@
 				if (dmResult) {
 					thisObj.displayUsingStunt(stunt);
 					aspect.setPersistenceType(2);
+					aspect.setBenefitTimes(1);
 				}
 			}
 		}
