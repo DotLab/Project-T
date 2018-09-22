@@ -21,13 +21,16 @@ namespace TestConsoleApp {
 		static readonly byte[] dmVerificationCode = { 0x00, 0x10, 0x20, 0xAB };
 		static readonly byte[] player1VerificationCode = { 0x00, 0x10, 0x20, 0x3B };
 		static readonly byte[] player2VerificationCode = { 0x00, 0x10, 0x20, 0xC5 };
+		static readonly byte[] player3VerificationCode = { 0x00, 0x11, 0x33, 0xFA };
 
 		static readonly NetworkfConnection dmConnection = new NetworkfConnection();
 		static readonly NetworkfConnection player1Connection = new NetworkfConnection();
 		static readonly NetworkfConnection player2Connection = new NetworkfConnection();
+		static readonly NetworkfConnection player3Connection = new NetworkfConnection();
 
 		static readonly KeyCharacter[] player1characters = new KeyCharacter[1];
-		static readonly KeyCharacter[] player2characters = new KeyCharacter[2];
+		static readonly KeyCharacter[] player2characters = new KeyCharacter[1];
+		static readonly KeyCharacter[] player3characters = new KeyCharacter[1];
 
 		static void Main(string[] args) {
 			var brught_jackson = player1characters[0] = new KeyCharacter("PlayerBrughtJackson", new CharacterView() { battle = "布鲁特", story = "布鲁特·杰克逊" });
@@ -118,7 +121,7 @@ namespace TestConsoleApp {
 			ranbo.Stunts.Add(stunt4);
 
 
-			var lily = player2characters[1] = new KeyCharacter("PlayerLily", new CharacterView() { battle = "李莉", story = "李莉" });
+			var lily = player3characters[0] = new KeyCharacter("PlayerLily", new CharacterView() { battle = "李莉", story = "李莉" });
 			lily.Name = "李莉";
 			lily.Description = "联邦调查局，负责人口失踪与贩卖类别的调查。由于移民身份总是受到同事的排挤。";
 			lily.PhysicsStressMax = lily.MentalStressMax = 3;
@@ -270,11 +273,12 @@ namespace TestConsoleApp {
 			emma.Token = CharacterToken.FRIENDLY;
 			franz.Token = CharacterToken.HOSTILE;
 
-			Player[] players = new Player[2];
-			players[0] = new Player("Player1", "Player1", player1Connection, 1, player1characters);
-			players[1] = new Player("Player2", "Player2", player2Connection, 2, player2characters);
+			Player[] players = new Player[3];
+			players[0] = new Player("Player1", "玩家1", player1Connection, 1, player1characters);
+			players[1] = new Player("Player2", "玩家2", player2Connection, 2, player2characters);
+			players[2] = new Player("Player3", "玩家3", player3Connection, 3, player3characters);
 
-			DM dm = new DM("DM", "DM", dmConnection);
+			DM dm = new DM("DM", "主持人", dmConnection);
 
 			Game.InitGame(dm, players);
 
@@ -312,7 +316,7 @@ namespace TestConsoleApp {
 
 			battleScene.PushGridObject(7, 6, false, new ActableGridObject(player1characters[0]));
 			battleScene.PushGridObject(7, 5, false, new ActableGridObject(player2characters[0]));
-			battleScene.PushGridObject(7, 4, false, new ActableGridObject(player2characters[1]));
+			battleScene.PushGridObject(7, 4, false, new ActableGridObject(player3characters[0]));
 
 			battleScene.PushGridObject(4, 3, false, new ActableGridObject(franz));
 			battleScene.PushGridObject(4, 4, false, new ActableGridObject(emma));
@@ -343,6 +347,12 @@ namespace TestConsoleApp {
 						initializer.ServerApplyConnection(null);
 					} else {
 						initializer.ServerApplyConnection(player2Connection);
+					}
+				} else if (code.SequenceEqual(player3VerificationCode)) {
+					if (player3Connection.Available()) {
+						initializer.ServerApplyConnection(null);
+					} else {
+						initializer.ServerApplyConnection(player3Connection);
 					}
 				} else {
 					initializer.ServerApplyConnection(null);

@@ -31,6 +31,9 @@ namespace TextyClient {
 		/// </summary>
 		[STAThread]
 		static void Main() {
+			Application.EnableVisualStyles();
+			Application.SetCompatibleTextRenderingDefault(false);
+
 			connection.ExceptionCaught += Connection_EventCaught;
 
 			string ip;
@@ -45,13 +48,21 @@ namespace TextyClient {
 				isDM = true;
 				id = "DM";
 			} else {
-				var dialogResult2 = MessageBox.Show("Player1(Yes) or Player2(No)?", "Choose", MessageBoxButtons.YesNo);
-				if (dialogResult2 == DialogResult.Yes) {
-					verificationCode = new byte[] { 0x00, 0x10, 0x20, 0x3B };
-					id = "Player1";
-				} else {
-					verificationCode = new byte[] { 0x00, 0x10, 0x20, 0xC5 };
-					id = "Player2";
+				while (true) {
+					string dialogResult2 = Microsoft.VisualBasic.Interaction.InputBox("Player1(输入1) or Player2(输入2) or Player3(输入3)?");
+					if (dialogResult2 == "1") {
+						verificationCode = new byte[] { 0x00, 0x10, 0x20, 0x3B };
+						id = "Player1";
+						break;
+					} else if (dialogResult2 == "2") {
+						verificationCode = new byte[] { 0x00, 0x10, 0x20, 0xC5 };
+						id = "Player2";
+						break;
+					} else if (dialogResult2 == "3") {
+						verificationCode = new byte[] { 0x00, 0x11, 0x33, 0xFA };
+						id = "Player3";
+						break;
+					}
 				}
 			}
 
@@ -84,8 +95,6 @@ namespace TextyClient {
 				}
 			});
 
-			Application.EnableVisualStyles();
-			Application.SetCompatibleTextRenderingDefault(false);
 			mainForm = new MainForm(isDM);
 			mainForm.Text += id;
 			mainForm.battleSceneForm.Text += id;
