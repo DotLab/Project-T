@@ -15,26 +15,24 @@
 			var thisCharacter = stunt.getBelong();
 			var fight = thisCharacter.getSkill(fightSkillType);
 			var athletics = thisCharacter.getSkill(athleticsSkillType);
-			$.campaignManager.askPlayer(thisCharacter, "你认为目标足够轻，想立刻致其死亡吗？（1是，0否）", function(result) {
-				if (result == 1) {
-					$.campaignManager.askDM(thisCharacter, "允许 " + thisCharacter.getName() + " 使用 " + stunt.getName() + " 将目标摔死吗？", function(dmResult) {
-						if (dmResult) {
-							for (var i = 0; i < targets.length; ++i) {
-								targets[i].markDestroyed();
-							}
-							completeFunc(true, "");
-						} else {
-							completeFunc(false, "DM拒绝你摔死目标");
-						}
-					});
+			var result = $.campaignManager.askUser(thisCharacter, "你认为目标足够轻，想立刻致其死亡吗？（1是，0否）");
+			if (result == 1) {
+				var dmResult = $.campaignManager.requestDMCheck(thisCharacter, "允许 " + thisCharacter.getName() + " 使用 " + stunt.getName() + " 将目标摔死吗？");
+				if (dmResult) {
+					for (var i = 0; i < targets.length; ++i) {
+						targets[i].markDestroyed();
+					}
+					completeFunc(true, "");
 				} else {
-					stunt.setCustomData(thisCharacter.getSkill(fightSkillType).clone());
-					fight.setName("战斗（运动）");
-					fight.setLevel(athletics.getLevel());
-					fight.setBattleMapProperty(athletics.getBattleMapProperty());
-					me.useSkillWithStuntComplete(fightSkillType, action, targets, completeFunc);
+					completeFunc(false, "DM拒绝你摔死目标");
 				}
-			});
+			} else {
+				stunt.setCustomData(thisCharacter.getSkill(fightSkillType).clone());
+				fight.setName("战斗（运动）");
+				fight.setLevel(athletics.getLevel());
+				fight.setBattleMapProperty(athletics.getBattleMapProperty());
+				me.useSkillWithStuntComplete(fightSkillType, action, targets, completeFunc);
+			}
 		}
 	}
 })();

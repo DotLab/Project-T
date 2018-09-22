@@ -266,13 +266,17 @@ namespace TestConsoleApp {
 			lily.MakePartyWith(brught_jackson);
 			emma.MakePartyWith(brught_jackson);
 
+			brught_jackson.Token = ranbo.Token = lily.Token = CharacterToken.PLAYER;
+			emma.Token = CharacterToken.FRIENDLY;
+			franz.Token = CharacterToken.HOSTILE;
+
 			Player[] players = new Player[2];
 			players[0] = new Player("Player1", "Player1", player1Connection, 1, player1characters);
 			players[1] = new Player("Player2", "Player2", player2Connection, 2, player2characters);
 
 			DM dm = new DM("DM", "DM", dmConnection);
 
-			Game.Init(dm, players);
+			Game.InitGame(dm, players);
 
 			NetworkHelper.StartServer(OnConnectionEstablished);
 
@@ -313,17 +317,9 @@ namespace TestConsoleApp {
 			battleScene.PushGridObject(4, 3, false, new ActableGridObject(franz));
 			battleScene.PushGridObject(4, 4, false, new ActableGridObject(emma));
 
-			battleScene.NewRound();
-			
-			while (!Game.GameOver) {
-				Game.Update();
-				Thread.Sleep(100);
-			}
+			battleScene.StartBattle();
 
-			Game.Cleanup();
-
-			Console.WriteLine("Press any key to continue...");
-			Console.ReadKey();
+			Game.RunGameLoop();
 		}
 
 		static void OnConnectionEstablished(NetworkService service) {
@@ -331,19 +327,19 @@ namespace TestConsoleApp {
 			byte[] code = initializer.ServerRequireClientVerify();
 			if (code != null) {
 				if (code.SequenceEqual(dmVerificationCode)) {
-					if (dmConnection.HasAppliedService()) {
+					if (dmConnection.Available()) {
 						initializer.ServerApplyConnection(null);
 					} else {
 						initializer.ServerApplyConnection(dmConnection);
 					}
 				} else if (code.SequenceEqual(player1VerificationCode)) {
-					if (player1Connection.HasAppliedService()) {
+					if (player1Connection.Available()) {
 						initializer.ServerApplyConnection(null);
 					} else {
 						initializer.ServerApplyConnection(player1Connection);
 					}
 				} else if (code.SequenceEqual(player2VerificationCode)) {
-					if (player2Connection.HasAppliedService()) {
+					if (player2Connection.Available()) {
 						initializer.ServerApplyConnection(null);
 					} else {
 						initializer.ServerApplyConnection(player2Connection);

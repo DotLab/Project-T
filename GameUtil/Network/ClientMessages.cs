@@ -121,8 +121,9 @@ namespace GameUtil.Network.ClientMessages {
 			STUNTS,
 			EXTRAS,
 			CONSEQUENCES,
+			FATEPOINT,
 			STRESS,
-			FATEPOINT
+			GROUP
 		}
 
 		public string characterID;
@@ -578,5 +579,20 @@ namespace GameUtil.Network.ClientMessages {
 			stream.WriteBoolean(stunt);
 		}
 	}
+	
+	public sealed class GetAllPartyListMessage : Message {
+		public const int MESSAGE_TYPE = 37;
+		public override int MessageType => MESSAGE_TYPE;
 
+		public override void ReadFrom(IDataInputStream stream) { }
+		public override void WriteTo(IDataOutputStream stream) { }
+	}
+
+	public sealed class GetPlayerCharactersMessage : Message {
+		public const int MESSAGE_TYPE = 38;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public override void ReadFrom(IDataInputStream stream) { }
+		public override void WriteTo(IDataOutputStream stream) { }
+	}
 }

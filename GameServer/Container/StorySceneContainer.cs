@@ -249,9 +249,9 @@ namespace GameServer.Container {
 			if (force || SkillChecker.Instance.CheckingAction == CharacterAction.ATTACK) {
 				this.InitiativeSelectSkill(skillType, bigone, fixedDicePoints);
 			} else if (SkillChecker.Instance.CheckingAction == CharacterAction.CREATE_ASPECT || SkillChecker.Instance.CheckingAction == CharacterAction.HINDER) {
-				Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Initiative.Controller,
-					SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
-					result => { if (result) this.InitiativeSelectSkill(skillType, bigone, fixedDicePoints); });
+				bool result = Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Initiative.Controller,
+					SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？");
+				if (result) this.InitiativeSelectSkill(skillType, bigone, fixedDicePoints);
 			}
 		}
 
@@ -287,9 +287,9 @@ namespace GameServer.Container {
 				if (SkillChecker.CanResistSkillWithoutDMCheck(SkillChecker.Instance.InitiativeSkillType, skillType, SkillChecker.Instance.CheckingAction)) {
 					this.PassiveSelectSkill(skillType, bigone, fixedDicePoints);
 				} else {
-					Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Passive.Controller,
-						SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？",
-						result => { if (result) this.PassiveSelectSkill(skillType, bigone, fixedDicePoints); });
+					bool result = Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Passive.Controller,
+						SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？");
+					if (result) this.PassiveSelectSkill(skillType, bigone, fixedDicePoints);
 				}
 			}
 		}
@@ -310,17 +310,15 @@ namespace GameServer.Container {
 				player.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(true, aspect);
 			}
 			Game.DM.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(true, aspect);
-			Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Initiative.Controller,
-				SkillChecker.Instance.Initiative.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
-				result => {
-					if (result) {
-						SkillChecker.Instance.InitiativeUseAspect(aspect, reroll);
-						foreach (Player player in Game.Players) {
-							player.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.GetInitiativePoint());
-						}
-						Game.DM.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.GetInitiativePoint());
-					}
-				});
+			bool result = Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Initiative.Controller,
+				SkillChecker.Instance.Initiative.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？");
+			if (result) {
+				SkillChecker.Instance.InitiativeUseAspect(aspect, reroll);
+				foreach (Player player in Game.Players) {
+					player.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.GetInitiativePoint());
+				}
+				Game.DM.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.GetInitiativePoint());
+			}
 		}
 
 		public void InitiativeSkipUsingAspect() {
@@ -332,17 +330,15 @@ namespace GameServer.Container {
 				player.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(false, aspect);
 			}
 			Game.DM.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(false, aspect);
-			Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Passive.Controller,
-				SkillChecker.Instance.Passive.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？",
-				result => {
-					if (result) {
-						SkillChecker.Instance.PassiveUseAspect(aspect, reroll);
-						foreach (Player player in Game.Players) {
-							player.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.GetPassivePoint());
-						}
-						Game.DM.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.GetPassivePoint());
-					}
-				});
+			bool result = Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Passive.Controller,
+				SkillChecker.Instance.Passive.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？");
+			if (result) {
+				SkillChecker.Instance.PassiveUseAspect(aspect, reroll);
+				foreach (Player player in Game.Players) {
+					player.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.GetPassivePoint());
+				}
+				Game.DM.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.GetPassivePoint());
+			}
 		}
 
 		public void PassiveSkipUsingAspect() {

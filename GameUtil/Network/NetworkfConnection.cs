@@ -35,17 +35,20 @@ namespace GameUtil.Network {
 
 	public sealed class NetworkfConnection : Connection {
 		private volatile Networkf.NetworkService _service = null;
+		private volatile bool _connectionClosed = false;
 		private readonly List<Message> _sendingMsgCache = new List<Message>();
 		private readonly List<Message> _receivedMsgCache = new List<Message>();
 		private readonly Dictionary<int, List<IMessageReceiver>> _messageReceiverDict = new Dictionary<int, List<IMessageReceiver>>();
 		private readonly byte[] _exchange = new byte[4096];
 
-		public NetworkfConnection() {
-			Task.Run((Action)SendCachedMessage);
+		private void OnExceptionCaught(NetworkfExceptionCaughtEventArgs args) {
+			if (ExceptionCaught != null) ExceptionCaught(this, args);
 		}
 
-		public bool HasAppliedService() {
-			return _service != null;
+		public event EventHandler<NetworkfExceptionCaughtEventArgs> ExceptionCaught; // multiple threads would invoke
+
+		public NetworkfConnection() {
+			Task.Run((Action)SendCachedMessage);
 		}
 
 		public void ApplyService(Networkf.NetworkService service) {
@@ -53,7 +56,12 @@ namespace GameUtil.Network {
 			service.parseMessage = NetworkfMessage.ParseMessage;
 			service.OnMessageReceived += OnMessageReceived;
 			service.OnServiceTeardown += OnServiceTeardown;
+			_connectionClosed = false;
 			_service = service;
+		}
+
+		public override bool Available() {
+			return _service != null && !_connectionClosed;
 		}
 
 		public override void AddMessageReceiver(int messageType, IMessageReceiver receiver) {
@@ -95,16 +103,18 @@ namespace GameUtil.Network {
 			}
 		}
 
-		public override void UpdateReceiver() {
+		public override void UpdateReceivers() {
+			Message[] receivedMessages;
 			lock (_receivedMsgCache) {
-				foreach (var message in _receivedMsgCache) {
-					if (_messageReceiverDict.ContainsKey(message.MessageType)) {
-						foreach (var receiver in _messageReceiverDict[message.MessageType]) {
-							receiver.MessageReceived(message);
-						}
+				receivedMessages = _receivedMsgCache.ToArray();
+				_receivedMsgCache.Clear();
+			}
+			foreach (var message in receivedMessages) {
+				if (_messageReceiverDict.ContainsKey(message.MessageType)) {
+					foreach (var receiver in _messageReceiverDict[message.MessageType]) {
+						receiver.MessageReceived(message);
 					}
 				}
-				_receivedMsgCache.Clear();
 			}
 		}
 
@@ -120,10 +130,10 @@ namespace GameUtil.Network {
 				if (service != null) {
 					int sendingResult = service.SendMessage(new NetworkfMessage(message));
 					if (sendingResult == -1) {
-						var eventArgs = new NetworkEventCaughtEventArgs() {
+						var eventArgs = new NetworkfExceptionCaughtEventArgs() {
 							message = "A network error occured during sending data."
 						};
-						OnEventCaught(eventArgs);
+						OnExceptionCaught(eventArgs);
 					}
 				}
 			}
@@ -141,11 +151,18 @@ namespace GameUtil.Network {
 			service.parseMessage = null;
 			service.OnMessageReceived -= OnMessageReceived;
 			service.OnServiceTeardown -= OnServiceTeardown;
-			var eventArgs = new NetworkEventCaughtEventArgs() {
-				message = "Connection is closed."
-			};
-			OnEventCaught(eventArgs);
+			if (!_connectionClosed) {
+				var eventArgs = new NetworkfExceptionCaughtEventArgs() {
+					message = "Connection is closed."
+				};
+				OnExceptionCaught(eventArgs);
+			}
 		}
+	}
+
+	public sealed class NetworkfExceptionCaughtEventArgs : EventArgs {
+		public string message;
+		// ...
 	}
 
 	public sealed class BitDataOutputStream : IDataOutputStream {
@@ -363,7 +380,7 @@ namespace GameUtil.Network {
 				Log("waiting server ready...");
 				while (!_hasReceivedServerReady) {
 					Thread.Sleep(100);
-					applyTo.UpdateReceiver();
+					applyTo.UpdateReceivers();
 				}
 				Log("server ready received");
 				applyTo.RemoveMessageReceiver(ServerReadyMessage.MESSAGE_TYPE, this);

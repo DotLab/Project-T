@@ -5,15 +5,13 @@
 	var me = stunt.getBelong();
 	var thisObj = $__eventArgs__.to;
 	if (me == $__eventArgs__.to.getCharacterRef()) {
-		$.campaignManager.askPlayer(me, "你认为这次攻击能对 " + me.getName() + " 造成伤害吗？(1能，0不能）", function(result) {
-			if (result == 0) {
-				$.campaignManager.askDM(me, "允许" + me.getName() + "使用" + stunt.getName() + "吗？", function(dmResult) {
-					if (dmResult) {
-						thisObj.displayUsingStunt(stunt);
-						me.recover(damage, mentalDamage);
-					}
-				});
+		var result = $.campaignManager.askUser(me, "你认为这次攻击能对 " + me.getName() + " 造成伤害吗？(1能，0不能）");
+		if (result == 0) {
+			var dmResult = $.campaignManager.requestDMCheck(me, "允许" + me.getName() + "使用" + stunt.getName() + "吗？");
+			if (dmResult) {
+				thisObj.displayUsingStunt(stunt);
+				me.recover(damage, mentalDamage);
 			}
-		});
+		}
 	}
 })();

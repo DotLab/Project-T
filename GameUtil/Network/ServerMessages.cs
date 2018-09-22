@@ -924,7 +924,7 @@ namespace GameUtil.Network.ServerMessages {
 		}
 	}
 
-	public sealed class BattleSceneSetActingOrderMessage : Message {
+	public sealed class BattleSceneUpdateTurnOrderMessage : Message {
 		public const int MESSAGE_TYPE = -53;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -946,7 +946,7 @@ namespace GameUtil.Network.ServerMessages {
 		}
 	}
 
-	public sealed class BattleSceneChangeTurnMessage : Message {
+	public sealed class BattleSceneNewTurnMessage : Message {
 		public const int MESSAGE_TYPE = -54;
 		public override int MessageType => MESSAGE_TYPE;
 
@@ -1535,4 +1535,109 @@ namespace GameUtil.Network.ServerMessages {
 		}
 	}
 
+	public sealed class WaitingForUserDeterminMessage : Message {
+		public const int MESSAGE_TYPE = -83;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public bool enabled;
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteBoolean(enabled);
+		}
+
+		public override void ReadFrom(IDataInputStream stream) {
+			enabled = stream.ReadBoolean();
+		}
+	}
+
+	public sealed class CharacterGroupDataMessage : Message {
+		public const int MESSAGE_TYPE = -84;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public CharacterToken token;
+		public string controlUserID;
+		public int groupID;
+		public string[] membersID;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			token = (CharacterToken)stream.ReadByte();
+			controlUserID = stream.ReadString();
+			groupID = stream.ReadInt32();
+			int length = stream.ReadInt32();
+			membersID = new string[length];
+			for (int i = 0; i < length; ++i) {
+				membersID[i] = stream.ReadString();
+			}
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteByte((byte)token);
+			stream.WriteString(controlUserID);
+			stream.WriteInt32(groupID);
+			stream.WriteInt32(membersID.Length);
+			foreach (string characterID in membersID) {
+				stream.WriteString(characterID);
+			}
+		}
+	}
+
+	public sealed class AllPartyListMessage : Message {
+		public const int MESSAGE_TYPE = -85;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public string[][] parties;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			int length = stream.ReadInt32();
+			parties = new string[length][];
+			for (int i = 0; i < length; ++i) {
+				int memberCount = stream.ReadInt32();
+				parties[i] = new string[memberCount];
+				for (int j = 0; j < memberCount; ++j) {
+					parties[i][j] = stream.ReadString();
+				}
+			}
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteInt32(parties.Length);
+			foreach (string[] charactersID in parties) {
+				stream.WriteInt32(charactersID.Length);
+				foreach (string characterID in charactersID) {
+					stream.WriteString(characterID);
+				}
+			}
+		}
+	}
+
+	public sealed class BattleSceneStartBattleMessage : Message {
+		public const int MESSAGE_TYPE = -86;
+		public override int MessageType => MESSAGE_TYPE;
+		
+		public override void ReadFrom(IDataInputStream stream) { }
+		public override void WriteTo(IDataOutputStream stream) { }
+	}
+
+	public sealed class PlayerCharactersMessage : Message {
+		public const int MESSAGE_TYPE = -87;
+		public override int MessageType => MESSAGE_TYPE;
+
+		public string[] charactersID;
+
+		public override void ReadFrom(IDataInputStream stream) {
+			int length = stream.ReadInt32();
+			charactersID = new string[length];
+			for (int i = 0; i < length; ++i) {
+				charactersID[i] = stream.ReadString();
+			}
+		}
+
+		public override void WriteTo(IDataOutputStream stream) {
+			stream.WriteInt32(charactersID.Length);
+			foreach (var id in charactersID) {
+				stream.WriteString(id);
+			}
+		}
+	}
+	
 }

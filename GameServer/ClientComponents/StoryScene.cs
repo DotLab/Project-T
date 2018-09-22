@@ -19,6 +19,7 @@ namespace GameServer.ClientComponents {
 
 		private ClientPosition _position = ClientPosition.OBSERVER;
 		private bool _isUsing = false;
+		private bool _ignoreOperating = false;
 
 		public SkillCheckPanel(Connection connection, User owner) :
 			base(connection, owner) {
@@ -29,7 +30,7 @@ namespace GameServer.ClientComponents {
 
 		public override void MessageReceived(Message message) {
 			try {
-				if (!_isUsing || _position == ClientPosition.OBSERVER) return;
+				if (!_isUsing || _ignoreOperating || _position == ClientPosition.OBSERVER) return;
 				if (message.MessageType == CheckerSkillSelectedMessage.MESSAGE_TYPE) {
 					CheckerSkillSelectedMessage skillSelectedMessage = (CheckerSkillSelectedMessage)message;
 					if (SkillType.SkillTypes.TryGetValue(skillSelectedMessage.skillTypeID, out SkillType skillType)) {
@@ -167,9 +168,14 @@ namespace GameServer.ClientComponents {
 			_connection.SendMessage(message);
 		}
 
+		public override void WaitingForUserDetermin(bool enabled) {
+			_ignoreOperating = enabled;
+		}
 	}
 
 	public sealed class TextBox : ClientComponent {
+		private bool _ignoreOperating = false;
+
 		public override void MessageReceived(Message message) {
 			TextSelectedMessage selectedMessage = (TextSelectedMessage)message;
 			this.OnSelectItem(selectedMessage.selection);
@@ -220,12 +226,16 @@ namespace GameServer.ClientComponents {
 			_connection.SendMessage(message);
 		}
 
+		public override void WaitingForUserDetermin(bool enabled) {
+			_ignoreOperating = enabled;
+		}
 	}
 
 	public class StoryScene : ClientComponent {
 		protected readonly TextBox _textBox;
 		protected readonly SkillCheckPanel _skillCheckPanel;
 		protected bool _isUsing = false;
+		protected bool _ignoreOperating = false;
 
 		public TextBox TextBox => _textBox;
 		public SkillCheckPanel SkillCheckPanel => _skillCheckPanel;
@@ -239,12 +249,10 @@ namespace GameServer.ClientComponents {
 		}
 
 		public void Open() {
-			if (_isUsing) return;
 			_isUsing = true;
 		}
 
 		public void Close() {
-			if (!_isUsing) return;
 			_skillCheckPanel.Close();
 			_isUsing = false;
 		}
@@ -315,6 +323,12 @@ namespace GameServer.ClientComponents {
 			message.effect = effect;
 			_connection.SendMessage(message);
 		}
+
+		public override void WaitingForUserDetermin(bool enabled) {
+			_ignoreOperating = enabled;
+			_textBox.WaitingForUserDetermin(enabled);
+			_skillCheckPanel.WaitingForUserDetermin(enabled);
+		}
 	}
 
 	public sealed class DMStoryScene : StoryScene {
@@ -324,7 +338,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public override void MessageReceived(Message message) {
-			if (!_isUsing) return;
+			if (!_isUsing || _ignoreOperating) return;
 			this.OnNextAction();
 		}
 
@@ -341,7 +355,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public override void MessageReceived(Message message) {
-			if (!_isUsing) return;
+			if (!_isUsing || _ignoreOperating) return;
 			StorySceneObjectActionMessage objectMessage = (StorySceneObjectActionMessage)message;
 			switch (objectMessage.action) {
 				case StorySceneObjectActionMessage.PlayerAction.INTERACT:

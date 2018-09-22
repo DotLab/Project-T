@@ -4,6 +4,8 @@ using GameUtil.Network;
 using GameUtil.Network.ClientMessages;
 using GameUtil.Network.ServerMessages;
 using System;
+using System.Diagnostics;
+using System.Threading;
 
 namespace GameServer.ClientComponents {
 	public abstract class ClientComponent : IMessageReceiver {
@@ -15,16 +17,38 @@ namespace GameServer.ClientComponents {
 			_owner = owner;
 		}
 
+		public abstract void WaitingForUserDetermin(bool enabled);
 		public abstract void MessageReceived(Message message);
 	}
 
-	public class Client : ClientComponent {
+	public class Client : ClientComponent, IRequestHandler {
 		protected readonly CharacterData _characterData;
 		protected readonly StoryScene _storyScene;
 		protected readonly BattleScene _battleScene;
+		protected bool _deciding = false;
+
+		private int _determinResult = 0;
 
 		public StoryScene StoryScene => _storyScene;
 		public BattleScene BattleScene => _battleScene;
+
+		public Message MakeResponse(Message request) {
+			Message ret = null;
+			if (request.MessageType == GetPlayerCharactersMessage.MESSAGE_TYPE) {
+				var resp = new PlayerCharactersMessage();
+				if (_owner.IsDM) {
+					resp.charactersID = new string[0];
+				} else {
+					var characters = _owner.AsPlayer.Characters;
+					resp.charactersID = new string[characters.Count];
+					for (int i = 0; i < characters.Count; ++i) {
+						resp.charactersID[i] = characters[i].ID;
+					}
+				}
+				ret = resp;
+			}
+			return ret;
+		}
 
 		public override void MessageReceived(Message message) {
 			if (message.MessageType == ClientInitMessage.MESSAGE_TYPE) {
@@ -42,6 +66,7 @@ namespace GameServer.ClientComponents {
 		
 		protected Client(Connection connection, User owner, StoryScene storyScene, BattleScene battleScene) :
 			base(connection, owner) {
+			_connection.SetRequestHandler(GetPlayerCharactersMessage.MESSAGE_TYPE, this);
 			_connection.AddMessageReceiver(ClientInitMessage.MESSAGE_TYPE, this);
 			_characterData = new CharacterData(connection, owner);
 			_storyScene = storyScene;
@@ -49,7 +74,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public virtual void Update() {
-			_connection.UpdateReceiver();
+			_connection.UpdateReceivers();
 		}
 
 		public void ShowScene(ContainerType scene) {
@@ -65,40 +90,61 @@ namespace GameServer.ClientComponents {
 				default:
 					return;
 			}
-			ShowSceneMessage message = new ShowSceneMessage();
+			var message = new ShowSceneMessage();
 			message.sceneType = (byte)scene;
 			_connection.SendMessage(message);
 		}
 
 		public void PlayBGM(string id) {
-			PlayBGMMessage message = new PlayBGMMessage();
+			var message = new PlayBGMMessage();
 			message.bgmID = id;
 			_connection.SendMessage(message);
 		}
 
 		public void StopBGM() {
-			StopBGMMessage message = new StopBGMMessage();
+			var message = new StopBGMMessage();
 			_connection.SendMessage(message);
 		}
 
 		public void PlaySE(string id) {
-			PlaySEMessage message = new PlaySEMessage();
+			var message = new PlaySEMessage();
 			message.seID = id;
 			_connection.SendMessage(message);
 		}
 
-		public void RequestDetermin(string text, Action<int> callback) {
-			if (callback == null) throw new ArgumentNullException(nameof(callback));
+		public int RequestDetermin(string text) {
+			Debug.Assert(!_deciding, "It's deciding.");
 			var request = new UserDeterminMessage();
 			request.text = text ?? throw new ArgumentNullException(nameof(text));
 			_connection.Request(request, resp => {
 				var result = resp as UserDeterminResultMessage;
 				if (result != null) {
-					callback(result.result);
-				} else {
-					callback(0);
+					_determinResult = result.result;
+					_deciding = false;
+					foreach (Player player in Game.Players) {
+						player.Client.WaitingForUserDetermin(false);
+					}
+					Game.DM.Client.WaitingForUserDetermin(false);
 				}
 			});
+			_deciding = true;
+			foreach (Player player in Game.Players) {
+				player.Client.WaitingForUserDetermin(true);
+			}
+			Game.DM.Client.WaitingForUserDetermin(true);
+			while (!Game.GameOver && _deciding) {
+				Game.Update();
+				Thread.Sleep(100);
+			}
+			return _determinResult;
+		}
+
+		public override void WaitingForUserDetermin(bool enabled) {
+			var message = new WaitingForUserDeterminMessage();
+			message.enabled = enabled;
+			_connection.SendMessage(message);
+			_storyScene.WaitingForUserDetermin(enabled);
+			_battleScene.WaitingForUserDetermin(enabled);
 		}
 	}
 
@@ -113,31 +159,45 @@ namespace GameServer.ClientComponents {
 	}
 
 	public sealed class DMClient : Client {
+		private bool _dmCheckResult = false;
+
 		public DMStoryScene DMStoryScene => (DMStoryScene)_storyScene;
 		public DMBattleScene DMBattleScene => (DMBattleScene)_battleScene;
-		
+
 		public DMClient(Connection connection, DM owner) :
 			base(connection, owner, new DMStoryScene(connection, owner), new DMBattleScene(connection, owner)) {
 
 		}
 
-		public void RequestDMCheck(User invoker, string text, Action<bool> callback) {
+		public bool RequestDMCheck(User invoker, string text) {
+			Debug.Assert(!_deciding, "It's deciding.");
 			if (invoker == null) throw new ArgumentNullException(nameof(invoker));
-			if (callback == null) throw new ArgumentNullException(nameof(callback));
 			if (invoker.IsDM) {
-				callback(true);
-				return;
+				return true;
 			}
 			var request = new DMCheckMessage();
 			request.text = text ?? throw new ArgumentNullException(nameof(text));
 			_connection.Request(request, resp => {
 				var result = resp as DMCheckResultMessage;
 				if (result != null) {
-					callback(result.result);
-				} else {
-					callback(false);
+					_dmCheckResult = result.result;
+					_deciding = false;
+					foreach (Player player in Game.Players) {
+						player.Client.WaitingForUserDetermin(false);
+					}
+					Game.DM.Client.WaitingForUserDetermin(false);
 				}
 			});
+			_deciding = true;
+			foreach (Player player in Game.Players) {
+				player.Client.WaitingForUserDetermin(true);
+			}
+			Game.DM.Client.WaitingForUserDetermin(true);
+			while (!Game.GameOver && _deciding) {
+				Game.Update();
+				Thread.Sleep(100);
+			}
+			return _dmCheckResult;
 		}
 	}
 

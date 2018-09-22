@@ -5,6 +5,7 @@ using GameServer.Core.ScriptSystem;
 using GameServer.EventSystem;
 using GameUtil;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace GameServer.Core {
 	public class JavascriptGlobalObject {
@@ -23,11 +24,11 @@ namespace GameServer.Core {
 		private static List<Player> _players = null;
 		private static DM _dm = null;
 
-		public static bool GameOver => _gameOver;
+		public static bool GameOver { get => _gameOver; set => _gameOver = value; }
 		public static IReadOnlyList<Player> Players => _players;
 		public static DM DM => _dm;
 
-		public static void Init(DM dm, IEnumerable<Player> players) {
+		public static void InitGame(DM dm, IEnumerable<Player> players) {
 			//Logger.ApplyLogger();
 
 			_dm = dm;
@@ -67,8 +68,11 @@ namespace GameServer.Core {
 			_dm.UpdateClient();
 		}
 
-		public static void Cleanup() {
-
+		public static void RunGameLoop() {
+			while (!_gameOver) {
+				Update();
+				Thread.Sleep(100);
+			}
 		}
 	}
 }

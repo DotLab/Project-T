@@ -8,11 +8,19 @@ namespace GameUtil {
 		NEGATIVE_ROW = 0b0100,
 		NEGATIVE_COL = 0b1000
 	}
-	
+
 	public enum CharacterAction {
 		CREATE_ASPECT = 0b001,
 		ATTACK = 0b010,
 		HINDER = 0b100
+	}
+
+	public enum CharacterToken {
+		PLAYER,
+		FRIENDLY,
+		NEUTRAL,
+		NEUTRAL_HOSTILE,
+		HOSTILE
 	}
 
 	public enum CheckResult {
@@ -171,18 +179,29 @@ namespace GameUtil {
 		public int col;
 		public bool highland;
 
+		public bool Equals(GridPos other) {
+			return row == other.row && col == other.col && highland == other.highland;
+		}
+
 		public override bool Equals(object obj) {
 			if (!(obj is GridPos)) return false;
 			else return Equals((GridPos)obj);
 		}
 
-		public bool Equals(GridPos other) {
-			return row == other.row && col == other.col && highland == other.highland;
-		}
-
 		public override int GetHashCode() {
 			int hash = ((row << 8) & 0xFF00) | (col & 0xFF);
 			return highland ? (hash ^ 0xFFFF) & 0xFFFF : hash;
+		}
+
+		public static bool operator ==(GridPos x, GridPos y) {
+			if (ReferenceEquals(x, y)) return true;
+			if (ReferenceEquals(x, null)) return false;
+			if (ReferenceEquals(y, null)) return false;
+			return x.Equals(y);
+		}
+
+		public static bool operator !=(GridPos x, GridPos y) {
+			return !(x == y);
 		}
 
 		public void ReadFrom(IDataInputStream stream) {

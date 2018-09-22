@@ -80,33 +80,23 @@ namespace GameServer.Campaign {
 				_outer = outer;
 			}
 
-			public void askPlayer(IJSAPI<Character> playerCharacter, string text, Action<int> callback) {
+			public int askUser(IJSAPI<Character> playerCharacter, string text) {
 				try {
 					var origin_character = JSContextHelper.Instance.GetAPIOrigin(playerCharacter);
-					origin_character.Controller.Client.RequestDetermin(text, result => {
-						try {
-							callback(result);
-						} catch (Exception e) {
-							JSEngineManager.Engine.Log(e.Message);
-						}
-					});
+					return origin_character.Controller.Client.RequestDetermin(text);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
+					return 0;
 				}
 			}
 
-			public void askDM(IJSAPI<Character> invoker, string text, Action<bool> callback) {
+			public bool requestDMCheck(IJSAPI<Character> invoker, string text) {
 				try {
 					var origin_invoker = JSContextHelper.Instance.GetAPIOrigin(invoker);
-					Game.DM.DMClient.RequestDMCheck(origin_invoker.Controller, text, result => {
-						try {
-							callback(result);
-						} catch (Exception e) {
-							JSEngineManager.Engine.Log(e.Message);
-						}
-					});
+					return Game.DM.DMClient.RequestDMCheck(origin_invoker.Controller, text);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
+					return false;
 				}
 			}
 			

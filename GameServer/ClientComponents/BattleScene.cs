@@ -16,6 +16,7 @@ namespace GameServer.ClientComponents {
 		protected bool _canOperate = false;
 		protected bool _skipSelectAspect = false;
 		protected bool _isUsing = false;
+		protected bool _ignoreOperating = false;
 
 		protected BattleSceneMovePathInfoMessage CreateMovePathInfoMessage(List<ReachablePlace> reachablePlaces) {
 			var ret = new BattleSceneMovePathInfoMessage();
@@ -231,7 +232,7 @@ namespace GameServer.ClientComponents {
 		}
 
 		public override void MessageReceived(Message message) {
-			if (!_isUsing) return;
+			if (!_isUsing || _ignoreOperating) return;
 			var container = BattleSceneContainer.Instance;
 			try {
 				switch (message.MessageType) {
@@ -245,7 +246,7 @@ namespace GameServer.ClientComponents {
 					case BattleSceneTakeExtraMovePointMessage.MESSAGE_TYPE: {
 							if (container.IsChecking) return;
 							if (!_canOperate || container.CurrentActable.CharacterRef.Controller != _owner) return;
-							container.CurrentActable.TakeExtraMove();
+							container.CurrentActable.TakeExtraMovePoint();
 						}
 						break;
 					case BattleSceneActableObjectDoActionMessage.MESSAGE_TYPE: {
@@ -411,13 +412,19 @@ namespace GameServer.ClientComponents {
 		}
 
 		public void Open() {
-			if (_isUsing) return;
 			_isUsing = true;
 		}
 
 		public void Close() {
-			if (!_isUsing) return;
 			_isUsing = false;
+		}
+
+		public void DisplayDicePoints(User who, int[] dicePoints) {
+			if (!_isUsing) return;
+			var message = new DisplayDicePointsMessage();
+			message.dicePoints = dicePoints;
+			message.userID = who.ID;
+			_connection.SendMessage(message);
 		}
 
 		public void Reset(int rows, int cols) {
@@ -460,18 +467,16 @@ namespace GameServer.ClientComponents {
 			message.ladderObj = StreamableFactory.CreateBattleSceneObject(ladderObject);
 			_connection.SendMessage(message);
 		}
-
-		public void DisplayDicePoints(User who, int[] dicePoints) {
+		
+		public void StartBattle() {
 			if (!_isUsing) return;
-			var message = new DisplayDicePointsMessage();
-			message.dicePoints = dicePoints;
-			message.userID = who.ID;
+			var message = new BattleSceneStartBattleMessage();
 			_connection.SendMessage(message);
 		}
 
-		public void SetActingOrder(List<ActableGridObject> actableObjects) {
+		public void UpdateTurnOrder(List<ActableGridObject> actableObjects) {
 			if (!_isUsing) return;
-			var message = new BattleSceneSetActingOrderMessage();
+			var message = new BattleSceneUpdateTurnOrderMessage();
 			message.objOrder = new BattleSceneObject[actableObjects.Count];
 			for (int i = 0; i < actableObjects.Count; ++i) {
 				message.objOrder[i] = StreamableFactory.CreateBattleSceneObject(actableObjects[i]);
@@ -479,10 +484,10 @@ namespace GameServer.ClientComponents {
 			_connection.SendMessage(message);
 		}
 
-		public void ChangeTurn(ActableGridObject actable) {
+		public void NewTurn(ActableGridObject actable) {
 			if (!_isUsing) return;
 			_canOperate = actable.CharacterRef.Controller == _owner;
-			var message = new BattleSceneChangeTurnMessage();
+			var message = new BattleSceneNewTurnMessage();
 			message.canOperate = _canOperate;
 			message.gridObj = StreamableFactory.CreateBattleSceneObject(actable);
 			_connection.SendMessage(message);
@@ -711,6 +716,10 @@ namespace GameServer.ClientComponents {
 			if (!_isUsing || !BattleSceneContainer.Instance.IsChecking) return;
 			var message = new BattleSceneEndCheckMessage();
 			_connection.SendMessage(message);
+		}
+
+		public override void WaitingForUserDetermin(bool enabled) {
+			_ignoreOperating = enabled;
 		}
 	}
 

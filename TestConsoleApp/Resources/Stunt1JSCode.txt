@@ -10,26 +10,24 @@
 			var targets = situation.getTargetsBS();
 			var action = situation.getAction();
 			var skillType = $.characterManager.getSkillType("Lore");
-			$.campaignManager.askDM(me.getCharacterRef(), "允许" + me.getName() + "使用" + stunt.getName() + "吗？", function(dmResult) {
-				if (dmResult) {
-					me.useSkillWithStuntComplete(skillType, action, targets, completeFunc, true, true, 2, null);
-				} else {
-					completeFunc(false, "DM拒绝你使用" + stunt.getName());
-				}
-			});
+			var dmResult = $.campaignManager.requestDMCheck(me.getCharacterRef(), "允许" + me.getName() + "使用" + stunt.getName() + "吗？");
+			if (dmResult) {
+				me.useSkillWithStuntComplete(skillType, action, targets, completeFunc, true, true, 2, null);
+			} else {
+				completeFunc(false, "DM拒绝你使用" + stunt.getName());
+			}
 		} else {
 			var initiative = situation.getInitiativeBS();
 			var me = situation.getPassiveBS();
 			var action = situation.getAction();
 			var initiativeSkillType = situation.getInitiativeSkillType();
 			var skillType = $.characterManager.getSkillType("Lore");
-			$.campaignManager.askDM(me.getCharacterRef(), "允许" + me.getName() + "使用" + stunt.getName() + "吗？", function(dmResult) {
-				if (dmResult) {
-					$.battleScene.currentPassiveUseSkillWithStuntComplete(skillType, completeFunc, true, true, 2, null);
-				} else {
-					completeFunc(false, "DM拒绝你使用" + stunt.getName());
-				}
-			});
+			var dmResult = $.campaignManager.requestDMCheck(me.getCharacterRef(), "允许" + me.getName() + "使用" + stunt.getName() + "吗？");
+			if (dmResult) {
+				$.battleScene.currentPassiveUseSkillWithStuntComplete(skillType, completeFunc, true, true, 2, null);
+			} else {
+				completeFunc(false, "DM拒绝你使用" + stunt.getName());
+			}
 		}
 	}
 })();

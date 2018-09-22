@@ -23,20 +23,19 @@
 				++index;
 			}
 			var stunt = $__this__.getBelongStunt();
-			$.campaignManager.askPlayer(me, text, function(result) {
-				if (result > 0 && result < index) {
-					if (result > lv2.length) {
-						lv4[0].setCounteractLevel(2);
-					} else {
-						consequences.remove(lv2[result - 1]);
-					}
-					me.setFatePoint(me.getFatePoint() - 1);
-					stunt.setCustomData(true);
-					completeFunc(true, "");
+			var result = $.campaignManager.askUser(me, text);
+			if (result > 0 && result < index) {
+				if (result > lv2.length) {
+					lv4[0].setCounteractLevel(2);
 				} else {
-					completeFunc(false, "Ñ¡Ôñ´íÎó");
+					consequences.remove(lv2[result - 1]);
 				}
-			});
+				me.setFatePoint(me.getFatePoint() - 1);
+				stunt.setCustomData(true);
+				completeFunc(true, "");
+			} else {
+				completeFunc(false, "Ñ¡Ôñ´íÎó");
+			}
 		}
 	}
 })();

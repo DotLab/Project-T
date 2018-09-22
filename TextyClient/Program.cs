@@ -24,12 +24,14 @@ namespace TextyClient {
 		public static NetworkfConnection connection = new NetworkfConnection();
 		public static List<CharacterPropertyInfo> skillTypes = new List<CharacterPropertyInfo>();
 		public static MainForm mainForm;
+		public static List<string> charactersID = new List<string>();
+
 		/// <summary>
 		/// 应用程序的主入口点。
 		/// </summary>
 		[STAThread]
 		static void Main() {
-			connection.EventCaught += Connection_EventCaught;
+			connection.ExceptionCaught += Connection_EventCaught;
 
 			string id;
 			byte[] verificationCode = { };
@@ -56,7 +58,15 @@ namespace TextyClient {
 				service.TeardownService();
 				return;
 			}
-			
+
+			var getCharactersRequest = new GetPlayerCharactersMessage();
+			connection.Request(getCharactersRequest, result => {
+				var resp = result as PlayerCharactersMessage;
+				if (resp != null) {
+					charactersID.AddRange(resp.charactersID);
+				}
+			});
+
 			var getAllSkillTypesRequest = new GetSkillTypeListMessage();
 			connection.Request(getAllSkillTypesRequest, result => {
 				var resp = result as SkillTypeListDataMessage;
@@ -78,7 +88,7 @@ namespace TextyClient {
 			Application.Run(mainForm);
 		}
 
-		private static void Connection_EventCaught(object sender, NetworkEventCaughtEventArgs e) {
+		private static void Connection_EventCaught(object sender, NetworkfExceptionCaughtEventArgs e) {
 			MessageBox.Show(e.message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			Application.Exit();
 		}
