@@ -232,6 +232,7 @@ namespace GameServer.Client {
 			message.skillTypeID = skillType.ID;
 			message.customName = skill.Name;
 			message.level = skill.Level;
+			message.targetMaxCount = skill.TargetMaxCount;
 			return message;
 		}
 
@@ -239,6 +240,7 @@ namespace GameServer.Client {
 			var message = new StuntDataMessage();
 			message.characterID = stunt.Belong == null ? "" : stunt.Belong.ID;
 			message.stuntID = stunt.ID;
+			message.targetMaxCount = stunt.TargetMaxCount;
 			return message;
 		}
 

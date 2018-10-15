@@ -551,12 +551,14 @@ namespace GameUtil.Network.ServerMessages {
 		public string skillTypeID;
 		public string customName;
 		public int level;
+		public int targetMaxCount;
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(characterID);
 			stream.WriteString(skillTypeID);
 			stream.WriteString(customName);
 			stream.WriteInt32(level);
+			stream.WriteInt32(targetMaxCount);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
@@ -564,6 +566,7 @@ namespace GameUtil.Network.ServerMessages {
 			skillTypeID = stream.ReadString();
 			customName = stream.ReadString();
 			level = stream.ReadInt32();
+			targetMaxCount = stream.ReadInt32();
 		}
 	}
 
@@ -573,15 +576,18 @@ namespace GameUtil.Network.ServerMessages {
 
 		public string characterID;
 		public string stuntID;
+		public int targetMaxCount;
 
 		public override void WriteTo(IDataOutputStream stream) {
 			stream.WriteString(characterID);
 			stream.WriteString(stuntID);
+			stream.WriteInt32(targetMaxCount);
 		}
 
 		public override void ReadFrom(IDataInputStream stream) {
 			characterID = stream.ReadString();
 			stuntID = stream.ReadString();
+			targetMaxCount = stream.ReadString();
 		}
 	}
 

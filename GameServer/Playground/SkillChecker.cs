@@ -16,62 +16,84 @@ namespace GameServer.Playground {
 			public JSAPI(SkillChecker outer) {
 				_outer = outer;
 			}
-			/*
-			public void currentPassiveUseSkillWithStuntComplete(IJSAPI<SkillType> skillType, Action<bool, string> completeFunc) {
-				currentPassiveUseSkillWithStuntComplete(skillType, completeFunc, false, true, 0, null);
+
+			public void initiativeUseSkill(
+				Action<bool> dmCheckCallback,
+				IJSAPI<Character> initiative, IJSAPI<Character>[] passives,
+				CharacterAction action, IJSAPI<SkillType> skillType
+				) {
+				initiativeUseSkill(dmCheckCallback, initiative, passives, action, skillType, () => { }, () => { }, (iResult, pResult, delta) => { }, 0, null);
 			}
 
-			public void currentPassiveUseSkillWithStuntComplete(
-				IJSAPI<SkillType> skillType, Action<bool, string> completeFunc,
-				bool skipDMCheck, bool bigone, int extraPoint, int[] fixedDicePoints
+			public void initiativeUseSkill(
+				Action<bool> dmCheckCallback,
+				IJSAPI<Character> initiative, IJSAPI<Character>[] passives,
+				CharacterAction action, IJSAPI<SkillType> skillType,
+				Action allCheckOver, Action onceCheckStart, Action<CheckResult, CheckResult, int> onceCheckOver,
+				int extraPoint, int[] fixedDicePoints
 				) {
 				try {
+					var origin_initiative = JSContextHelper.Instance.GetAPIOrigin(initiative);
 					var origin_skillType = JSContextHelper.Instance.GetAPIOrigin(skillType);
-					int[] dicePoints;
-					if (!skipDMCheck) {
-						if (!SkillType.CanResistSkillWithoutDMCheck(_outer.InitiativeSkillType, origin_skillType, _outer.CheckingAction)) {
-							bool result = Game.DM.DMClient.RequireDMCheck(_outer.CurrentPassive.Controller,
-							_outer.CurrentPassive.Name + "对" + _outer.Initiative.Name + "使用" + _outer.CurrentPassive.GetSkill(origin_skillType).Name + ",可以吗？");
-							if (result) {
-								_outer.CurrentPassiveUseSkill(origin_skillType);
-								dicePoints = _outer.CurrentPassiveRollDice(fixedDicePoints);
-								_outer.PassiveExtraPoint = extraPoint;
-								foreach (Player player in Game.Players) {
-									player.Client.BattleScene.DisplayDicePoints(_outer.CurrentPassive.CharacterRef.Controller, dicePoints);
-									player.Client.BattleScene.DisplaySkillReady(_outer.CurrentPassive, origin_skillType, bigone);
-									player.Client.BattleScene.UpdateSumPoint(_outer.CurrentPassive, _outer.GetPassivePoint());
-								}
-								Game.DM.Client.BattleScene.DisplayDicePoints(_outer.CurrentPassive.CharacterRef.Controller, dicePoints);
-								Game.DM.Client.BattleScene.DisplaySkillReady(_outer.CurrentPassive, origin_skillType, bigone);
-								Game.DM.Client.BattleScene.UpdateSumPoint(_outer.CurrentPassive, _outer.GetPassivePoint());
-								_outer.PassiveSkillSelectionOver();
-								completeFunc(true, "");
-								_outer.Initiative.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectAspect();
-							} else {
-								completeFunc(false, "DM拒绝了你的选择");
-							}
-							return;
-						}
+					var origin_passives = new List<Character>();
+					foreach (var passive in passives) {
+						origin_passives.Add(JSContextHelper.Instance.GetAPIOrigin(passive));
 					}
-					_outer.PassiveSelectSkill(origin_skillType);
-					dicePoints = _outer.PassiveRollDice(fixedDicePoints);
-					_outer.PassiveExtraPoint = extraPoint;
-					foreach (Player player in Game.Players) {
-						player.Client.BattleScene.DisplayDicePoints(_outer.CurrentPassive.CharacterRef.Controller, dicePoints);
-						player.Client.BattleScene.DisplaySkillReady(_outer.CurrentPassive, origin_skillType, bigone);
-						player.Client.BattleScene.UpdateSumPoint(_outer.CurrentPassive, _outer.GetPassivePoint());
-					}
-					Game.DM.Client.BattleScene.DisplayDicePoints(_outer.CurrentPassive.CharacterRef.Controller, dicePoints);
-					Game.DM.Client.BattleScene.DisplaySkillReady(_outer.CurrentPassive, origin_skillType, bigone);
-					Game.DM.Client.BattleScene.UpdateSumPoint(_outer.CurrentPassive, _outer.GetPassivePoint());
-					_outer.PassiveSkillSelectionOver();
-					completeFunc(true, "");
-					_outer.Initiative.CharacterRef.Controller.Client.BattleScene.NotifyInitiativeSelectAspect();
+					_outer.InitiativeUseSkill(dmCheckCallback, origin_initiative, origin_passives, action, origin_skillType, () => { }, () => { }, (iResult, pResult, delta) => { }, extraPoint, fixedDicePoints);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 				}
 			}
-			*/
+
+			public void initiativeUseSkillWithoutDMCheck(IJSAPI<Character> initiative, IJSAPI<Character>[] passives, CharacterAction action, IJSAPI<SkillType> skillType, Action<bool, string> completeFunc) {
+				initiativeUseSkillWithoutDMCheck(initiative, passives, action, skillType, () => { }, () => { }, (iResult, pResult, delta) => { }, 0, null);
+			}
+
+			public void initiativeUseSkillWithoutDMCheck(
+				IJSAPI<Character> initiative, IJSAPI<Character>[] passives,
+				CharacterAction action, IJSAPI<SkillType> skillType,
+				Action allCheckOver, Action onceCheckStart, Action<CheckResult, CheckResult, int> onceCheckOver,
+				int extraPoint, int[] fixedDicePoints
+				) {
+				try {
+					var origin_initiative = JSContextHelper.Instance.GetAPIOrigin(initiative);
+					var origin_skillType = JSContextHelper.Instance.GetAPIOrigin(skillType);
+					var origin_passives = new List<Character>();
+					foreach (var passive in passives) {
+						origin_passives.Add(JSContextHelper.Instance.GetAPIOrigin(passive));
+					}
+					_outer.InitiativeUseSkillWithoutDMCheck(origin_initiative, origin_passives, action, origin_skillType, () => { }, () => { }, (iResult, pResult, delta) => { }, extraPoint, fixedDicePoints);
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+			
+			public void currentPassiveUseSkill(Action<bool> dmCheckCallback, IJSAPI<SkillType> skillType) {
+				currentPassiveUseSkill(dmCheckCallback, skillType, 0, null);
+			}
+
+			public void currentPassiveUseSkill(Action<bool> dmCheckCallback, IJSAPI<SkillType> skillType, int extraPoint, int[] fixedDicePoints) {
+				try {
+					var origin_skillType = JSContextHelper.Instance.GetAPIOrigin(skillType);
+					_outer.CurrentPassiveUseSkill(dmCheckCallback, origin_skillType, extraPoint, fixedDicePoints);
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
+			public void currentPassiveUseSkillWithoutDMCheck(IJSAPI<SkillType> skillType) {
+				currentPassiveUseSkillWithoutDMCheck(skillType, 0, null);
+			}
+
+			public void currentPassiveUseSkillWithoutDMCheck(IJSAPI<SkillType> skillType, int extraPoint, int[] fixedDicePoints) {
+				try {
+					var origin_skillType = JSContextHelper.Instance.GetAPIOrigin(skillType);
+					_outer.CurrentPassiveUseSkillWithoutDMCheck(origin_skillType, extraPoint, fixedDicePoints);
+				} catch (Exception e) {
+					JSEngineManager.Engine.Log(e.Message);
+				}
+			}
+
 			public SkillChecker Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {
@@ -179,6 +201,22 @@ namespace GameServer.Playground {
 			return SkillType.CanInitiativeUseSkill(initiative, skillType, action);
 		}
 
+		public void InitiativeUseSkillFrameworkInvoking(
+			Action<bool> dmCheckCallback,
+			Character initiative, IEnumerable<Character> passives,
+			CharacterAction action, SkillType skillType,
+			Action allCheckOver, Action onceCheckStart, Action<CheckResult, CheckResult, int> onceCheckOver
+			) {
+			InitiativeUseSkill(dmCheckResult => {
+				dmCheckCallback(dmCheckResult);
+				if (dmCheckResult) {
+					initiative.Controller.Client.SkillChecker.NotifyInitiativeActionAccepted();
+				} else {
+					initiative.Controller.Client.SkillChecker.NotifyInitiativeActionFailure("DM拒绝了你的选择");
+				}
+			}, initiative, passives, action, skillType, allCheckOver, onceCheckStart, onceCheckOver);
+		}
+
 		public void InitiativeUseSkill(
 			Action<bool> dmCheckCallback,
 			Character initiative, IEnumerable<Character> passives,
@@ -192,14 +230,10 @@ namespace GameServer.Playground {
 					initiative.Name + "想使用" + initiative.GetSkill(skillType).Name + ",可以吗？");
 				dmCheckCallback(result);
 				if (result) {
-					initiative.Controller.Client.SkillChecker.NotifyInitiativeActionAccepted();
 					InitiativeUseSkillWithoutDMCheck(initiative, passives, action, skillType, () => { }, () => { }, (iResult, pResult, delta) => { });
-				} else {
-					initiative.Controller.Client.SkillChecker.NotifyInitiativeActionFailure("DM拒绝了你选择的技能");
 				}
 			} else {
 				dmCheckCallback(true);
-				initiative.Controller.Client.SkillChecker.NotifyInitiativeActionAccepted();
 				InitiativeUseSkillWithoutDMCheck(initiative, passives, action, skillType, () => { }, () => { }, (iResult, pResult, delta) => { });
 			}
 		}
@@ -267,7 +301,7 @@ namespace GameServer.Playground {
 			return stunt.TargetCondition.Judge();
 		}
 
-		public void InitiativeUseStunt(
+		public void InitiativeUseStuntFrameworkInvoking(
 			Character initiative, Stunt stunt,
 			Situation situation, Action<bool> resultCallback
 			) {
@@ -545,45 +579,48 @@ namespace GameServer.Playground {
 			return SkillType.CanResistSkillWithoutDMCheck(initiativeUsing, resist, action);
 		}
 
-		public void CurrentPassiveUseSkill(SkillType skillType) {
-			if (_state != CheckerState.PASSIVE_RESIST) throw new InvalidOperationException("State incorrect.");
-			if (skillType == null) throw new ArgumentNullException(nameof(skillType));
-			if (!CanCurrentPassiveUseSkill(skillType)) throw new InvalidOperationException("Cannot use this skill.");
-			if (CanCurrentPassiveResistSkillWithoutDMCheck(_currentInitiativeSkillType, skillType, _checkingAction)) {
-				_currentPassiveSkillType = skillType;
-				_currentPassiveRollPoints = FateDice.Roll();
-				foreach (Player player in Game.Players) {
-					player.Client.DisplayDicePoints(_currentPassive.Controller, _currentPassiveRollPoints);
-					player.Client.SkillChecker.DisplayUsingSkill(false, skillType);
-					player.Client.SkillChecker.UpdateSumPoint(false, GetPassivePoint());
-				}
-				Game.DM.Client.DisplayDicePoints(_currentPassive.Controller, _currentPassiveRollPoints);
-				Game.DM.Client.SkillChecker.DisplayUsingSkill(false, skillType);
-				Game.DM.Client.SkillChecker.UpdateSumPoint(false, GetPassivePoint());
-				_state = CheckerState.INITIATIVE_ASPECT;
-				_currentPassive.Controller.Client.SkillChecker.NotifyPassiveActionAccepted();
-				_initiative.Controller.Client.SkillChecker.NotifyInitiativeSelectAspect();
-			} else {
-				bool result = Game.DM.DMClient.RequireDMCheck(_currentPassive.Controller,
-					_currentPassive.Name + "对" + _initiative.Name + "使用" + _currentPassive.GetSkill(skillType).Name + ",可以吗？");
-				if (result) {
-					_currentPassiveSkillType = skillType;
-					_currentPassiveRollPoints = FateDice.Roll();
-					foreach (Player player in Game.Players) {
-						player.Client.DisplayDicePoints(_currentPassive.Controller, _currentPassiveRollPoints);
-						player.Client.SkillChecker.DisplayUsingSkill(false, skillType);
-						player.Client.SkillChecker.UpdateSumPoint(false, GetPassivePoint());
-					}
-					Game.DM.Client.DisplayDicePoints(_currentPassive.Controller, _currentPassiveRollPoints);
-					Game.DM.Client.SkillChecker.DisplayUsingSkill(false, skillType);
-					Game.DM.Client.SkillChecker.UpdateSumPoint(false, GetPassivePoint());
-					_state = CheckerState.INITIATIVE_ASPECT;
+		public void CurrentPassiveUseSkillFrameworkInvoking(SkillType skillType) {
+			CurrentPassiveUseSkill(dmCheckResult => {
+				if (dmCheckResult) {
 					_currentPassive.Controller.Client.SkillChecker.NotifyPassiveActionAccepted();
 					_initiative.Controller.Client.SkillChecker.NotifyInitiativeSelectAspect();
 				} else {
 					_currentPassive.Controller.Client.SkillChecker.NotifyPassiveActionFailure("DM拒绝了你选择的技能");
 				}
+			}, skillType);
+		}
+
+		public void CurrentPassiveUseSkill(Action<bool> dmCheckResult, SkillType skillType, int extraPoint = 0, int[] fixedDicePoints = null) {
+			if (dmCheckResult == null) throw new ArgumentNullException(nameof(dmCheckResult));
+			if (CanCurrentPassiveResistSkillWithoutDMCheck(_currentInitiativeSkillType, skillType, _checkingAction)) {
+				CurrentPassiveUseSkillWithoutDMCheck(skillType, extraPoint, fixedDicePoints);
+				dmCheckResult(true);
+			} else {
+				bool result = Game.DM.DMClient.RequireDMCheck(_currentPassive.Controller,
+					_currentPassive.Name + "对" + _initiative.Name + "使用" + _currentPassive.GetSkill(skillType).Name + ",可以吗？");
+				if (result) {
+					CurrentPassiveUseSkillWithoutDMCheck(skillType, extraPoint, fixedDicePoints);
+				}
+				dmCheckResult(result);
 			}
+		}
+		
+		public void CurrentPassiveUseSkillWithoutDMCheck(SkillType skillType, int extraPoint = 0, int[] fixedDicePoints = null) {
+			if (_state != CheckerState.PASSIVE_RESIST) throw new InvalidOperationException("State incorrect.");
+			if (skillType == null) throw new ArgumentNullException(nameof(skillType));
+			if (!CanCurrentPassiveUseSkill(skillType)) throw new InvalidOperationException("Cannot use this skill.");
+			_currentPassiveSkillType = skillType;
+			_currentPassiveRollPoints = fixedDicePoints ?? FateDice.Roll();
+			_currentPassiveExtraPoint = extraPoint;
+			foreach (Player player in Game.Players) {
+				player.Client.DisplayDicePoints(_currentPassive.Controller, _currentPassiveRollPoints);
+				player.Client.SkillChecker.DisplayUsingSkill(false, skillType);
+				player.Client.SkillChecker.UpdateSumPoint(false, GetPassivePoint());
+			}
+			Game.DM.Client.DisplayDicePoints(_currentPassive.Controller, _currentPassiveRollPoints);
+			Game.DM.Client.SkillChecker.DisplayUsingSkill(false, skillType);
+			Game.DM.Client.SkillChecker.UpdateSumPoint(false, GetPassivePoint());
+			_state = CheckerState.INITIATIVE_ASPECT;
 		}
 
 		public bool CanCurrentPassiveUseStunt(Stunt stunt, Situation situation) {
@@ -604,7 +641,7 @@ namespace GameServer.Playground {
 			} else return false;
 		}
 
-		public void CurrentPassiveUseStunt(Stunt stunt, Situation situation, Action<bool> resultCallback) {
+		public void CurrentPassiveUseStuntFrameworkInvoking(Stunt stunt, Situation situation, Action<bool> resultCallback) {
 			if (_state != CheckerState.PASSIVE_RESIST) throw new InvalidOperationException("State incorrect.");
 			if (stunt == null) throw new ArgumentNullException(nameof(stunt));
 			if (situation == null) throw new ArgumentNullException(nameof(situation));

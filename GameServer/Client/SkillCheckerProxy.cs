@@ -41,7 +41,7 @@ namespace GameServer.Client {
 								resp.result = checker.CanInitiativeUseSkill(initiative.CharacterRef, skillType, reqMsg.action)
 									&& initiative.IsActionPointEnough(battleMapProperty);
 							} else {
-
+								// ....
 							}
 							return resp;
 						}
@@ -55,7 +55,7 @@ namespace GameServer.Client {
 								resp.result = checker.CanInitiativeUseStunt(initiative.CharacterRef, stunt, situation)
 										&& initiative.IsActionPointEnough(stunt.BattleMapProperty);
 							} else {
-
+								// ....
 							}
 							return resp;
 						}
@@ -69,61 +69,10 @@ namespace GameServer.Client {
 								var situation = initiative.GetStuntSituationForTargetCondition(target, stunt, reqMsg.action);
 								resp.result = checker.CanInitiativeUseStuntOnCharacter(target.CharacterRef, stunt, situation);
 							} else {
-
+								// ....
 							}
 							return resp;
 						}
-					/*
-				case CheckerGetInitiativeDirectlyUsableStuntListMessage.MESSAGE_TYPE: {
-					if (!_canOperate || checker.CurrentActable.CharacterRef.Controller != _owner) break;
-					var reqMsg = (CheckerGetInitiativeDirectlyUsableStuntListMessage)request;
-					if (reqMsg.stunt) {
-						var resp = new BattleSceneObjectDirectlyUsableStuntListMessage();
-						var candoList = new List<Stunt>();
-						if (checker.CurrentActable.CharacterRef.Stunts != null) {
-							foreach (var stunt in checker.CurrentActable.CharacterRef.Stunts) {
-								if (checker.CurrentActable.CanUseStuntOnInteract(stunt)
-									&& checker.CurrentActable.IsActionPointEnough(stunt.BattleMapProperty)) {
-									candoList.Add(stunt);
-								}
-							}
-						}
-						resp.stunts = new CharacterPropertyDescription[candoList.Count];
-						for (int i = 0; i < candoList.Count; ++i) {
-							resp.stunts[i] = StreamableFactory.CreateCharacterPropertyDescription(candoList[i]);
-						}
-						return resp;
-					} else {
-						var resp = new BattleSceneObjectUsableSkillListOnInteractMessage();
-						var candoList = new List<SkillType>();
-						foreach (var skillType in SkillType.SkillTypes) {
-							var battleMapProperty = checker.CurrentActable.CharacterRef.GetSkill(skillType.Value).BattleMapProperty;
-							if (checker.CurrentActable.CanUseSkillOnInteract(skillType.Value)
-								&& checker.CurrentActable.IsActionPointEnough(battleMapProperty)) {
-								candoList.Add(skillType.Value);
-							}
-						}
-						resp.skillTypes = new SkillTypeDescription[candoList.Count];
-						for (int i = 0; i < candoList.Count; ++i) {
-							resp.skillTypes[i] = StreamableFactory.CreateSkillTypeDescription(candoList[i]);
-						}
-						return resp;
-					}
-				}
-				case GetActionTargetCountMessage.MESSAGE_TYPE: {
-					if (_position == ClientPosition.OBSERVER || checker.CurrentActable.CharacterRef.Controller != _owner) break;
-					var reqMsg = (GetActionTargetCountMessage)request;
-					var resp = new SkillOrStuntTargetCountMessage();
-					if (reqMsg.isStunt) {
-						var stunt = checker.CurrentActable.CharacterRef.FindStuntByID(reqMsg.skillTypeOrStuntID);
-						resp.count = stunt.BattleMapProperty.targetMaxCount;
-					} else {
-						var skillType = SkillType.SkillTypes[reqMsg.skillTypeOrStuntID];
-						resp.count = checker.CurrentActable.CharacterRef.GetSkill(skillType).BattleMapProperty.targetMaxCount;
-					}
-					return resp;
-				}
-				*/
 					case CheckerGetPassiveUsableActionListMessage.MESSAGE_TYPE: {
 							if (!IsUsing || _position != ClientPosition.PASSIVE) break;
 							var reqMsg = (CheckerGetPassiveUsableActionListMessage)request;
@@ -148,8 +97,9 @@ namespace GameServer.Client {
 										if (checker.CanCurrentPassiveUseStunt(stunt, situation)) {
 											stuntList.Add(stunt);
 										}
+									} else {
+										// ....
 									}
-
 								}
 							}
 							resp.stuntsID = new string[stuntList.Count];
@@ -182,7 +132,7 @@ namespace GameServer.Client {
 							var msg = (CheckerPassiveSkillSelectedMessage)message;
 							if (!checker.IsChecking || checker.CurrentPassive.Controller != _owner) return;
 							var selectedSkillType = SkillType.SkillTypes[msg.skillTypeID];
-							checker.CurrentPassiveUseSkill(selectedSkillType);
+							checker.CurrentPassiveUseSkillFrameworkInvoking(selectedSkillType);
 						}
 						break;
 					case CheckerPassiveStuntSelectedMessage.MESSAGE_TYPE: {
@@ -194,11 +144,11 @@ namespace GameServer.Client {
 									var initiativeObj = BattleScene.Instance.FindObject(checker.Initiative.ID);
 									var situation = BattleScene.Instance.FindObject(checker.CurrentPassive.ID)
 										.GetStuntSituationForPassive(initiativeObj, checker.InitiativeSkillType, stunt, checker.CheckingAction);
-									checker.CurrentPassiveUseStunt(stunt, situation, success => {
+									checker.CurrentPassiveUseStuntFrameworkInvoking(stunt, situation, success => {
 										if (success) BattleScene.Instance.Update();
 									});
 								} else {
-
+									// ....
 								}
 							}
 						}

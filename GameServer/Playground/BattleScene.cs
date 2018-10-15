@@ -853,53 +853,7 @@ namespace GameServer.Playground.BattleComponent {
 					JSEngineManager.Engine.Log(e.Message);
 				}
 			}
-			/*
-			public void useSkillWithStuntComplete(IJSAPI<SkillType> skillType, CharacterAction action, IJSAPI<SceneObject>[] targets, Action<bool, string> completeFunc) {
-				useSkillWithStuntComplete(skillType, action, targets, completeFunc, false, true, 0, null);
-			}
-
-			public void useSkillWithStuntComplete(
-				IJSAPI<SkillType> skillType, CharacterAction action, IJSAPI<SceneObject>[] targets,
-				Action<bool, string> completeFunc, bool skipDMCheck, bool bigone, int extraPoint, int[] fixedDicePoints
-				) {
-				try {
-					var origin_skillType = JSContextHelper.Instance.GetAPIOrigin(skillType);
-					var origin_targets = new List<SceneObject>();
-					foreach (var target in targets) {
-						origin_targets.Add(JSContextHelper.Instance.GetAPIOrigin(target));
-					}
-					if (!skipDMCheck) {
-						if (action == CharacterAction.CREATE_ASPECT) {
-							bool result = Game.DM.DMClient.RequireDMCheck(_outer.CharacterRef.Controller,
-								_outer.CharacterRef.Name + "想使用" + _outer.CharacterRef.GetSkill(origin_skillType).Name + ",可以吗？");
-							if (result) {
-								completeFunc(true, "");
-								BattleScene.Instance.StartCheck(_outer, origin_targets, action, origin_skillType, () => { }, null, bigone, extraPoint, fixedDicePoints);
-							} else {
-								completeFunc(false, "DM拒绝了你的选择");
-							}
-							return;
-						}
-					}
-					completeFunc(true, "");
-					BattleScene.Instance.StartCheck(_outer, origin_targets, action, origin_skillType, () => { }, null, bigone, extraPoint, fixedDicePoints);
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-				}
-			}
-
-			public void displayUsingStunt(IJSAPI<Stunt> stunt) {
-				try {
-					var origin_stunt = JSContextHelper.Instance.GetAPIOrigin(stunt);
-					foreach (Player player in Game.Players) {
-						player.Client.BattleScene.DisplayUsingStunt(_outer, origin_stunt);
-					}
-					Game.DM.Client.BattleScene.DisplayUsingStunt(_outer, origin_stunt);
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-				}
-			}
-			*/
+			
 			ActableGridObject IJSAPI<ActableGridObject>.Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {
@@ -1496,7 +1450,7 @@ namespace GameServer.Playground.BattleComponent {
 			foreach (var sceneObj in wrapperList) {
 				characterList.Add(sceneObj.CharacterRef);
 			}
-			SkillChecker.Instance.InitiativeUseSkill(dmCheckResult => {
+			SkillChecker.Instance.InitiativeUseSkillFrameworkInvoking(dmCheckResult => {
 				if (dmCheckResult) {
 					this.ActionPoint -= battleMapProperty.actionPointCost;
 					foreach (Player player in Game.Players) {
@@ -1570,7 +1524,7 @@ namespace GameServer.Playground.BattleComponent {
 				Action = action,
 				InitiativeSkillType = null
 			};
-			SkillChecker.Instance.InitiativeUseStunt(_characterRef, stunt, situation, success => {
+			SkillChecker.Instance.InitiativeUseStuntFrameworkInvoking(_characterRef, stunt, situation, success => {
 				if (success) {
 					this.ActionPoint -= battleMapProperty.actionPointCost;
 					foreach (Player player in Game.Players) {
