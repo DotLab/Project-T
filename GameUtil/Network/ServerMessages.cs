@@ -587,7 +587,7 @@ namespace GameUtil.Network.ServerMessages {
 		public override void ReadFrom(IDataInputStream stream) {
 			characterID = stream.ReadString();
 			stuntID = stream.ReadString();
-			targetMaxCount = stream.ReadString();
+			targetMaxCount = stream.ReadInt32();
 		}
 	}
 
