@@ -1,18 +1,18 @@
-﻿using GameServer.CharacterSystem;
-using GameServer.Container.StoryComponent;
+﻿using GameServer.CharacterComponents;
+using GameServer.Playground.StoryComponent;
 using GameServer.Core;
 using GameServer.Core.ScriptSystem;
 using GameUtil;
 using System;
 using System.Collections.Generic;
 
-namespace GameServer.Container {
-	public sealed class StorySceneContainer : IJSContextProvider {
+namespace GameServer.Playground {
+	public sealed class StoryScene : IJSContextProvider {
 		#region Javascript API class
-		private sealed class JSAPI : IJSAPI<StorySceneContainer> {
-			private readonly StorySceneContainer _outer;
+		private sealed class JSAPI : IJSAPI<StoryScene> {
+			private readonly StoryScene _outer;
 
-			public JSAPI(StorySceneContainer outer) {
+			public JSAPI(StoryScene outer) {
 				_outer = outer;
 			}
 
@@ -111,7 +111,7 @@ namespace GameServer.Container {
 				}
 			}
 
-			public StorySceneContainer Origin(JSContextHelper proof) {
+			public StoryScene Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {
 						return _outer;
@@ -125,25 +125,33 @@ namespace GameServer.Container {
 		#endregion
 		private readonly JSAPI _apiObj;
 
-		private static readonly StorySceneContainer _instance = new StorySceneContainer();
-		public static StorySceneContainer Instance => _instance;
+		private static readonly StoryScene _instance = new StoryScene();
+		public static StoryScene Instance => _instance;
 
-		private readonly IdentifiedObjList<ISceneObject> _objList;
-		private readonly IdentifiedObjList<Character> _playerCharacters;
+		private readonly IdentifiedObjectList<ISceneObject> _objList;
+		private readonly IdentifiedObjectList<Character> _playerCharacters;
 		private readonly Camera _camera;
 		private readonly List<TextBox> _textBoxes;
 
-		public IReadonlyIdentifiedObjList<ISceneObject> ObjList => _objList;
-		public IReadonlyIdentifiedObjList<Character> PlayerCharacters => _playerCharacters;
+		public IReadonlyIdentifiedObjectList<ISceneObject> ObjList => _objList;
+		public IReadonlyIdentifiedObjectList<Character> PlayerCharacters => _playerCharacters;
 		public Camera Camera => _camera;
 		public List<TextBox> TextBoxes => _textBoxes;
 
-		public StorySceneContainer() {
-			_objList = new IdentifiedObjList<ISceneObject>();
-			_playerCharacters = new IdentifiedObjList<Character>();
+		public StoryScene() {
+			_objList = new IdentifiedObjectList<ISceneObject>();
+			_playerCharacters = new IdentifiedObjectList<Character>();
 			_camera = new Camera();
 			_textBoxes = new List<TextBox>();
 			_apiObj = new JSAPI(this);
+		}
+
+		public Character FindCharacter(string id) {
+			if (_playerCharacters.TryGetValue(id, out Character character)) {
+				return character;
+			} else if (_objList.TryGetValue(id, out ISceneObject storyObject)) {
+				return storyObject.CharacterRef;
+			} else return null;
 		}
 
 		private SceneObject CreateStoryObject(Character character) {
@@ -191,160 +199,7 @@ namespace GameServer.Container {
 			}
 			throw new NotImplementedException();
 		}
-
-		public void StartCheck(
-			Character initiative, Character passive, CharacterAction action,
-			Action<CheckResult, CheckResult, int> checkOverCallback
-			) {
-			SkillChecker.Instance.StartCheck(initiative, passive, action, checkOverCallback);
-			foreach (Player player in Game.Players) {
-				if (initiative.Controller == player) player.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.INITIATIVE);
-				else if (passive.Controller == player) player.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.PASSIVE);
-				else player.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.OBSERVER);
-			}
-			if (initiative.Controller.IsDM) Game.DM.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.INITIATIVE);
-			else if (passive.Controller.IsDM) Game.DM.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.PASSIVE);
-			else Game.DM.Client.StoryScene.SkillCheckPanel.Open(initiative, passive, ClientComponents.SkillCheckPanel.ClientPosition.OBSERVER);
-		}
-
-		public void ForceEndCheck(CheckResult initiativeResult, CheckResult passiveResult, int delta) {
-			SkillChecker.Instance.ForceEndCheck(initiativeResult, passiveResult, delta);
-			foreach (Player player in Game.Players) {
-				if (SkillChecker.Instance.Initiative.Controller == player) player.Client.StoryScene.SkillCheckPanel.Close();
-				else if (SkillChecker.Instance.Passive.Controller == player) player.Client.StoryScene.SkillCheckPanel.Close();
-				else player.Client.StoryScene.SkillCheckPanel.Close();
-			}
-			if (SkillChecker.Instance.Initiative.Controller.IsDM) Game.DM.Client.StoryScene.SkillCheckPanel.Close();
-			else if (SkillChecker.Instance.Passive.Controller.IsDM) Game.DM.Client.StoryScene.SkillCheckPanel.Close();
-			else Game.DM.Client.StoryScene.SkillCheckPanel.Close();
-		}
-
-		public void EndCheck() {
-			SkillChecker.Instance.EndCheck();
-			foreach (Player player in Game.Players) {
-				if (SkillChecker.Instance.Initiative.Controller == player) player.Client.StoryScene.SkillCheckPanel.Close();
-				else if (SkillChecker.Instance.Passive.Controller == player) player.Client.StoryScene.SkillCheckPanel.Close();
-				else player.Client.StoryScene.SkillCheckPanel.Close();
-			}
-			if (SkillChecker.Instance.Initiative.Controller.IsDM) Game.DM.Client.StoryScene.SkillCheckPanel.Close();
-			else if (SkillChecker.Instance.Passive.Controller.IsDM) Game.DM.Client.StoryScene.SkillCheckPanel.Close();
-			else Game.DM.Client.StoryScene.SkillCheckPanel.Close();
-		}
-
-		private void InitiativeSelectSkill(SkillType skillType, bool bigone, int[] fixedDicePoints) {
-			SkillChecker.Instance.InitiativeSelectSkill(skillType);
-			int[] dicePoints = SkillChecker.Instance.InitiativeRollDice(fixedDicePoints);
-			SkillChecker.Instance.InitiativeSkillSelectionOver();
-			foreach (Player player in Game.Players) {
-				player.Client.StoryScene.SkillCheckPanel.DisplayDicePoint(true, dicePoints);
-				player.Client.StoryScene.SkillCheckPanel.DisplaySkillReady(true, skillType, bigone);
-				player.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.GetInitiativePoint());
-			}
-			Game.DM.Client.StoryScene.SkillCheckPanel.DisplayDicePoint(true, dicePoints);
-			Game.DM.Client.StoryScene.SkillCheckPanel.DisplaySkillReady(true, skillType, bigone);
-			Game.DM.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.GetInitiativePoint());
-		}
-
-		public void InitiativeUseSkill(SkillType skillType, bool force, bool bigone, int[] fixedDicePoints = null) {
-			if (force || SkillChecker.Instance.CheckingAction == CharacterAction.ATTACK) {
-				this.InitiativeSelectSkill(skillType, bigone, fixedDicePoints);
-			} else if (SkillChecker.Instance.CheckingAction == CharacterAction.CREATE_ASPECT || SkillChecker.Instance.CheckingAction == CharacterAction.HINDER) {
-				bool result = Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Initiative.Controller,
-					SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？");
-				if (result) this.InitiativeSelectSkill(skillType, bigone, fixedDicePoints);
-			}
-		}
-
-		public void InitiativeUseStunt(Stunt stunt) {
-			if (stunt.Belong != SkillChecker.Instance.Initiative) throw new ArgumentException("This stunt is not belong to initiative character.", nameof(stunt));
-			/*
-			if (stunt.NeedDMCheck)
-				Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Initiative.Controller,
-					SkillChecker.Instance.Initiative.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + stunt.Name + ",可以吗？",
-					result => { if (result) stunt.Effect.TakeEffect(); });
-			else stunt.Effect.TakeEffect();
-			*/
-		}
-
-		private void PassiveSelectSkill(SkillType skillType, bool bigone, int[] fixedDicePoints) {
-			SkillChecker.Instance.PassiveSelectSkill(skillType);
-			int[] dicePoints = SkillChecker.Instance.PassiveRollDice(fixedDicePoints);
-			SkillChecker.Instance.PassiveSkillSelectionOver();
-			foreach (Player player in Game.Players) {
-				player.Client.StoryScene.SkillCheckPanel.DisplayDicePoint(false, dicePoints);
-				player.Client.StoryScene.SkillCheckPanel.DisplaySkillReady(false, skillType, bigone);
-				player.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.GetPassivePoint());
-			}
-			Game.DM.Client.StoryScene.SkillCheckPanel.DisplayDicePoint(false, dicePoints);
-			Game.DM.Client.StoryScene.SkillCheckPanel.DisplaySkillReady(false, skillType, bigone);
-			Game.DM.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.GetPassivePoint());
-		}
-
-		public void PassiveUseSkill(SkillType skillType, bool force, bool bigone, int[] fixedDicePoints = null) {
-			if (force) {
-				this.PassiveSelectSkill(skillType, bigone, fixedDicePoints);
-			} else {
-				if (SkillChecker.CanResistSkillWithoutDMCheck(SkillChecker.Instance.InitiativeSkillType, skillType, SkillChecker.Instance.CheckingAction)) {
-					this.PassiveSelectSkill(skillType, bigone, fixedDicePoints);
-				} else {
-					bool result = Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Passive.Controller,
-						SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Passive.Name + "使用" + skillType.Name + ",可以吗？");
-					if (result) this.PassiveSelectSkill(skillType, bigone, fixedDicePoints);
-				}
-			}
-		}
-
-		public void PassiveUseStunt(Stunt stunt) {
-			if (stunt.Belong != SkillChecker.Instance.Passive) throw new ArgumentException("This stunt is not belong to passive character.", nameof(stunt));
-			/*
-			if (stunt.NeedDMCheck)
-				Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Passive.Controller,
-					SkillChecker.Instance.Passive.Name + "对" + SkillChecker.Instance.Initiative.Name + "使用" + stunt.Name + ",可以吗？",
-					result => { if (result) stunt.Effect.TakeEffect(); });
-			else stunt.Effect.TakeEffect();
-			*/
-		}
-
-		public void InitiativeUseAspect(Aspect aspect, bool reroll) {
-			foreach (Player player in Game.Players) {
-				player.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(true, aspect);
-			}
-			Game.DM.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(true, aspect);
-			bool result = Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Initiative.Controller,
-				SkillChecker.Instance.Initiative.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？");
-			if (result) {
-				SkillChecker.Instance.InitiativeUseAspect(aspect, reroll);
-				foreach (Player player in Game.Players) {
-					player.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.GetInitiativePoint());
-				}
-				Game.DM.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(true, SkillChecker.Instance.GetInitiativePoint());
-			}
-		}
-
-		public void InitiativeSkipUsingAspect() {
-			SkillChecker.Instance.InitiativeAspectSelectionOver();
-		}
-
-		public void PassiveUseAspect(Aspect aspect, bool reroll) {
-			foreach (Player player in Game.Players) {
-				player.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(false, aspect);
-			}
-			Game.DM.Client.StoryScene.SkillCheckPanel.DisplayUsingAspect(false, aspect);
-			bool result = Game.DM.DMClient.RequestDMCheck(SkillChecker.Instance.Passive.Controller,
-				SkillChecker.Instance.Passive.Name + "想使用" + aspect.Belong.Name + "的" + aspect.Name + "可以吗？");
-			if (result) {
-				SkillChecker.Instance.PassiveUseAspect(aspect, reroll);
-				foreach (Player player in Game.Players) {
-					player.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.GetPassivePoint());
-				}
-				Game.DM.Client.StoryScene.SkillCheckPanel.UpdateSumPoint(false, SkillChecker.Instance.GetPassivePoint());
-			}
-		}
-
-		public void PassiveSkipUsingAspect() {
-			SkillChecker.Instance.PassiveAspectSelectionOver();
-		}
-
+		
 		public IJSContext GetContext() {
 			return _apiObj;
 		}
@@ -353,7 +208,7 @@ namespace GameServer.Container {
 	}
 }
 
-namespace GameServer.Container.StoryComponent {
+namespace GameServer.Playground.StoryComponent {
 	public interface ISceneObject : IIdentifiable {
 		void OnInteract();
 		void OnCreateAspect();

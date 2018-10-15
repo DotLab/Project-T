@@ -1,11 +1,11 @@
-﻿using GameServer.Container.BattleComponent;
-using GameServer.Core;
+﻿using GameServer.Core;
 using GameServer.Core.ScriptSystem;
+using GameServer.EventSystem;
 using GameUtil;
 using System;
 using System.Collections.Generic;
 
-namespace GameServer.CharacterSystem {
+namespace GameServer.CharacterComponents {
 	public interface IStuntProperty : IAttachable<Stunt> { }
 
 	public class StuntPropertyList<T> : AttachableList<Stunt, T> where T : class, IStuntProperty {
@@ -130,33 +130,24 @@ namespace GameServer.CharacterSystem {
 				}
 			}
 
-			public IJSAPI<InitiativeEffect> getEffect() {
+			public IJSAPI<StuntEffect> getEffect() {
 				try {
 					if (_outer.TargetCondition == null) return null;
-					return (IJSAPI<InitiativeEffect>)_outer.TargetCondition.GetContext();
+					return (IJSAPI<StuntEffect>)_outer.TargetCondition.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return null;
 				}
 			}
 
-			public void setEffect(IJSAPI<InitiativeEffect> val) {
+			public void setEffect(IJSAPI<StuntEffect> val) {
 				try {
 					_outer.Effect = JSContextHelper.Instance.GetAPIOrigin(val);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 				}
 			}
-
-			public IJSAPI<StuntPropertyList<PassiveEffect>> getPassiveEffects() {
-				try {
-					return (IJSAPI<StuntPropertyList<PassiveEffect>>)_outer.PassiveEffects.GetContext();
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-					return null;
-				}
-			}
-
+			
 			public SkillBattleMapProperty getBattleMapSkillProperty() {
 				try {
 					return _outer.BattleMapProperty;
@@ -218,8 +209,9 @@ namespace GameServer.CharacterSystem {
 		private Character _belong = null;
 		private Condition _usingCondition = null;
 		private Condition _targetCondition = null;
-		private InitiativeEffect _initiativeEffect;
-		private readonly StuntPropertyList<PassiveEffect> _passiveEffects;
+		private int _targetMaxCount = 1;
+		private StuntEffect _stuntEffect;
+		private readonly List<Trigger> _triggersInvoking;
 		private SkillBattleMapProperty _battleMapProperty;
 		private StuntSituationLimit _situationLimit;
 		private readonly List<SkillType> _overcome = new List<SkillType>();
@@ -227,15 +219,15 @@ namespace GameServer.CharacterSystem {
 		private readonly List<SkillType> _defend = new List<SkillType>();
 		private object _customData = null;
 
-		public Stunt(InitiativeEffect effect, string name = "", string description = "") {
+		public Stunt(StuntEffect effect, string name = "", string description = "") {
 			if (effect == null) throw new ArgumentNullException(nameof(effect));
 			if (effect.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(effect));
-			_initiativeEffect = effect;
+			_stuntEffect = effect;
 			effect.SetBelong(this);
 			_name = name ?? throw new ArgumentNullException(nameof(name));
 			_description = description ?? throw new ArgumentNullException(nameof(description));
 			_battleMapProperty = SkillBattleMapProperty.INIT;
-			_passiveEffects = new StuntPropertyList<PassiveEffect>(this);
+			_triggersInvoking = new List<Trigger>();
 			_apiObj = new JSAPI(this);
 		}
 
@@ -270,17 +262,17 @@ namespace GameServer.CharacterSystem {
 				}
 			}
 		}
-		public InitiativeEffect Effect {
-			get => _initiativeEffect;
+		public int TargetMaxCount { get => _targetMaxCount; set => _targetMaxCount = value; }
+		public StuntEffect Effect {
+			get => _stuntEffect;
 			set {
 				if (value == null) throw new ArgumentNullException(nameof(value));
 				if (value.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(value));
-				_initiativeEffect.SetBelong(null);
-				_initiativeEffect = value;
+				_stuntEffect.SetBelong(null);
+				_stuntEffect = value;
 				value.SetBelong(this);
 			}
 		}
-		public StuntPropertyList<PassiveEffect> PassiveEffects => _passiveEffects;
 		public SkillBattleMapProperty BattleMapProperty { get => _battleMapProperty; set => _battleMapProperty = value; }
 		public StuntSituationLimit SituationLimit { get => _situationLimit; set => _situationLimit = value; }
 		public List<SkillType> Overcome => _overcome;
@@ -306,9 +298,37 @@ namespace GameServer.CharacterSystem {
 		}
 
 		public void CopyResistTable(SkillType skillType) {
-			if (SkillChecker.DEFEND.TryGetValue(skillType, out var defend)) _defend.AddRange(defend);
-			if (SkillChecker.EVADE.TryGetValue(skillType, out var evade)) _evade.AddRange(evade);
-			if (SkillChecker.OVERCOME.TryGetValue(skillType, out var overcome)) _overcome.AddRange(overcome);
+			if (SkillType.DEFEND.TryGetValue(skillType, out var defend)) _defend.AddRange(defend);
+			if (SkillType.EVADE.TryGetValue(skillType, out var evade)) _evade.AddRange(evade);
+			if (SkillType.OVERCOME.TryGetValue(skillType, out var overcome)) _overcome.AddRange(overcome);
+		}
+
+		public void BindEvent(string eventID) {
+			var trigger = new Trigger(eventID, new Command(() => {
+				if (_belong == null) return;
+				var situation = new Situation() {
+					IsTriggerInvoking = true, EventID = eventID,
+					IsInStoryScene = false, IsInitiative = false,
+					InitiativeSS = null, InitiativeBS = null,
+					PassivesSS = null, PassivesBS = null,
+					Action = 0,
+					InitiativeSkillType = null
+				};
+				if (_usingCondition != null) {
+					_usingCondition.Situation = situation;
+					if (!_usingCondition.Judge()) return;
+				}
+				_stuntEffect.Situation = situation;
+				_stuntEffect.TakeEffect((success, message) => {
+					if (success) {
+						foreach (Player player in Game.Players) {
+							player.Client.SkillChecker.DisplayUsingStunt(_belong, this);
+						}
+						Game.DM.Client.SkillChecker.DisplayUsingStunt(_belong, this);
+					}
+				});
+			}));
+			_triggersInvoking.Add(trigger);
 		}
 
 		public void SetBelong(Character belong) {

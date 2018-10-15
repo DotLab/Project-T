@@ -7,6 +7,7 @@
     <Platforms>AnyCPU</Platforms>
 	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 	<ApplicationIcon />
+	<AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

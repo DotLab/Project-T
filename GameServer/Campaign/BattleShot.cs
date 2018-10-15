@@ -1,4 +1,4 @@
-﻿using GameServer.Container;
+﻿using GameServer.Playground;
 
 namespace GameServer.Campaign {
 	public sealed class BattleShot : Shot {
@@ -11,7 +11,7 @@ namespace GameServer.Campaign {
 
 		}
 
-		public void InitBattleScene(BattleSceneContainer scene) {
+		public void InitBattleScene(BattleScene scene) {
 
 		}
 	}

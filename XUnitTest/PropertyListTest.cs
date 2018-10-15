@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Xunit;
 using System.Text;
 using GameServer.Core.ScriptSystem;
-using GameServer.CharacterSystem;
+using GameServer.CharacterComponents;
 using Xunit.Abstractions;
 using GameServer.Core.ScriptSystem.EngineWrapper;
 

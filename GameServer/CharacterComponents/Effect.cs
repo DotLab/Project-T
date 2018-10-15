@@ -5,7 +5,7 @@ using System;
 using GameUtil;
 using System.Collections.Generic;
 
-namespace GameServer.CharacterSystem {
+namespace GameServer.CharacterComponents {
 	public sealed class Situation : IJSContextProvider {
 		#region Javascript API class
 		private sealed class JSAPI : IJSAPI<Situation> {
@@ -51,40 +51,48 @@ namespace GameServer.CharacterSystem {
 				}
 			}
 
-			public IJSAPI<Container.StoryComponent.SceneObject> getInitiativeSS() {
+			public IJSAPI<Playground.StoryComponent.SceneObject> getInitiativeSS() {
 				try {
 					if (_outer.InitiativeSS == null) return null;
-					return (IJSAPI<Container.StoryComponent.SceneObject>)_outer.InitiativeSS.GetContext();
+					return (IJSAPI<Playground.StoryComponent.SceneObject>)_outer.InitiativeSS.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return null;
 				}
 			}
 
-			public IJSAPI<Container.BattleComponent.SceneObject> getInitiativeBS() {
+			public IJSAPI<Playground.BattleComponent.SceneObject> getInitiativeBS() {
 				try {
 					if (_outer.InitiativeBS == null) return null;
-					return (IJSAPI<Container.BattleComponent.SceneObject>)_outer.InitiativeBS.GetContext();
+					return (IJSAPI<Playground.BattleComponent.SceneObject>)_outer.InitiativeBS.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return null;
 				}
 			}
 
-			public IJSAPI<Container.StoryComponent.SceneObject> getPassiveSS() {
+			public IJSAPI<Playground.StoryComponent.SceneObject>[] getTargetsSS() {
 				try {
-					if (_outer.PassiveSS == null) return null;
-					return (IJSAPI<Container.StoryComponent.SceneObject>)_outer.PassiveSS.GetContext();
+					if (_outer.PassivesSS == null) return null;
+					var ret = new IJSAPI<Playground.StoryComponent.SceneObject>[_outer.PassivesSS.Length];
+					for (int i = 0; i < _outer.PassivesSS.Length; ++i) {
+						ret[i] = (IJSAPI<Playground.StoryComponent.SceneObject>)_outer.PassivesSS[i].GetContext();
+					}
+					return ret;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return null;
 				}
 			}
 
-			public IJSAPI<Container.BattleComponent.SceneObject> getPassiveBS() {
+			public IJSAPI<Playground.BattleComponent.SceneObject>[] getTargetsBS() {
 				try {
-					if (_outer.PassiveBS == null) return null;
-					return (IJSAPI<Container.BattleComponent.SceneObject>)_outer.PassiveBS.GetContext();
+					if (_outer.PassivesBS == null) return null;
+					var ret = new IJSAPI<Playground.BattleComponent.SceneObject>[_outer.PassivesBS.Length];
+					for (int i = 0; i < _outer.PassivesBS.Length; ++i) {
+						ret[i] = (IJSAPI<Playground.BattleComponent.SceneObject>)_outer.PassivesBS[i].GetContext();
+					}
+					return ret;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return null;
@@ -99,16 +107,7 @@ namespace GameServer.CharacterSystem {
 					return 0;
 				}
 			}
-
-			public bool isOnInteract() {
-				try {
-					return _outer.IsOnInteract;
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-					return false;
-				}
-			}
-
+			
 			public IJSAPI<SkillType> getInitiativeSkillType() {
 				try {
 					if (_outer.InitiativeSkillType == null) return null;
@@ -119,20 +118,6 @@ namespace GameServer.CharacterSystem {
 				}
 			}
 			
-			public IJSAPI<Container.BattleComponent.SceneObject>[] getTargetsBS() {
-				try {
-					if (_outer.TargetsBS == null) return null;
-					var ret = new IJSAPI<Container.BattleComponent.SceneObject>[_outer.TargetsBS.Length];
-					for (int i = 0; i < _outer.TargetsBS.Length; ++i) {
-						ret[i] = (IJSAPI<Container.BattleComponent.SceneObject>)_outer.TargetsBS[i].GetContext();
-					}
-					return ret;
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-					return null;
-				}
-			}
-
 			public Situation Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {
@@ -151,27 +136,23 @@ namespace GameServer.CharacterSystem {
 		private string _eventID;
 		private bool _isInStoryScene;
 		private bool _isInitiative;
-		private Container.StoryComponent.SceneObject _initiativeSS;
-		private Container.BattleComponent.SceneObject _initiativeBS;
-		private Container.StoryComponent.SceneObject _passiveSS;
-		private Container.BattleComponent.SceneObject _passiveBS;
+		private Playground.StoryComponent.SceneObject _initiativeSS;
+		private Playground.BattleComponent.SceneObject _initiativeBS;
+		private Playground.StoryComponent.SceneObject[] _passivesSS;
+		private Playground.BattleComponent.SceneObject[] _passivesBS;
 		private CharacterAction _action;
-		private bool _isOnInteract;
 		private SkillType _initiativeSkillType;
-		private Container.BattleComponent.SceneObject[] _targetsBS;
 
 		public bool IsTriggerInvoking { get => _isTriggerInvoking; set => _isTriggerInvoking = value; }
 		public string EventID { get => _eventID; set => _eventID = value; }
 		public bool IsInStoryScene { get => _isInStoryScene; set => _isInStoryScene = value; }
 		public bool IsInitiative { get => _isInitiative; set => _isInitiative = value; }
-		public Container.StoryComponent.SceneObject InitiativeSS { get => _initiativeSS; set => _initiativeSS = value; }
-		public Container.BattleComponent.SceneObject InitiativeBS { get => _initiativeBS; set => _initiativeBS = value; }
-		public Container.StoryComponent.SceneObject PassiveSS { get => _passiveSS; set => _passiveSS = value; }
-		public Container.BattleComponent.SceneObject PassiveBS { get => _passiveBS; set => _passiveBS = value; }
+		public Playground.StoryComponent.SceneObject InitiativeSS { get => _initiativeSS; set => _initiativeSS = value; }
+		public Playground.BattleComponent.SceneObject InitiativeBS { get => _initiativeBS; set => _initiativeBS = value; }
+		public Playground.StoryComponent.SceneObject[] PassivesSS { get => _passivesSS; set => _passivesSS = value; }
+		public Playground.BattleComponent.SceneObject[] PassivesBS { get => _passivesBS; set => _passivesBS = value; }
 		public CharacterAction Action { get => _action; set => _action = value; }
-		public bool IsOnInteract { get => _isOnInteract; set => _isOnInteract = value; }
 		public SkillType InitiativeSkillType { get => _initiativeSkillType; set => _initiativeSkillType = value; }
-		public Container.BattleComponent.SceneObject[] TargetsBS { get => _targetsBS; set => _targetsBS = value; }
 
 		public Situation() {
 			_apiObj = new JSAPI(this);
@@ -275,12 +256,12 @@ namespace GameServer.CharacterSystem {
 		public void SetContext(IJSContext context) { }
 	}
 
-	public sealed class InitiativeEffect : IStuntProperty {
+	public sealed class StuntEffect : IStuntProperty {
 		#region Javascript API class
-		private sealed class JSAPI : IJSAPI<InitiativeEffect> {
-			private readonly InitiativeEffect _outer;
+		private sealed class JSAPI : IJSAPI<StuntEffect> {
+			private readonly StuntEffect _outer;
 
-			public JSAPI(InitiativeEffect outer) {
+			public JSAPI(StuntEffect outer) {
 				_outer = outer;
 			}
 
@@ -312,7 +293,7 @@ namespace GameServer.CharacterSystem {
 				}
 			}
 
-			public InitiativeEffect Origin(JSContextHelper proof) {
+			public StuntEffect Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {
 						return _outer;
@@ -338,7 +319,7 @@ namespace GameServer.CharacterSystem {
 			_belong = belong;
 		}
 		
-		public InitiativeEffect(Command command) {
+		public StuntEffect(Command command) {
 			_command = command ?? throw new ArgumentNullException(nameof(command));
 			_apiObj = new JSAPI(this);
 		}
@@ -357,29 +338,19 @@ namespace GameServer.CharacterSystem {
 		public void SetContext(IJSContext context) { }
 	}
 
-	public sealed class PassiveEffect : Trigger, IStuntProperty, IExtraProperty {
+	public sealed class ExtraEffect : Trigger, IExtraProperty {
 		#region Javascript API class
-		private new class JSAPI : Trigger.JSAPI, IJSAPI<PassiveEffect> {
-			private readonly PassiveEffect _outer;
+		private new class JSAPI : Trigger.JSAPI, IJSAPI<ExtraEffect> {
+			private readonly ExtraEffect _outer;
 
-			public JSAPI(PassiveEffect outer) :
+			public JSAPI(ExtraEffect outer) :
 				base(outer) {
 				_outer = outer;
 			}
-
-			public IJSAPI<Stunt> getBelongStunt() {
-				try {
-					if (_outer.BelongStunt != null) return (IJSAPI<Stunt>)_outer.BelongStunt.GetContext();
-					else return null;
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-					return null;
-				}
-			}
-
+			
 			public IJSAPI<Extra> getBelongExtra() {
 				try {
-					if (_outer.BelongExtra != null) return (IJSAPI<Extra>)_outer.BelongExtra.GetContext();
+					if (_outer.Belong != null) return (IJSAPI<Extra>)_outer.Belong.GetContext();
 					else return null;
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
@@ -387,7 +358,7 @@ namespace GameServer.CharacterSystem {
 				}
 			}
 
-			PassiveEffect IJSAPI<PassiveEffect>.Origin(JSContextHelper proof) {
+			ExtraEffect IJSAPI<ExtraEffect>.Origin(JSContextHelper proof) {
 				try {
 					if (proof == JSContextHelper.Instance) {
 						return _outer;
@@ -400,42 +371,21 @@ namespace GameServer.CharacterSystem {
 		}
 		#endregion
 		private readonly JSAPI _apiObj;
-
-		private Stunt _belongStunt = null;
-		private Extra _belongExtra = null;
-
-		Stunt IAttachable<Stunt>.Belong => _belongStunt;
-		Extra IAttachable<Extra>.Belong => _belongExtra;
-		public Stunt BelongStunt => _belongStunt;
-		public Extra BelongExtra => _belongExtra;
-
-		public void SetBelong(Stunt belong) {
-			_belongStunt = belong;
-		}
-
+		
+		private Extra _belong = null;
+		
+		public Extra Belong => _belong;
+		
 		public void SetBelong(Extra belong) {
-			_belongExtra = belong;
+			_belong = belong;
 		}
 		
-		public PassiveEffect(string boundEventID, Command command) :
+		public ExtraEffect(string boundEventID, Command command) :
 			base(boundEventID, command) {
 			_apiObj = new JSAPI(this);
 		}
 
 		public override void Notify() {
-			if (_belongStunt != null) {
-				if (_belongStunt.UsingCondition != null) {
-					_belongStunt.UsingCondition.Situation = new Situation() {
-						IsTriggerInvoking = true, EventID = _boundEventID,
-						IsInStoryScene = false, IsInitiative = false,
-						InitiativeSS = null, InitiativeBS = null,
-						PassiveSS = null, PassiveBS = null,
-						Action = 0, IsOnInteract = false,
-						InitiativeSkillType = null, TargetsBS = null
-					};
-					if (!_belongStunt.UsingCondition.Judge()) return;
-				}
-			}
 			JSEngineManager.Engine.SynchronizeContext("$__this__", this);
 			base.Notify();
 			JSEngineManager.Engine.RemoveContext("$__this__");

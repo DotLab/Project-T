@@ -6,14 +6,14 @@ using System.Dynamic;
 using System.Text;
 using GameServer.Core;
 using GameUtil.Network;
-using GameServer.CharacterSystem;
+using GameServer.CharacterComponents;
 using NetworkHelper = Networkf.NetworkHelper;
 using NetworkService = Networkf.NetworkService;
 using System.Threading;
 using System.Linq;
 using GameUtil;
-using GameServer.Container;
-using GameServer.Container.BattleComponent;
+using GameServer.Playground;
+using GameServer.Playground.BattleComponent;
 using GameServer.Campaign;
 
 namespace TestConsoleApp {
@@ -27,13 +27,9 @@ namespace TestConsoleApp {
 		static readonly NetworkfConnection player1Connection = new NetworkfConnection();
 		static readonly NetworkfConnection player2Connection = new NetworkfConnection();
 		static readonly NetworkfConnection player3Connection = new NetworkfConnection();
-
-		static readonly KeyCharacter[] player1characters = new KeyCharacter[1];
-		static readonly KeyCharacter[] player2characters = new KeyCharacter[1];
-		static readonly KeyCharacter[] player3characters = new KeyCharacter[1];
-
+		
 		static void Main(string[] args) {
-			var brught_jackson = player1characters[0] = new KeyCharacter("PlayerBrughtJackson", new CharacterView() { battle = "布鲁特", story = "布鲁特·杰克逊" });
+			var brught_jackson = new KeyCharacter("PlayerBrughtJackson", new CharacterView() { battle = "布鲁特", story = "布鲁特·杰克逊" });
 			brught_jackson.Name = "布鲁特·杰克逊";
 			brught_jackson.Description = "正在读大学的布鲁特是他所成长的街区内这一辈年轻人里唯一一个拿到私立大学奖学金的人，被考古专业录取的他对于一切古老而神秘的事务充满好奇。";
 			brught_jackson.PhysicsStressMax = 2;
@@ -53,11 +49,11 @@ namespace TestConsoleApp {
 			brught_jackson.GetSkill(SkillType.Rapport).Level = 1;
 			brught_jackson.GetSkill(SkillType.Stealth).Level = 1;
 			
-			var stunt1 = new Stunt(new InitiativeEffect(new Command("专家主动效果", Resource.Stunt1JSCode)));
+			var stunt1 = new Stunt(new StuntEffect(new Command("专家主动效果", Resource.Stunt1JSCode)));
 			stunt1.Name = "专家";
 			stunt1.Description = "你声明一个专业领域，例如草药学，犯罪学或者动物学。在你针对那个领域相关的内容进行学识掷骰时，你获得 + 2 的掷骰结果。";
 			var limit1 = new StuntSituationLimit() {
-				canUseOnInteract = true,
+				canUseDirectly = false,
 				usableSituation = CharacterAction.CREATE_ASPECT | CharacterAction.HINDER,
 				resistableSituation = CharacterAction.CREATE_ASPECT | CharacterAction.HINDER
 			};
@@ -66,22 +62,22 @@ namespace TestConsoleApp {
 			stunt1.CopyResistTable(SkillType.Lore);
 			brught_jackson.Stunts.Add(stunt1);
 			
-			var stunt2 = new Stunt(new InitiativeEffect(new Command("决心的力量主动效果", Resource.Stunt2JSCode)));
+			var stunt2 = new Stunt(new StuntEffect(new Command("决心的力量主动效果", Resource.Stunt2JSCode)));
 			stunt2.Name = "决心的力量";
 			stunt2.Description = "任何被动掷骰中都可以使用意志代替体格，这表示超凡的力量。";
 			var limit2 = new StuntSituationLimit() {
-				canUseOnInteract = false,
+				canUseDirectly = false,
 				usableSituation = 0,
 				resistableSituation = CharacterAction.ATTACK | CharacterAction.CREATE_ASPECT | CharacterAction.HINDER
 			};
 			stunt2.SituationLimit = limit2;
 			stunt2.BattleMapProperty = brught_jackson.GetSkill(SkillType.Will).BattleMapProperty;
 			stunt2.CopyResistTable(SkillType.Physique);
-			stunt2.PassiveEffects.Add(new PassiveEffect("event.battleScene.onceCheckOver", new Command("决心的力量被动效果", Resource.Stunt2Trigger1JSCode)));
+			stunt2.BindEvent("event.battleScene.onceCheckOver");
 			brught_jackson.Stunts.Add(stunt2);
 
 
-			var ranbo = player2characters[0] = new KeyCharacter("PlayerRanbo", new CharacterView() { battle = "蓝波", story = "蓝波" });
+			var ranbo = new KeyCharacter("PlayerRanbo", new CharacterView() { battle = "蓝波", story = "蓝波" });
 			ranbo.Name = "蓝波";
 			ranbo.Description = "从小就备受欺负的蓝波，坚信一身强健的肌肉可以保护自己，长大后成为了亚特兰大市民中心内的健身房教练，出生于美国中部州的他对政府极度不信任。";
 			ranbo.PhysicsStressMax = 4;
@@ -101,19 +97,19 @@ namespace TestConsoleApp {
 			ranbo.GetSkill(SkillType.Lore).Level = 1;
 			ranbo.GetSkill(SkillType.Empathy).Level = 1;
 			
-			var stunt3 = new Stunt(new InitiativeEffect(new Command("", "")));
+			var stunt3 = new Stunt(new StuntEffect(new Command("", "")));
 			stunt3.Name = "晕眩反击";
 			stunt3.Description = "每当你在对抗对手格斗技能的防御行动中获得大成功时，你自动反击对手。你可以免费在你的对手身上激活晕眩特性。";
-			stunt3.PassiveEffects.Add(new PassiveEffect("event.battleScene.onceCheckOver", new Command("晕眩反击被动效果", Resource.Stunt3Trigger1JSCode)));
+			stunt3.BindEvent("event.battleScene.onceCheckOver");
 			ranbo.Stunts.Add(stunt3);
 			
-			var stunt4 = new Stunt(new InitiativeEffect(new Command("坚韧如钉主动效果", Resource.Stunt4JSCode)));
+			var stunt4 = new Stunt(new StuntEffect(new Command("坚韧如钉主动效果", Resource.Stunt4JSCode)));
 			stunt4.UsingCondition = new Condition(new Command("坚韧如钉使用判定", Resource.Stunt4UsingConditionJSCode));
 			stunt4.TargetCondition = new Condition(new Command("坚韧如钉目标判定", Resource.Stunt4TargetConditionJSCode));
 			stunt4.Name = "坚韧如钉";
 			stunt4.Description = "每局游戏一次，消耗一点命运点数，你可以将一个物理性的中度伤痕减弱为轻微（如果你的轻微不良状态槽正空着），或者完全解除一个轻微伤痕。";
 			var limit4 = new StuntSituationLimit() {
-				canUseOnInteract = true,
+				canUseDirectly = true,
 				usableSituation = 0,
 				resistableSituation = 0
 			};
@@ -121,7 +117,7 @@ namespace TestConsoleApp {
 			ranbo.Stunts.Add(stunt4);
 
 
-			var lily = player3characters[0] = new KeyCharacter("PlayerLily", new CharacterView() { battle = "李莉", story = "李莉" });
+			var lily = new KeyCharacter("PlayerLily", new CharacterView() { battle = "李莉", story = "李莉" });
 			lily.Name = "李莉";
 			lily.Description = "联邦调查局，负责人口失踪与贩卖类别的调查。由于移民身份总是受到同事的排挤。";
 			lily.PhysicsStressMax = lily.MentalStressMax = 3;
@@ -139,11 +135,11 @@ namespace TestConsoleApp {
 			lily.GetSkill(SkillType.Will).Level = 1;
 			lily.GetSkill(SkillType.Notice).Level = 1;
 			
-			var stunt5 = new Stunt(new InitiativeEffect(new Command("", "")));
+			var stunt5 = new Stunt(new StuntEffect(new Command("", "")));
 			stunt5.UsingCondition = new Condition(new Command("备用武器使用判定", Resource.Stunt5UsingConditionJSCode));
 			stunt5.Name = "备用武器";
 			stunt5.Description = "每当其他人在你身上创造“缴械”、“武器落手”或类似的情景特征时，你可以花费1 个命运点来宣告细节，表示你带着备用武器，对手将因此而无法创造情景特征，但他可以获得一个增益，以此表示你在不得不更换武器时所出现的短时间分心。";
-			stunt5.PassiveEffects.Add(new PassiveEffect("event.battleScene.onceCheckOverAspectCreated", new Command("备用武器被动效果", Resource.Stunt5Trigger1JSCode)));
+			stunt5.BindEvent("event.battleScene.onceCheckOverAspectCreated");
 			lily.Stunts.Add(stunt5);
 
 			var pistol = new Extra(CharacterManager.Instance.CreateCharacterWithSaving(CharacterManager.DataLevel.Common, "ItemPistol", new CharacterView() { battle = "手枪", story = "手枪" }));
@@ -152,18 +148,18 @@ namespace TestConsoleApp {
 			pistol.IsLongRangeWeapon = true;
 			lily.Extras.Add(pistol);
 
-			var stunt6 = new Stunt(new InitiativeEffect(new Command("洞若观火主动效果", Resource.Stunt6JSCode)));
+			var stunt6 = new Stunt(new StuntEffect(new Command("洞若观火主动效果", Resource.Stunt6JSCode)));
 			stunt6.Name = "洞若观火";
 			stunt6.Description = "你可以使用调查技能代替洞察技能来防御欺诈。其他人凭借本能反应和直觉感知的信息，你可以通过仔细观察别人的细微表情来获悉。";
 			var limit6 = new StuntSituationLimit() {
-				canUseOnInteract = false,
+				canUseDirectly = false,
 				usableSituation = 0,
 				resistableSituation = CharacterAction.ATTACK | CharacterAction.CREATE_ASPECT | CharacterAction.HINDER
 			};
 			stunt6.SituationLimit = limit6;
 			stunt6.BattleMapProperty = lily.GetSkill(SkillType.Investigate).BattleMapProperty;
 			stunt6.CopyResistTable(SkillType.Notice);
-			stunt6.PassiveEffects.Add(new PassiveEffect("event.battleScene.onceCheckOver", new Command("洞若观火被动效果", Resource.Stunt6Trigger1JSCode)));
+			stunt6.BindEvent("event.battleScene.onceCheckOver");
 			lily.Stunts.Add(stunt6);
 
 			var franz = CharacterManager.Instance.CreateCharacterWithSaving(CharacterManager.DataLevel.Key, "NPCFranz", new CharacterView { battle = "弗兰兹", story = "弗兰兹" });
@@ -185,11 +181,11 @@ namespace TestConsoleApp {
 			franz.GetSkill(SkillType.Lore).Level = 1;
 			franz.GetSkill(SkillType.Will).Level = 1;
 
-			var stunt7 = new Stunt(new InitiativeEffect(new Command("掠空攻击主动效果", Resource.Stunt7JSCode)));
+			var stunt7 = new Stunt(new StuntEffect(new Command("掠空攻击主动效果", Resource.Stunt7JSCode)));
 			stunt7.Name = "掠空攻击";
 			stunt7.Description = "从空中滑翔而下，在飞行的最低点攻击目标。如果目标足够轻，则将其携带至高空中摔死。";
 			var limit7 = new StuntSituationLimit() {
-				canUseOnInteract = false,
+				canUseDirectly = false,
 				usableSituation = CharacterAction.ATTACK,
 				resistableSituation = 0
 			};
@@ -197,13 +193,13 @@ namespace TestConsoleApp {
 			var mapProperty7 = franz.GetSkill(SkillType.Athletics).BattleMapProperty;
 			mapProperty7.useRange = new Range() { low = 0, lowOpen = false, high = 8, highOpen = false };
 			stunt7.BattleMapProperty = mapProperty7;
-			stunt7.PassiveEffects.Add(new PassiveEffect("event.battleScene.onceCheckOver", new Command("掠空攻击被动效果", Resource.Stunt7Trigger1JSCode)));
+			stunt7.BindEvent("event.battleScene.onceCheckOver");
 			franz.Stunts.Add(stunt7);
 
-			var stunt8 = new Stunt(new InitiativeEffect(new Command("", "")));
+			var stunt8 = new Stunt(new StuntEffect(new Command("", "")));
 			stunt8.Name = "不死之身";
 			stunt8.Description = "作为吸血鬼，除非受到阳光（紫外线）和银制物品的攻击，否则不会受到伤害，就算有外伤也会迅速愈合。生理压力槽 + 2，精神压力槽 + 1。";
-			stunt8.PassiveEffects.Add(new PassiveEffect("event.battleScene.onceCheckOverCauseDamage", new Command("不死之身被动效果", Resource.Stunt8Trigger1JSCode)));
+			stunt8.BindEvent("event.battleScene.onceCheckOverCauseDamage");
 			franz.Stunts.Add(stunt8);
 
 			var emma = CharacterManager.Instance.CreateCharacterWithSaving(CharacterManager.DataLevel.Common, "NPCEmma", new CharacterView { battle = "艾玛", story = "艾玛" });
@@ -224,20 +220,20 @@ namespace TestConsoleApp {
 			emma.GetSkill(SkillType.Will).Level = 1;
 			emma.GetSkill(SkillType.Resources).Level = 1;
 
-			var stunt9 = new Stunt(new InitiativeEffect(new Command("爆发射击主动效果", Resource.Stunt9JSCode)));
+			var stunt9 = new Stunt(new StuntEffect(new Command("爆发射击主动效果", Resource.Stunt9JSCode)));
 			stunt9.UsingCondition = new Condition(new Command("爆发射击使用判定", Resource.Stunt9UsingConditionJSCode));
 			stunt9.Name = "爆发射击（雷明顿M870霰弹枪）";
 			stunt9.Description = "在攻击检定结果上获得 + 2 的奖励，并且可以攻击同方向至多3 个目标。";
 			var limit9 = new StuntSituationLimit() {
-				canUseOnInteract = false,
+				canUseDirectly = false,
 				usableSituation = CharacterAction.ATTACK,
 				resistableSituation = 0
 			};
 			stunt9.SituationLimit = limit9;
 			var mapProperty9 = emma.GetSkill(SkillType.Shoot).BattleMapProperty;
 			mapProperty9.affectRange = new Range() { low = 0, lowOpen = false, high = 3, highOpen = false };
-			mapProperty9.targetMaxCount = 3;
 			stunt9.BattleMapProperty = mapProperty9;
+			stunt9.TargetMaxCount = 3;
 			emma.Stunts.Add(stunt9);
 
 			var gun = new Extra(CharacterManager.Instance.CreateCharacterWithSaving(CharacterManager.DataLevel.Common, "ItemGun", new CharacterView() { battle = "霰弹枪", story = "霰弹枪" }));
@@ -274,9 +270,9 @@ namespace TestConsoleApp {
 			franz.Token = CharacterToken.HOSTILE;
 
 			Player[] players = new Player[3];
-			players[0] = new Player("Player1", "玩家1", player1Connection, 1, player1characters);
-			players[1] = new Player("Player2", "玩家2", player2Connection, 2, player2characters);
-			players[2] = new Player("Player3", "玩家3", player3Connection, 3, player3characters);
+			players[0] = new Player("Player1", "玩家1", player1Connection, brught_jackson);
+			players[1] = new Player("Player2", "玩家2", player2Connection, ranbo);
+			players[2] = new Player("Player3", "玩家3", player3Connection, lily);
 
 			DM dm = new DM("DM", "主持人", dmConnection);
 
@@ -286,7 +282,7 @@ namespace TestConsoleApp {
 
 			CampaignManager.Instance.CurrentContainer = ContainerType.BATTLE;
 			
-			var battleScene = BattleSceneContainer.Instance;
+			var battleScene = BattleScene.Instance;
 			battleScene.Reset(8, 8);
 
 			var groundView = new CharacterView();
@@ -314,16 +310,16 @@ namespace TestConsoleApp {
 			battleScene.PushGridObject(1, 6, false, stelae3);
 			battleScene.PushGridObject(5, 5, false, stelae4);
 
-			battleScene.PushGridObject(7, 6, false, new ActableGridObject(player1characters[0]));
-			battleScene.PushGridObject(7, 5, false, new ActableGridObject(player2characters[0]));
-			battleScene.PushGridObject(7, 4, false, new ActableGridObject(player3characters[0]));
+			battleScene.PushGridObject(7, 6, false, new ActableGridObject(brught_jackson));
+			battleScene.PushGridObject(7, 5, false, new ActableGridObject(ranbo));
+			battleScene.PushGridObject(7, 4, false, new ActableGridObject(lily));
 
 			battleScene.PushGridObject(4, 3, false, new ActableGridObject(franz));
 			battleScene.PushGridObject(4, 4, false, new ActableGridObject(emma));
 
 			battleScene.StartBattle();
 
-			Game.RunGameLoop();
+			Game.ListenClientProxy();
 		}
 
 		static void OnConnectionEstablished(NetworkService service) {

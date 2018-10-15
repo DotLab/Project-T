@@ -1,4 +1,4 @@
-﻿using GameServer.CharacterSystem;
+﻿using GameServer.CharacterComponents;
 using GameServer.Core.ScriptSystem;
 using System;
 using System.Collections.Generic;

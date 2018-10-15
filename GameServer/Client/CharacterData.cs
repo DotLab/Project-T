@@ -1,4 +1,4 @@
-﻿using GameServer.CharacterSystem;
+﻿using GameServer.CharacterComponents;
 using GameServer.Core;
 using GameServer.Core.DataSystem;
 using GameUtil;
@@ -9,7 +9,7 @@ using GameUtil.Network.Streamable;
 using System;
 using System.Collections.Generic;
 
-namespace GameServer.ClientComponents {
+namespace GameServer.Client {
 	public sealed class CharacterData : IRequestHandler {
 		private readonly Connection _connection;
 		private readonly User _owner;
@@ -24,7 +24,7 @@ namespace GameServer.ClientComponents {
 			connection.SetRequestHandler(GetStuntDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetExtraDataMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetDirectResistSkillsMessage.MESSAGE_TYPE, this);
-			connection.SetRequestHandler(GetDirectResistStuntsMessage.MESSAGE_TYPE, this);
+			connection.SetRequestHandler(GetDirectResistableStuntsMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetSkillTypeListMessage.MESSAGE_TYPE, this);
 			connection.SetRequestHandler(GetAllPartyListMessage.MESSAGE_TYPE, this);
 		}
@@ -76,8 +76,8 @@ namespace GameServer.ClientComponents {
 							resp = GetDirectResistSkills(SkillType.SkillTypes[req.initiativeSkillTypeID], req.actionType);
 						}
 						break;
-					case GetDirectResistStuntsMessage.MESSAGE_TYPE: {
-							var req = (GetDirectResistStuntsMessage)request;
+					case GetDirectResistableStuntsMessage.MESSAGE_TYPE: {
+							var req = (GetDirectResistableStuntsMessage)request;
 							resp = GetDirectResistStunts(SkillType.SkillTypes[req.initiativeSkillTypeID], CharacterManager.Instance.FindCharacterByID(req.passiveCharacterID), req.actionType);
 						}
 						break;
@@ -252,22 +252,22 @@ namespace GameServer.ClientComponents {
 		}
 
 		private Message GetDirectResistSkills(SkillType initiativeSkillType, CharacterAction action) {
-			var message = new DirectResistSkillsListMessage();
+			var message = new DirectResistableSkillsListMessage();
 			List<SkillType> resistables = new List<SkillType>();
 			foreach (var skillType in SkillType.SkillTypes) {
-				if (SkillChecker.CanResistSkillWithoutDMCheck(initiativeSkillType, skillType.Value, action)) {
+				if (SkillType.CanResistSkillWithoutDMCheck(initiativeSkillType, skillType.Value, action)) {
 					resistables.Add(skillType.Value);
 				}
 			}
-			message.skillTypes = new SkillTypeDescription[resistables.Count];
+			message.skillTypesID = new string[resistables.Count];
 			for (int i = 0; i < resistables.Count; ++i) {
-				message.skillTypes[i] = StreamableFactory.CreateSkillTypeDescription(resistables[i]);
+				message.skillTypesID[i] = resistables[i].ID;
 			}
 			return message;
 		}
 
 		private Message GetDirectResistStunts(SkillType initiativeSkillType, Character passive, CharacterAction action) {
-			var message = new DirectResistStuntsListMessage();
+			var message = new DirectResistableStuntsListMessage();
 			List<Stunt> resistables = new List<Stunt>();
 			if (passive.Stunts != null) {
 				foreach (var stunt in passive.Stunts) {
@@ -277,9 +277,9 @@ namespace GameServer.ClientComponents {
 				}
 			}
 			message.characterID = passive.ID;
-			message.stunts = new CharacterPropertyDescription[resistables.Count];
+			message.stuntsID = new string[resistables.Count];
 			for (int i = 0; i < resistables.Count; ++i) {
-				message.stunts[i] = StreamableFactory.CreateCharacterPropertyDescription(resistables[i]);
+				message.stuntsID[i] = resistables[i].ID;
 			}
 			return message;
 		}

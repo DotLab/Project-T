@@ -111,25 +111,7 @@ namespace GameUtil.Network.Streamable {
 			describable.WriteTo(stream);
 		}
 	}
-
-	public struct BattleSceneObject : IStreamable {
-		public string id;
-		public int row;
-		public int col;
-
-		public void ReadFrom(IDataInputStream stream) {
-			id = stream.ReadString();
-			row = stream.ReadInt32();
-			col = stream.ReadInt32();
-		}
-
-		public void WriteTo(IDataOutputStream stream) {
-			stream.WriteString(id);
-			stream.WriteInt32(row);
-			stream.WriteInt32(col);
-		}
-	}
-
+	
 	public struct GridObjectData : IStreamable {
 		public struct ActableObjectData : IStreamable {
 			public int actionPoint;
@@ -152,7 +134,9 @@ namespace GameUtil.Network.Streamable {
 			}
 		}
 
-		public BattleSceneObject obj;
+		public string id;
+		public int row;
+		public int col;
 		public bool obstacle;
 		public bool highland;
 		public int stagnate;
@@ -161,7 +145,9 @@ namespace GameUtil.Network.Streamable {
 		public ActableObjectData actableObjData;
 
 		public void ReadFrom(IDataInputStream stream) {
-			obj.ReadFrom(stream);
+			id = stream.ReadString();
+			row = stream.ReadInt32();
+			col = stream.ReadInt32();
 			obstacle = stream.ReadBoolean();
 			highland = stream.ReadBoolean();
 			stagnate = stream.ReadInt32();
@@ -173,7 +159,9 @@ namespace GameUtil.Network.Streamable {
 		}
 
 		public void WriteTo(IDataOutputStream stream) {
-			obj.WriteTo(stream);
+			stream.WriteString(id);
+			stream.WriteInt32(row);
+			stream.WriteInt32(col);
 			stream.WriteBoolean(obstacle);
 			stream.WriteBoolean(highland);
 			stream.WriteInt32(stagnate);
@@ -186,18 +174,24 @@ namespace GameUtil.Network.Streamable {
 	}
 
 	public struct LadderObjectData : IStreamable {
-		public BattleSceneObject obj;
+		public string id;
+		public int row;
+		public int col;
 		public int stagnate;
 		public BattleMapDirection direction;
 
 		public void ReadFrom(IDataInputStream stream) {
-			obj.ReadFrom(stream);
+			id = stream.ReadString();
+			row = stream.ReadInt32();
+			col = stream.ReadInt32();
 			stagnate = stream.ReadInt32();
 			direction = (BattleMapDirection)stream.ReadByte();
 		}
 
 		public void WriteTo(IDataOutputStream stream) {
-			obj.WriteTo(stream);
+			stream.WriteString(id);
+			stream.WriteInt32(row);
+			stream.WriteInt32(col);
 			stream.WriteInt32(stagnate);
 			stream.WriteByte((byte)direction);
 		}

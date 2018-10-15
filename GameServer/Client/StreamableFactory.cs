@@ -1,9 +1,9 @@
-﻿using GameServer.CharacterSystem;
-using GameServer.Container.BattleComponent;
+﻿using GameServer.CharacterComponents;
+using GameServer.Playground.BattleComponent;
 using GameServer.Core;
 using GameUtil.Network.Streamable;
 
-namespace GameServer.ClientComponents {
+namespace GameServer.Client {
 	public static class StreamableFactory {
 		public static Describable CreateDescribable(IDescribable describable) {
 			var ret = new Describable() {
@@ -29,21 +29,12 @@ namespace GameServer.ClientComponents {
 			return ret;
 		}
 		
-		public static BattleSceneObject CreateBattleSceneObject(SceneObject sceneObject) {
-			var ret = new BattleSceneObject() {
-				row = sceneObject.GridRef.PosRow,
-				col = sceneObject.GridRef.PosCol,
-				id = sceneObject.ID
-			};
-			return ret;
-		}
-		
 		public static GridObjectData CreateBattleSceneGridObjData(GridObject gridObject) {
 			var ret = new GridObjectData();
-			ret.obj.row = gridObject.GridRef.PosRow;
-			ret.obj.col = gridObject.GridRef.PosCol;
+			ret.id = gridObject.ID;
+			ret.row = gridObject.GridRef.PosRow;
+			ret.col = gridObject.GridRef.PosCol;
 			ret.highland = gridObject.Highland;
-			ret.obj.id = gridObject.ID;
 			ret.direction = gridObject.Direction;
 			ret.obstacle = gridObject.Obstacle;
 			ret.stagnate = gridObject.Stagnate;
@@ -60,9 +51,9 @@ namespace GameServer.ClientComponents {
 
 		public static LadderObjectData CreateBattleSceneLadderObjData(LadderObject ladderObject) {
 			var ret = new LadderObjectData();
-			ret.obj.row = ladderObject.GridRef.PosRow;
-			ret.obj.col = ladderObject.GridRef.PosCol;
-			ret.obj.id = ladderObject.ID;
+			ret.id = ladderObject.ID;
+			ret.row = ladderObject.GridRef.PosRow;
+			ret.col = ladderObject.GridRef.PosCol;
 			ret.direction = ladderObject.DirectionOnFirstGrid;
 			return ret;
 		}

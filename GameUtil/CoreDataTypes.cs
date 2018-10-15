@@ -3,16 +3,16 @@ using System;
 
 namespace GameUtil {
 	public enum BattleMapDirection {
-		POSITIVE_ROW = 0b0001,
-		POSITIVE_COL = 0b0010,
-		NEGATIVE_ROW = 0b0100,
-		NEGATIVE_COL = 0b1000
+		POSITIVE_ROW = 1,
+		POSITIVE_COL = 2,
+		NEGATIVE_ROW = 4,
+		NEGATIVE_COL = 8
 	}
 
 	public enum CharacterAction {
-		CREATE_ASPECT = 0b001,
-		ATTACK = 0b010,
-		HINDER = 0b100
+		CREATE_ASPECT = 1,
+		ATTACK = 2,
+		HINDER = 4
 	}
 
 	public enum CharacterToken {

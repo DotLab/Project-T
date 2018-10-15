@@ -1,8 +1,6 @@
-﻿using GameServer.CharacterSystem;
-using GameServer.ClientComponents;
+﻿using GameServer.CharacterComponents;
+using GameServer.Client;
 using GameUtil.Network;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System;
 
 namespace GameServer.Core {
@@ -16,8 +14,7 @@ namespace GameServer.Core {
 		public Player AsPlayer => (Player)this;
 		public string ID => _id;
 		public string Name => _name;
-		public abstract int Index { get; }
-		public abstract Client Client { get; }
+		public abstract ClientProxy Client { get; }
 
 		protected User(string id, string name, bool isDM) {
 			_id = id;
@@ -25,8 +22,8 @@ namespace GameServer.Core {
 			_isDM = isDM;
 		}
 
-		public void UpdateClient() {
-			this.Client.Update();
+		public void UpdateClientProxy() {
+			this.Client.FlushUserInputBuffer();
 		}
 
 		public override bool Equals(object obj) {
@@ -44,24 +41,18 @@ namespace GameServer.Core {
 
 	public sealed class Player : User {
 		private readonly PlayerClient _playerClient;
-		private readonly List<Character> _characters;
-		private readonly int _index;
+		private readonly Character _character;
 
 		public PlayerClient PlayerClient => _playerClient;
-		public List<Character> Characters => _characters;
+		public Character Character => _character;
+		
+		public override ClientProxy Client => _playerClient;
 
-		public override int Index => _index;
-		public override Client Client => _playerClient;
-
-		public Player(string id, string name, Connection connection, int index, IEnumerable<Character> characters) :
+		public Player(string id, string name, Connection connection, Character character) :
 			base(id, name, false) {
-			Debug.Assert(index > 0);
-			_index = index;
+			_character = character ?? throw new ArgumentNullException(nameof(character));
 			_playerClient = new PlayerClient(connection, this);
-			_characters = new List<Character>(characters);
-			foreach (Character character in characters) {
-				character.ControlPlayer = this;
-			}
+			character.ControlPlayer = this;
 		}
 
 	}
@@ -70,9 +61,8 @@ namespace GameServer.Core {
 		private readonly DMClient _dmClient;
 
 		public DMClient DMClient => _dmClient;
-
-		public override int Index => 0;
-		public override Client Client => _dmClient;
+		
+		public override ClientProxy Client => _dmClient;
 
 		public DM(string id, string name, Connection connection) :
 			base(id, name, true) {

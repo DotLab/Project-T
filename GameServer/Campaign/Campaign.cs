@@ -1,4 +1,4 @@
-﻿using GameServer.CharacterSystem;
+﻿using GameServer.CharacterComponents;
 using GameServer.Core;
 using GameServer.Core.ScriptSystem;
 using System;
@@ -80,10 +80,10 @@ namespace GameServer.Campaign {
 				_outer = outer;
 			}
 
-			public int askUser(IJSAPI<Character> playerCharacter, string text) {
+			public int askUser(IJSAPI<Character> playerCharacter, string promptText, string[] selections) {
 				try {
 					var origin_character = JSContextHelper.Instance.GetAPIOrigin(playerCharacter);
-					return origin_character.Controller.Client.RequestDetermin(text);
+					return origin_character.Controller.Client.RequireDetermin(promptText, selections);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return 0;
@@ -93,7 +93,7 @@ namespace GameServer.Campaign {
 			public bool requestDMCheck(IJSAPI<Character> invoker, string text) {
 				try {
 					var origin_invoker = JSContextHelper.Instance.GetAPIOrigin(invoker);
-					return Game.DM.DMClient.RequestDMCheck(origin_invoker.Controller, text);
+					return Game.DM.DMClient.RequireDMCheck(origin_invoker.Controller, text);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return false;

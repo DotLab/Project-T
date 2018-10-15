@@ -3,25 +3,25 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace GameServer.Core {
-	public interface IReadonlyIdentifiedObjList<T> : IEnumerable<T>, IEnumerable, IReadOnlyCollection<T> {
+	public interface IReadonlyIdentifiedObjectList<T> : IEnumerable<T>, IEnumerable, IReadOnlyCollection<T> {
 		T this[string id] { get; }
 		bool Contains(string id);
 		bool Contains(T item);
 		bool TryGetValue(string id, out T value);
 	}
 
-	public sealed class IdentifiedObjList<T> : IEnumerable<T>, IEnumerable, IReadonlyIdentifiedObjList<T> where T : IIdentifiable {
+	public sealed class IdentifiedObjectList<T> : IEnumerable<T>, IEnumerable, IReadonlyIdentifiedObjectList<T> where T : IIdentifiable {
 		private Dictionary<string, T> _table;
 
 		public int Count => _table.Count;
 
 		public T this[string id] => _table[id];
 
-		public IdentifiedObjList() {
+		public IdentifiedObjectList() {
 			_table = new Dictionary<string, T>();
 		}
 
-		public IdentifiedObjList(IEnumerable<T> list) :
+		public IdentifiedObjectList(IEnumerable<T> list) :
 			this() {
 			foreach (T e in list) {
 				_table.Add(e.ID, e);

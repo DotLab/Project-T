@@ -14,9 +14,9 @@ namespace GameServer.EventSystem {
 				_outer = outer;
 			}
 
-			public IJSAPI<Trigger> createTrigger(string eventID, Action action, bool autoReg = true) {
+			public IJSAPI<Trigger> createTrigger(string eventID, Action action) {
 				try {
-					Trigger trigger = new Trigger(eventID, new Command(action), autoReg);
+					Trigger trigger = new Trigger(eventID, new Command(action));
 					return (IJSAPI<Trigger>)trigger.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);

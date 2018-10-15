@@ -1,13 +1,13 @@
 ﻿using GameServer.Campaign;
-using GameServer.Container;
-using GameServer.Container.StoryComponent;
+using GameServer.Playground;
+using GameServer.Playground.StoryComponent;
 using GameServer.Core;
 using GameServer.Core.ScriptSystem;
 using GameUtil;
 using System;
 using System.Collections.Generic;
 
-namespace GameServer.CharacterSystem {
+namespace GameServer.CharacterComponents {
 	public interface ICharacterProperty : IIdentifiable, IAttachable<Character> { }
 	
 	public class CharacterPropertyList<T> : AttachableList<Character, T> where T : class, ICharacterProperty {
@@ -406,7 +406,6 @@ namespace GameServer.CharacterSystem {
 						if (extra.IsLongRangeWeapon) {
 							var limit = ret.SituationLimit;
 							limit.usableSituation |= CharacterAction.ATTACK | CharacterAction.CREATE_ASPECT | CharacterAction.HINDER;
-							limit.canUseOnInteract = true;
 							ret.SituationLimit = limit;
 							hasLongRangeWeapon = true;
 							break;
@@ -417,7 +416,6 @@ namespace GameServer.CharacterSystem {
 					var limit = ret.SituationLimit;
 					limit.usableSituation = 0;
 					limit.resistableSituation = 0;
-					limit.canUseOnInteract = false;
 					ret.SituationLimit = limit;
 				}
 			}
@@ -429,7 +427,6 @@ namespace GameServer.CharacterSystem {
 							var limit = ret.SituationLimit;
 							limit.usableSituation |= CharacterAction.CREATE_ASPECT | CharacterAction.HINDER;
 							limit.resistableSituation |= CharacterAction.CREATE_ASPECT | CharacterAction.HINDER;
-							limit.canUseOnInteract = true;
 							ret.SituationLimit = limit;
 							hasVehicle = true;
 							break;
@@ -440,7 +437,6 @@ namespace GameServer.CharacterSystem {
 					var limit = ret.SituationLimit;
 					limit.usableSituation = 0;
 					limit.resistableSituation = 0;
-					limit.canUseOnInteract = false;
 					ret.SituationLimit = limit;
 				}
 			}
@@ -799,13 +795,13 @@ namespace GameServer.CharacterSystem {
 
 		private int _autoIncrementalIDNum = 0;
 
-		private readonly IdentifiedObjList<Character> _savingNPCharacters = new IdentifiedObjList<Character>();
-		private readonly IdentifiedObjList<Character> _playerCharacters = new IdentifiedObjList<Character>();
+		private readonly IdentifiedObjectList<Character> _savingNPCharacters = new IdentifiedObjectList<Character>();
+		private readonly IdentifiedObjectList<Character> _playerCharacters = new IdentifiedObjectList<Character>();
 
 		private readonly Dictionary<int, CharacterGroup> _characterGroups = new Dictionary<int, CharacterGroup>();
 
-		public IdentifiedObjList<Character> SavingNPCharacters => _savingNPCharacters;
-		public IdentifiedObjList<Character> PlayerCharacters => _playerCharacters;
+		public IdentifiedObjectList<Character> SavingNPCharacters => _savingNPCharacters;
+		public IdentifiedObjectList<Character> PlayerCharacters => _playerCharacters;
 
 		private CharacterManager() {
 			_apiObj = new JSAPI(this);
@@ -873,24 +869,24 @@ namespace GameServer.CharacterSystem {
 		
 		public Character FindCharacterOrItemRecursivelyByID(string id) {
 			if (CampaignManager.Instance.CurrentContainer == ContainerType.STORY) {
-				if (StorySceneContainer.Instance.PlayerCharacters.TryGetValue(id, out Character character)) {
+				if (StoryScene.Instance.PlayerCharacters.TryGetValue(id, out Character character)) {
 					return character;
-				} else if (StorySceneContainer.Instance.ObjList.TryGetValue(id, out ISceneObject storyObject)) {
+				} else if (StoryScene.Instance.ObjList.TryGetValue(id, out ISceneObject storyObject)) {
 					return storyObject.CharacterRef;
 				} else {
-					foreach (var character2 in StorySceneContainer.Instance.PlayerCharacters) {
+					foreach (var character2 in StoryScene.Instance.PlayerCharacters) {
 						var item = this.FindItemRecursivelyByID(character2, id);
 						if (item != null) return item;
 					}
-					foreach (var obj in StorySceneContainer.Instance.ObjList) {
+					foreach (var obj in StoryScene.Instance.ObjList) {
 						var item = this.FindItemRecursivelyByID(obj.CharacterRef, id);
 						if (item != null) return item;
 					}
 				}
 			} else if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
-				var sceneObject = BattleSceneContainer.Instance.FindObject(id);
+				var sceneObject = BattleScene.Instance.FindObject(id);
 				if (sceneObject != null) return sceneObject.CharacterRef;
-				foreach (var sceneObject2 in BattleSceneContainer.Instance.ObjectList) {
+				foreach (var sceneObject2 in BattleScene.Instance.ObjectList) {
 					var item = this.FindItemRecursivelyByID(sceneObject2.CharacterRef, id);
 					if (item != null) return item;
 				}
@@ -900,13 +896,10 @@ namespace GameServer.CharacterSystem {
 
 		public Character FindCharacterByID(string id) {
 			if (CampaignManager.Instance.CurrentContainer == ContainerType.STORY) {
-				if (StorySceneContainer.Instance.PlayerCharacters.TryGetValue(id, out Character character)) {
-					return character;
-				} else if (StorySceneContainer.Instance.ObjList.TryGetValue(id, out ISceneObject storyObject)) {
-					return storyObject.CharacterRef;
-				}
+				var character = StoryScene.Instance.FindCharacter(id);
+				return character;
 			} else if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
-				var sceneObject = BattleSceneContainer.Instance.FindObject(id);
+				var sceneObject = BattleScene.Instance.FindObject(id);
 				if (sceneObject != null) return sceneObject.CharacterRef;
 			}
 			return null;

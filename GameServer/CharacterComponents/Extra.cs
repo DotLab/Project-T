@@ -2,7 +2,7 @@
 using GameServer.Core.ScriptSystem;
 using System;
 
-namespace GameServer.CharacterSystem {
+namespace GameServer.CharacterComponents {
 	public interface IExtraProperty : IAttachable<Extra> { }
 
 	public class ExtraPropertyList<T> : AttachableList<Extra, T> where T : class, IExtraProperty {
@@ -64,9 +64,9 @@ namespace GameServer.CharacterSystem {
 				}
 			}
 
-			public IJSAPI<ExtraPropertyList<PassiveEffect>> getPassiveEffectList() {
+			public IJSAPI<ExtraPropertyList<ExtraEffect>> getPassiveEffectList() {
 				try {
-					return (IJSAPI<ExtraPropertyList<PassiveEffect>>)_outer.Effects.GetContext();
+					return (IJSAPI<ExtraPropertyList<ExtraEffect>>)_outer.Effects.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return null;
@@ -108,7 +108,7 @@ namespace GameServer.CharacterSystem {
 		private readonly Character _item;
 		private bool _isLongRangeWeapon;
 		private bool _isVehicle;
-		private readonly ExtraPropertyList<PassiveEffect> _passiveEffects;
+		private readonly ExtraPropertyList<ExtraEffect> _passiveEffects;
 		private object _customData = null;
 
 		public Extra(Character item) {
@@ -116,7 +116,7 @@ namespace GameServer.CharacterSystem {
 			if (item.Belong != null) throw new ArgumentException("This item has already been bound.", nameof(item));
 			_item = item;
 			item.SetBelong(this);
-			_passiveEffects = new ExtraPropertyList<PassiveEffect>(this);
+			_passiveEffects = new ExtraPropertyList<ExtraEffect>(this);
 			_apiObj = new JSAPI(this);
 		}
 
@@ -127,7 +127,7 @@ namespace GameServer.CharacterSystem {
 		public Character Item => _item;
 		public bool IsLongRangeWeapon { get => _isLongRangeWeapon; set => _isLongRangeWeapon = value; }
 		public bool IsVehicle { get => _isVehicle; set => _isVehicle = value; }
-		public ExtraPropertyList<PassiveEffect> Effects => _passiveEffects;
+		public ExtraPropertyList<ExtraEffect> Effects => _passiveEffects;
 
 		public void SetBelong(Character belong) {
 			_belong = belong;

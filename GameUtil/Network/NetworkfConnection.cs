@@ -3,14 +3,13 @@ using GameUtil.Network.ServerMessages;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using Bit = Networkf.BitHelper;
 
 namespace GameUtil.Network {
 	public sealed class NetworkfMessage : Networkf.Message {
 		private readonly Message _innerMessage;
 
-		public Message InnerMessage => _innerMessage;
+		public Message InnerMessage { get { return _innerMessage; } }
 
 		public static Networkf.Message ParseMessage(byte[] buf, ref int i) {
 			int type = ReadMessageType(buf, ref i);
@@ -48,7 +47,7 @@ namespace GameUtil.Network {
 		public event EventHandler<NetworkfExceptionCaughtEventArgs> ExceptionCaught; // multiple threads would invoke
 
 		public NetworkfConnection() {
-			Task.Run((Action)SendCachedMessage);
+			new Thread(SendCachedMessage).Start();
 		}
 
 		public void ApplyService(Networkf.NetworkService service) {
@@ -94,7 +93,8 @@ namespace GameUtil.Network {
 			} else {
 				var identifiedMsg = message as IdentifiedMessage;
 				if (identifiedMsg != null) {
-					if (_messageReceiverDict.TryGetValue(IdentifiedMessage.MESSAGE_TYPE, out List<IMessageReceiver> receivers)) {
+					List<IMessageReceiver> receivers;
+					if (_messageReceiverDict.TryGetValue(IdentifiedMessage.MESSAGE_TYPE, out receivers)) {
 						foreach (var receiver in receivers) {
 							receiver.MessageReceived(new IdentifiedMessage() { resp = true, guid = identifiedMsg.guid, innerMessage = null });
 						}
@@ -103,7 +103,7 @@ namespace GameUtil.Network {
 			}
 		}
 
-		public override void UpdateReceivers() {
+		public override void FlushReceivingBuffer() {
 			Message[] receivedMessages;
 			lock (_receivedMsgCache) {
 				receivedMessages = _receivedMsgCache.ToArray();
@@ -380,7 +380,7 @@ namespace GameUtil.Network {
 				Log("waiting server ready...");
 				while (!_hasReceivedServerReady) {
 					Thread.Sleep(100);
-					applyTo.UpdateReceivers();
+					applyTo.FlushReceivingBuffer();
 				}
 				Log("server ready received");
 				applyTo.RemoveMessageReceiver(ServerReadyMessage.MESSAGE_TYPE, this);

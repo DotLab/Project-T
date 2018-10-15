@@ -2,7 +2,7 @@
 using GameServer.Core.ScriptSystem;
 using System;
 
-namespace GameServer.CharacterSystem {
+namespace GameServer.CharacterComponents {
 	public enum PersistenceType {
 		Fixed = 0,
 		Common = 1,

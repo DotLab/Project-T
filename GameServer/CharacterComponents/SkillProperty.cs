@@ -2,29 +2,25 @@
 using System;
 using System.Collections.Generic;
 
-namespace GameServer.CharacterSystem {
+namespace GameServer.CharacterComponents {
 	public struct SkillSituationLimit {
 		public static readonly SkillSituationLimit INIT = new SkillSituationLimit() {
 			usableSituation = CharacterAction.CREATE_ASPECT | CharacterAction.HINDER,
-			resistableSituation = CharacterAction.CREATE_ASPECT | CharacterAction.HINDER,
-			canUseOnInteract = true,
-			damageMental = false
+			resistableSituation = CharacterAction.CREATE_ASPECT | CharacterAction.HINDER
 		};
 		public CharacterAction usableSituation;
 		public CharacterAction resistableSituation;
-		public bool canUseOnInteract;
-		public bool damageMental;
 	}
 
 	public struct StuntSituationLimit {
 		public static readonly StuntSituationLimit INIT = new StuntSituationLimit() {
-			canUseOnInteract = false,
 			usableSituation = 0,
-			resistableSituation = 0
+			resistableSituation = 0,
+			canUseDirectly = false
 		};
 		public CharacterAction usableSituation;
 		public CharacterAction resistableSituation;
-		public bool canUseOnInteract;
+		public bool canUseDirectly;
 	}
 
 	public struct SkillBattleMapProperty {
@@ -35,8 +31,7 @@ namespace GameServer.CharacterSystem {
 			islinearUse = false,
 			islinearAffect = false,
 			linearAffectDirection = BattleMapDirection.POSITIVE_ROW | BattleMapDirection.POSITIVE_COL | BattleMapDirection.NEGATIVE_ROW | BattleMapDirection.NEGATIVE_COL,
-			linearUseDirection = BattleMapDirection.POSITIVE_ROW | BattleMapDirection.POSITIVE_COL | BattleMapDirection.NEGATIVE_ROW | BattleMapDirection.NEGATIVE_COL,
-			targetMaxCount = 1
+			linearUseDirection = BattleMapDirection.POSITIVE_ROW | BattleMapDirection.POSITIVE_COL | BattleMapDirection.NEGATIVE_ROW | BattleMapDirection.NEGATIVE_COL
 		};
 
 		public int actionPointCost;
@@ -46,6 +41,5 @@ namespace GameServer.CharacterSystem {
 		public Range affectRange;
 		public bool islinearAffect;
 		public BattleMapDirection linearAffectDirection;
-		public int targetMaxCount;
 	}
 }

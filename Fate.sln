@@ -9,16 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XUnitTest", "XUnitTest\XUni
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestConsoleApp", "TestConsoleApp\TestConsoleApp.csproj", "{8D8F409A-2FC1-444D-9DB1-15AD097681DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextyClient", "TextyClient\TextyClient.csproj", "{1DD11007-2CB9-4B03-AFDC-C8421B4B3E7E}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Networkf", "..\Networkf\Networkf\Networkf.csproj", "{CBDC55E6-4342-499E-9005-A9FEB17AC397}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GameUtil", "GameUtil\GameUtil.csproj", "{3B5E8CCF-BCDE-4275-B0C1-7B178C52BAEA}"
 EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -36,10 +31,6 @@ Global
 		{8D8F409A-2FC1-444D-9DB1-15AD097681DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8D8F409A-2FC1-444D-9DB1-15AD097681DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8D8F409A-2FC1-444D-9DB1-15AD097681DB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1DD11007-2CB9-4B03-AFDC-C8421B4B3E7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1DD11007-2CB9-4B03-AFDC-C8421B4B3E7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1DD11007-2CB9-4B03-AFDC-C8421B4B3E7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1DD11007-2CB9-4B03-AFDC-C8421B4B3E7E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CBDC55E6-4342-499E-9005-A9FEB17AC397}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CBDC55E6-4342-499E-9005-A9FEB17AC397}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CBDC55E6-4342-499E-9005-A9FEB17AC397}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -54,5 +45,8 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E1440315-9833-437B-883F-E907E19B3D5E}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

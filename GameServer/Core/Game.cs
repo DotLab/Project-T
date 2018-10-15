@@ -1,9 +1,10 @@
 ﻿using GameServer.Campaign;
-using GameServer.CharacterSystem;
-using GameServer.Container;
+using GameServer.CharacterComponents;
+using GameServer.Playground;
 using GameServer.Core.ScriptSystem;
 using GameServer.EventSystem;
 using GameUtil;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -11,8 +12,8 @@ namespace GameServer.Core {
 	public class JavascriptGlobalObject {
 		public IJSAPI<CharacterManager> characterManager = (IJSAPI<CharacterManager>)CharacterManager.Instance.GetContext();
 		public IJSAPI<CampaignManager> campaignManager = (IJSAPI<CampaignManager>)CampaignManager.Instance.GetContext();
-		public IJSAPI<StorySceneContainer> storyScene = (IJSAPI<StorySceneContainer>)StorySceneContainer.Instance.GetContext();
-		public IJSAPI<BattleSceneContainer> battleScene = (IJSAPI<BattleSceneContainer>)BattleSceneContainer.Instance.GetContext();
+		public IJSAPI<StoryScene> storyScene = (IJSAPI<StoryScene>)StoryScene.Instance.GetContext();
+		public IJSAPI<BattleScene> battleScene = (IJSAPI<BattleScene>)BattleScene.Instance.GetContext();
 		public IJSAPI<GameEventBus> gameEventBus = (IJSAPI<GameEventBus>)GameEventBus.Instance.GetContext();
 		
 	}
@@ -35,9 +36,7 @@ namespace GameServer.Core {
 			_players = new List<Player>(players);
 
 			foreach (Player player in _players) {
-				foreach (Character character in player.Characters) {
-					CharacterManager.Instance.PlayerCharacters.Add(character);
-				}
+				CharacterManager.Instance.PlayerCharacters.Add(player.Character);
 			}
 
 			IJSEngineRaw engineRaw = JSEngineManager.EngineRaw;
@@ -60,17 +59,14 @@ namespace GameServer.Core {
 
 			_gameOver = false;
 		}
-
-		public static void Update() {
-			foreach (User player in _players) {
-				player.UpdateClient();
-			}
-			_dm.UpdateClient();
-		}
-
-		public static void RunGameLoop() {
+		
+		public static void ListenClientProxy(Func<bool> stopCondition = null) {
 			while (!_gameOver) {
-				Update();
+				if (stopCondition != null && stopCondition()) break;
+				foreach (User player in _players) {
+					player.UpdateClientProxy();
+				}
+				_dm.UpdateClientProxy();
 				Thread.Sleep(100);
 			}
 		}

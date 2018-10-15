@@ -37,15 +37,7 @@ namespace GameServer.EventSystem {
 					return false;
 				}
 			}
-
-			public void register() {
-				try {
-					_outer.Register();
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-				}
-			}
-
+			
 			public void unregister() {
 				try {
 					_outer.Unregister();
@@ -76,15 +68,11 @@ namespace GameServer.EventSystem {
 		public Command Command => _command;
 		public bool Active { get => _active; set => _active = value; }
 
-		public Trigger(string boundEventID, Command command, bool autoReg = true) {
+		public Trigger(string boundEventID, Command command) {
 			_boundEventID = boundEventID ?? throw new ArgumentNullException(nameof(boundEventID));
 			_command = command ?? throw new ArgumentNullException(nameof(command));
 			_active = true;
 			_apiObj = new JSAPI(this);
-			if (autoReg) this.Register();
-		}
-
-		public void Register() {
 			GameEventBus.Instance.Register(this);
 		}
 

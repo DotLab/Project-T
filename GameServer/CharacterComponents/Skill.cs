@@ -4,7 +4,7 @@ using GameUtil;
 using System;
 using System.Collections.Generic;
 
-namespace GameServer.CharacterSystem {
+namespace GameServer.CharacterComponents {
 	public sealed class Skill : IJSContextProvider, IDescribable, ICloneable {
 		#region Javascript API class
 		private sealed class JSAPI : IJSAPI<Skill> {
@@ -119,6 +119,10 @@ namespace GameServer.CharacterSystem {
 		private bool _nameUseRef = true;
 		private int _level;
 		private bool _levelUseRef = true;
+		private int _targetMaxCount;
+		private bool _targetMaxCountUseRef = true;
+		private bool _damageMental = false;
+		private bool _damageMentalUseRef = true;
 		private SkillBattleMapProperty _battleMapProperty;
 		private bool _battleMapPropertyUseRef = true;
 		private SkillSituationLimit _situationLimit;
@@ -128,6 +132,8 @@ namespace GameServer.CharacterSystem {
 		public string Description { get => ""; set { } }
 		public SkillType SkillType => _skillType;
 		public int Level { get => _levelUseRef ? _skillType.Level : _level; set { _level = value; _levelUseRef = false; } }
+		public int TargetMaxCount { get => _targetMaxCountUseRef ? _skillType.TargetMaxCount : _targetMaxCount; set { _targetMaxCount = value; _targetMaxCountUseRef = false; } }
+		public bool DamageMental { get => _damageMentalUseRef ? _skillType.DamageMental : _damageMental; set { _damageMental = value; _damageMentalUseRef = false; } }
 		public SkillBattleMapProperty BattleMapProperty { get => _battleMapPropertyUseRef ? _skillType.BattleMapProperty : _battleMapProperty; set { _battleMapProperty = value; _battleMapPropertyUseRef = false; } }
 		public SkillSituationLimit SituationLimit { get => _situationLimitUseRef ? _skillType.SituationLimit : _situationLimit; set { _situationLimit = value; _situationLimitUseRef = false; } }
 
@@ -135,6 +141,8 @@ namespace GameServer.CharacterSystem {
 			_skillType = skillType ?? throw new ArgumentNullException(nameof(skillType));
 			_name = skillType.Name;
 			_level = skillType.Level;
+			_targetMaxCount = skillType.TargetMaxCount;
+			_damageMental = skillType.DamageMental;
 			_battleMapProperty = skillType.BattleMapProperty;
 			_situationLimit = skillType.SituationLimit;
 			_apiObj = new JSAPI(this);
@@ -146,6 +154,10 @@ namespace GameServer.CharacterSystem {
 			ret._nameUseRef = _nameUseRef;
 			ret._level = _level;
 			ret._levelUseRef = _levelUseRef;
+			ret._targetMaxCount = _targetMaxCount;
+			ret._targetMaxCountUseRef = _targetMaxCountUseRef;
+			ret._damageMental = _damageMental;
+			ret._damageMentalUseRef = _damageMentalUseRef;
 			ret._battleMapProperty = _battleMapProperty;
 			ret._battleMapPropertyUseRef = _battleMapPropertyUseRef;
 			ret._situationLimit = _situationLimit;
@@ -232,6 +244,14 @@ namespace GameServer.CharacterSystem {
 		private static readonly Dictionary<string, SkillType> skillTypes = new Dictionary<string, SkillType>();
 		public static Dictionary<string, SkillType> SkillTypes => skillTypes;
 
+		private static readonly Dictionary<SkillType, List<SkillType>> _OVERCOME = new Dictionary<SkillType, List<SkillType>>();
+		private static readonly Dictionary<SkillType, List<SkillType>> _EVADE = new Dictionary<SkillType, List<SkillType>>();
+		private static readonly Dictionary<SkillType, List<SkillType>> _DEFEND = new Dictionary<SkillType, List<SkillType>>();
+
+		public static Dictionary<SkillType, List<SkillType>> OVERCOME => _OVERCOME;
+		public static Dictionary<SkillType, List<SkillType>> EVADE => _EVADE;
+		public static Dictionary<SkillType, List<SkillType>> DEFEND => _DEFEND;
+
 		static SkillType() {
 			Athletics._situationLimit.resistableSituation |= CharacterAction.ATTACK;
 			Fight._situationLimit.usableSituation |= CharacterAction.ATTACK;
@@ -278,24 +298,102 @@ namespace GameServer.CharacterSystem {
 
 			Hinder._situationLimit.usableSituation = 0;
 			Hinder._situationLimit.resistableSituation = 0;
-			Hinder._situationLimit.canUseOnInteract = false;
-			Hinder._situationLimit.damageMental = false;
 
 			skillTypes.Add(Hinder.ID, Hinder);
+
+			////////////////////////////////////////////////////////////////////////////
+
+			_OVERCOME.Add(Athletics, new List<SkillType>(new SkillType[] { Athletics, Physique }));
+			_OVERCOME.Add(Burglary, new List<SkillType>(new SkillType[] { }));
+			_OVERCOME.Add(Contacts, new List<SkillType>(new SkillType[] { Contacts, Deceive, Investigate }));
+			_OVERCOME.Add(Crafts, new List<SkillType>(new SkillType[] { }));
+			_OVERCOME.Add(Deceive, new List<SkillType>(new SkillType[] { Deceive, Investigate, Lore }));
+			_OVERCOME.Add(Drive, new List<SkillType>(new SkillType[] { Drive }));
+			_OVERCOME.Add(Empathy, new List<SkillType>(new SkillType[] { Deceive }));
+			_OVERCOME.Add(Fight, new List<SkillType>(new SkillType[] { Fight }));
+			_OVERCOME.Add(Investigate, new List<SkillType>(new SkillType[] { Deceive }));
+			_OVERCOME.Add(Lore, new List<SkillType>(new SkillType[] { Deceive }));
+			_OVERCOME.Add(Notice, new List<SkillType>(new SkillType[] { Burglary, Stealth }));
+			_OVERCOME.Add(Physique, new List<SkillType>(new SkillType[] { Physique, Fight, Shoot, Crafts }));
+			_OVERCOME.Add(Provoke, new List<SkillType>(new SkillType[] { Provoke }));
+			_OVERCOME.Add(Rapport, new List<SkillType>(new SkillType[] { Rapport }));
+			_OVERCOME.Add(Resources, new List<SkillType>(new SkillType[] { Resources }));
+			_OVERCOME.Add(Shoot, new List<SkillType>(new SkillType[] { Athletics, Drive }));
+			_OVERCOME.Add(Stealth, new List<SkillType>(new SkillType[] { Notice, Investigate }));
+			_OVERCOME.Add(Will, new List<SkillType>(new SkillType[] { Provoke }));
+
+			_EVADE.Add(Athletics, new List<SkillType>(new SkillType[] { Athletics, Fight, Shoot, Physique }));
+			_EVADE.Add(Burglary, new List<SkillType>(new SkillType[] { }));
+			_EVADE.Add(Contacts, new List<SkillType>(new SkillType[] { Contacts, Deceive }));
+			_EVADE.Add(Crafts, new List<SkillType>(new SkillType[] { }));
+			_EVADE.Add(Deceive, new List<SkillType>(new SkillType[] { Deceive, Investigate, Lore }));
+			_EVADE.Add(Drive, new List<SkillType>(new SkillType[] { Drive }));
+			_EVADE.Add(Empathy, new List<SkillType>(new SkillType[] { Deceive }));
+			_EVADE.Add(Fight, new List<SkillType>(new SkillType[] { Fight }));
+			_EVADE.Add(Investigate, new List<SkillType>(new SkillType[] { Deceive }));
+			_EVADE.Add(Lore, new List<SkillType>(new SkillType[] { Deceive }));
+			_EVADE.Add(Notice, new List<SkillType>(new SkillType[] { Burglary, Stealth }));
+			_EVADE.Add(Physique, new List<SkillType>(new SkillType[] { Physique, Fight, Shoot, Crafts }));
+			_EVADE.Add(Provoke, new List<SkillType>(new SkillType[] { Provoke }));
+			_EVADE.Add(Rapport, new List<SkillType>(new SkillType[] { Rapport }));
+			_EVADE.Add(Resources, new List<SkillType>(new SkillType[] { Resources }));
+			_EVADE.Add(Shoot, new List<SkillType>(new SkillType[] { Athletics, Drive }));
+			_EVADE.Add(Stealth, new List<SkillType>(new SkillType[] { Notice, Investigate }));
+			_EVADE.Add(Will, new List<SkillType>(new SkillType[] { Provoke }));
+
+			_DEFEND.Add(Athletics, new List<SkillType>(new SkillType[] { Fight, Shoot }));
+			_DEFEND.Add(Physique, new List<SkillType>(new SkillType[] { Fight, Shoot }));
+			_DEFEND.Add(Fight, new List<SkillType>(new SkillType[] { Fight }));
+			_DEFEND.Add(Will, new List<SkillType>(new SkillType[] { Provoke }));
+		}
+
+		public static bool CanInitiativeUseSkill(Character initiative, SkillType skillType, CharacterAction action) {
+			var situationLimit = initiative.GetSkill(skillType).SituationLimit;
+			if ((situationLimit.usableSituation & action) == 0) return false;
+			else return true;
+		}
+
+		public static bool CanPassiveUseSkill(Character passive, SkillType skillType, CharacterAction action) {
+			var situationLimit = passive.GetSkill(skillType).SituationLimit;
+			if ((situationLimit.resistableSituation & action) == 0) return false;
+			else return true;
+		}
+
+		public static bool CanResistSkillWithoutDMCheck(SkillType initiativeUsing, SkillType resist, CharacterAction action) {
+			Dictionary<SkillType, List<SkillType>> resistTable;
+			switch (action) {
+				case CharacterAction.CREATE_ASPECT:
+					resistTable = _EVADE;
+					break;
+				case CharacterAction.ATTACK:
+					resistTable = _DEFEND;
+					break;
+				case CharacterAction.HINDER:
+					resistTable = _OVERCOME;
+					break;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(action));
+			}
+			if (resistTable.TryGetValue(resist, out List<SkillType> initiativeSkills)) return initiativeSkills.Contains(initiativeUsing);
+			else return false;
 		}
 
 		private readonly string _id;
 		private readonly string _name;
 		private int _level = 0;
+		private int _targetMaxCount = 1;
+		private bool _damageMental = false;
 		private SkillBattleMapProperty _battleMapProperty = SkillBattleMapProperty.INIT;
 		private SkillSituationLimit _situationLimit = SkillSituationLimit.INIT;
 
 		public string ID => _id;
 		public string Name => _name;
 		public int Level => _level;
+		public int TargetMaxCount => _targetMaxCount;
+		public bool DamageMental => _damageMental;
 		public SkillBattleMapProperty BattleMapProperty => _battleMapProperty;
 		public SkillSituationLimit SituationLimit => _situationLimit;
-		
+
 		private SkillType(string id, string name) {
 			_id = id ?? throw new ArgumentNullException(nameof(id));
 			_name = name ?? throw new ArgumentNullException(nameof(name));
