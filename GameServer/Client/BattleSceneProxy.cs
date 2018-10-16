@@ -16,7 +16,7 @@ namespace GameServer.Client {
 		protected bool _canOperate = false;
 		protected bool _ignoreOperating = false;
 
-		public override bool IsUsing => CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE;
+		public override bool IsUsing => CampaignManager.Instance.CurrentScene == SceneType.BATTLE;
 
 		protected BattleSceneMovePathInfoMessage CreateMovePathInfoMessage(List<ReachablePlace> reachablePlaces) {
 			var ret = new BattleSceneMovePathInfoMessage();

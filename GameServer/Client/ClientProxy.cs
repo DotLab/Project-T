@@ -57,11 +57,11 @@ namespace GameServer.Client {
 			if (message.MessageType == ClientInitMessage.MESSAGE_TYPE) {
 				_battleScene.SynchronizeData();
 
-				if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
-					ShowScene(ContainerType.BATTLE);
+				if (CampaignManager.Instance.CurrentScene == SceneType.BATTLE) {
+					ShowScene(SceneType.BATTLE);
 					_battleScene.SynchronizeState();
-				} else if (CampaignManager.Instance.CurrentContainer == ContainerType.STORY) {
-					ShowScene(ContainerType.STORY);
+				} else if (CampaignManager.Instance.CurrentScene == SceneType.STORY) {
+					ShowScene(SceneType.STORY);
 
 				}
 			} else if (message.MessageType == UserDecisionMessage.MESSAGE_TYPE) {
@@ -90,7 +90,7 @@ namespace GameServer.Client {
 			_connection.FlushReceivingBuffer();
 		}
 
-		public void ShowScene(ContainerType scene) {
+		public void ShowScene(SceneType scene) {
 			var message = new ShowSceneMessage();
 			message.sceneType = (byte)scene;
 			_connection.SendMessage(message);

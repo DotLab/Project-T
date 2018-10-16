@@ -280,7 +280,7 @@ namespace TestConsoleApp {
 
 			NetworkHelper.StartServer(OnConnectionEstablished);
 
-			CampaignManager.Instance.CurrentContainer = ContainerType.BATTLE;
+			CampaignManager.Instance.CurrentScene = SceneType.BATTLE;
 			
 			var battleScene = BattleScene.Instance;
 			battleScene.Reset(8, 8);

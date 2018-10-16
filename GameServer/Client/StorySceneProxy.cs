@@ -77,7 +77,7 @@ namespace GameServer.Client {
 
 		public TextBox TextBox => _textBox;
 
-		public override bool IsUsing => CampaignManager.Instance.CurrentContainer == ContainerType.STORY;
+		public override bool IsUsing => CampaignManager.Instance.CurrentScene == SceneType.STORY;
 
 		public override void MessageReceived(Message message) { }
 
@@ -103,7 +103,7 @@ namespace GameServer.Client {
 			_connection.SendMessage(message);
 		}
 
-		public void AddObject(ISceneObject obj) {
+		public void AddObject(SceneObject obj) {
 			StorySceneObjectAddMessage message = new StorySceneObjectAddMessage();
 			message.objID = obj.ID;
 			message.view = obj.CharacterRef.View;
@@ -116,25 +116,25 @@ namespace GameServer.Client {
 			_connection.SendMessage(message);
 		}
 
-		public void RemoveObject(ISceneObject obj) {
+		public void RemoveObject(SceneObject obj) {
 			this.RemoveObject(obj.ID);
 		}
 
-		public void TransformObject(ISceneObject obj, Layout to) {
+		public void TransformObject(SceneObject obj, Layout to) {
 			StorySceneObjectTransformMessage message = new StorySceneObjectTransformMessage();
 			message.objID = obj.ID;
 			message.to = to;
 			_connection.SendMessage(message);
 		}
 
-		public void SetObjectViewEffect(ISceneObject obj, CharacterViewEffect effect) {
+		public void SetObjectViewEffect(SceneObject obj, CharacterViewEffect effect) {
 			StorySceneObjectViewEffectMessage message = new StorySceneObjectViewEffectMessage();
 			message.objID = obj.ID;
 			message.effect = effect;
 			_connection.SendMessage(message);
 		}
 
-		public void SetObjectPortraitStyle(ISceneObject obj, PortraitStyle portrait) {
+		public void SetObjectPortraitStyle(SceneObject obj, PortraitStyle portrait) {
 			StorySceneObjectPortraitStyleMessage message = new StorySceneObjectPortraitStyleMessage();
 			message.objID = obj.ID;
 			message.portrait = portrait;

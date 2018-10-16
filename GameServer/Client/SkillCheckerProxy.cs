@@ -34,7 +34,7 @@ namespace GameServer.Client {
 					case CheckerGetInitiativeCanUseSkillMessage.MESSAGE_TYPE: {
 							var reqMsg = (CheckerGetInitiativeCanUseSkillMessage)request;
 							var resp = new CheckerCanInitiativeUseSkillMessage();
-							if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
+							if (CampaignManager.Instance.CurrentScene == SceneType.BATTLE) {
 								var skillType = SkillType.SkillTypes[reqMsg.skillTypeID];
 								var initiative = (ActableGridObject)BattleScene.Instance.FindObject(reqMsg.initiativeID);
 								var battleMapProperty = initiative.CharacterRef.GetSkill(skillType).BattleMapProperty;
@@ -48,7 +48,7 @@ namespace GameServer.Client {
 					case CheckerGetInitiativeCanUseStuntMessage.MESSAGE_TYPE: {
 							var reqMsg = (CheckerGetInitiativeCanUseStuntMessage)request;
 							var resp = new CheckerCanInitiativeUseStuntMessage();
-							if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
+							if (CampaignManager.Instance.CurrentScene == SceneType.BATTLE) {
 								var initiative = (ActableGridObject)BattleScene.Instance.FindObject(reqMsg.initiativeID);
 								var stunt = initiative.CharacterRef.FindStuntByID(reqMsg.stuntID);
 								var situation = initiative.GetStuntSituationForUsingCondition(stunt, reqMsg.action);
@@ -62,7 +62,7 @@ namespace GameServer.Client {
 					case CheckerGetStuntTargetValidityMessage.MESSAGE_TYPE: {
 							var reqMsg = (CheckerGetStuntTargetValidityMessage)request;
 							var resp = new CheckerStuntTargetValidityMessage();
-							if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
+							if (CampaignManager.Instance.CurrentScene == SceneType.BATTLE) {
 								var initiative = (ActableGridObject)BattleScene.Instance.FindObject(reqMsg.initiativeID);
 								var target = BattleScene.Instance.FindObject(reqMsg.targetID);
 								var stunt = initiative.CharacterRef.FindStuntByID(reqMsg.stuntID);
@@ -90,7 +90,7 @@ namespace GameServer.Client {
 							}
 							if (checker.CurrentPassive.Stunts != null) {
 								foreach (var stunt in checker.CurrentPassive.Stunts) {
-									if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
+									if (CampaignManager.Instance.CurrentScene == SceneType.BATTLE) {
 										var initiativeObj = BattleScene.Instance.FindObject(checker.Initiative.ID);
 										var situation = BattleScene.Instance.FindObject(checker.CurrentPassive.ID)
 											.GetStuntSituationForPassive(initiativeObj, checker.InitiativeSkillType, stunt, checker.CheckingAction);
@@ -140,7 +140,7 @@ namespace GameServer.Client {
 							if (!checker.IsChecking || checker.CurrentPassive.Controller != _owner) return;
 							var stunt = checker.CurrentPassive.FindStuntByID(msg.stuntID);
 							if (stunt != null) {
-								if (CampaignManager.Instance.CurrentContainer == ContainerType.BATTLE) {
+								if (CampaignManager.Instance.CurrentScene == SceneType.BATTLE) {
 									var initiativeObj = BattleScene.Instance.FindObject(checker.Initiative.ID);
 									var situation = BattleScene.Instance.FindObject(checker.CurrentPassive.ID)
 										.GetStuntSituationForPassive(initiativeObj, checker.InitiativeSkillType, stunt, checker.CheckingAction);

@@ -27,9 +27,9 @@ namespace GameServer.Playground {
 				}
 			}
 
-			public bool addToScene(IJSAPI<ISceneObject> sceneObj) {
+			public bool addToScene(IJSAPI<SceneObject> sceneObj) {
 				try {
-					ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+					SceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
 					return _outer.AddIntoScene(originSceneObj);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
@@ -37,19 +37,19 @@ namespace GameServer.Playground {
 				}
 			}
 
-			public IJSAPI<ISceneObject> getObject(string id) {
+			public IJSAPI<SceneObject> getObject(string id) {
 				try {
-					ISceneObject sceneObject = _outer.ObjList[id];
-					return (IJSAPI<ISceneObject>)sceneObject.GetContext();
+					SceneObject sceneObject = _outer.ObjList[id];
+					return (IJSAPI<SceneObject>)sceneObject.GetContext();
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
 					return null;
 				}
 			}
 
-			public bool isInScene(IJSAPI<ISceneObject> sceneObj) {
+			public bool isInScene(IJSAPI<SceneObject> sceneObj) {
 				try {
-					ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+					SceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
 					return _outer.ObjList.Contains(originSceneObj);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
@@ -66,9 +66,9 @@ namespace GameServer.Playground {
 				}
 			}
 
-			public bool removeFromScene(IJSAPI<ISceneObject> sceneObj) {
+			public bool removeFromScene(IJSAPI<SceneObject> sceneObj) {
 				try {
-					ISceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
+					SceneObject originSceneObj = JSContextHelper.Instance.GetAPIOrigin(sceneObj);
 					return _outer.RemoveFromScene(originSceneObj);
 				} catch (Exception e) {
 					JSEngineManager.Engine.Log(e.Message);
@@ -128,29 +128,29 @@ namespace GameServer.Playground {
 		private static readonly StoryScene _instance = new StoryScene();
 		public static StoryScene Instance => _instance;
 
-		private readonly IdentifiedObjectList<ISceneObject> _objList;
-		private readonly IdentifiedObjectList<Character> _playerCharacters;
+		private readonly IdentifiedObjectList<SceneObject> _objList;
+		private readonly IdentifiedObjectList<SceneObject> _playerCharacters;
 		private readonly Camera _camera;
 		private readonly List<TextBox> _textBoxes;
 
-		public IReadonlyIdentifiedObjectList<ISceneObject> ObjList => _objList;
-		public IReadonlyIdentifiedObjectList<Character> PlayerCharacters => _playerCharacters;
+		public IReadonlyIdentifiedObjectList<SceneObject> ObjList => _objList;
+		public IReadonlyIdentifiedObjectList<SceneObject> PlayerCharacters => _playerCharacters;
 		public Camera Camera => _camera;
 		public List<TextBox> TextBoxes => _textBoxes;
 
 		public StoryScene() {
-			_objList = new IdentifiedObjectList<ISceneObject>();
-			_playerCharacters = new IdentifiedObjectList<Character>();
+			_objList = new IdentifiedObjectList<SceneObject>();
+			_playerCharacters = new IdentifiedObjectList<SceneObject>();
 			_camera = new Camera();
 			_textBoxes = new List<TextBox>();
 			_apiObj = new JSAPI(this);
 		}
 
-		public Character FindCharacter(string id) {
-			if (_playerCharacters.TryGetValue(id, out Character character)) {
+		public SceneObject FindObject(string id) {
+			if (_playerCharacters.TryGetValue(id, out SceneObject character)) {
 				return character;
-			} else if (_objList.TryGetValue(id, out ISceneObject storyObject)) {
-				return storyObject.CharacterRef;
+			} else if (_objList.TryGetValue(id, out SceneObject storyObject)) {
+				return storyObject;
 			} else return null;
 		}
 
@@ -159,7 +159,7 @@ namespace GameServer.Playground {
 			return ret;
 		}
 
-		public void AddPlayerCharacter(Character playerCharacter) {
+		public void AddPlayerCharacter(SceneObject playerCharacter) {
 			_playerCharacters.Add(playerCharacter);
 			throw new NotImplementedException();
 		}
@@ -174,7 +174,7 @@ namespace GameServer.Playground {
 			return this.RemovePlayerCharacter(playerCharacter.ID);
 		}
 
-		public bool AddIntoScene(ISceneObject sceneObject) {
+		public bool AddIntoScene(SceneObject sceneObject) {
 			_objList.Add(sceneObject);
 			throw new NotImplementedException();
 			return true;
@@ -186,7 +186,7 @@ namespace GameServer.Playground {
 			return ret;
 		}
 
-		public bool RemoveFromScene(ISceneObject sceneObject) {
+		public bool RemoveFromScene(SceneObject sceneObject) {
 			return this.RemoveFromScene(sceneObject.ID);
 		}
 
@@ -194,7 +194,6 @@ namespace GameServer.Playground {
 			_objList.Clear();
 			_camera.Reset();
 			foreach (TextBox box in _textBoxes) {
-				box.Clear();
 				box.DisplayText();
 			}
 			throw new NotImplementedException();
@@ -209,20 +208,7 @@ namespace GameServer.Playground {
 }
 
 namespace GameServer.Playground.StoryComponent {
-	public interface ISceneObject : IIdentifiable {
-		void OnInteract();
-		void OnCreateAspect();
-		void OnAttack();
-		void OnHinder();
-		Character CharacterRef { get; }
-		Layout Layout { get; }
-		PortraitStyle Style { get; }
-		void TransTo(Layout layout);
-		void ChangeStyle(PortraitStyle style);
-		void ApplyEffect(CharacterViewEffect effect);
-	}
-
-	public class SceneObject : ISceneObject {
+	public class SceneObject : IIdentifiable {
 		#region Javascript API class
 		protected class JSAPI : IJSAPI<SceneObject> {
 			private readonly SceneObject _outer;
@@ -589,72 +575,18 @@ namespace GameServer.Playground.StoryComponent {
 
 		public void SetContext(IJSContext context) { }
 	}
-
-	public interface ITextItem : IJSContextProvider {
-		bool IsSelection { get; }
-		int SelectionCode { get; }
-		string Text { get; }
-	}
-
-	public sealed class TextItem : ITextItem {
-		#region Javascript API class
-		private sealed class JSAPI : IJSAPI<TextItem> {
-			private readonly TextItem _outer;
-
-			public JSAPI(TextItem outer) {
-				_outer = outer;
-			}
-
-			public void setText(string text) {
-				try {
-					_outer.Text = text;
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-				}
-			}
-
-			public string getText() {
-				try {
-					return _outer.Text;
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-					return null;
-				}
-			}
-
-			public TextItem Origin(JSContextHelper proof) {
-				try {
-					if (proof == JSContextHelper.Instance) {
-						return _outer;
-					}
-					return null;
-				} catch (Exception) {
-					return null;
-				}
-			}
-		}
-		#endregion
-		private readonly JSAPI _apiObj;
-
-		private string _text;
-
-		public bool IsSelection => false;
-		public int SelectionCode => -1;
-		public string Text { get => _text; set => _text = value ?? throw new ArgumentNullException(nameof(value)); }
-
-		public TextItem(string text) {
-			_text = text ?? throw new ArgumentNullException(nameof(text));
-			_apiObj = new JSAPI(this);
-		}
-
+	
+	public sealed class SelectionBox : IJSContextProvider {
 		public IJSContext GetContext() {
-			return _apiObj;
+			throw new NotImplementedException();
 		}
 
-		public void SetContext(IJSContext context) { }
+		public void SetContext(IJSContext context) {
+			throw new NotImplementedException();
+		}
 	}
 
-	public sealed class SelectionItem : ITextItem {
+	public sealed class SelectionItem : IJSContextProvider {
 		#region Javascript API class
 		private sealed class JSAPI : IJSAPI<SelectionItem> {
 			private readonly SelectionItem _outer;
@@ -729,27 +661,7 @@ namespace GameServer.Playground.StoryComponent {
 			public JSAPI(TextBox outer) {
 				_outer = outer;
 			}
-
-			public IJSAPI<TextItem> generateText(string text) {
-				try {
-					ITextItem textItem = _outer.GenerateText(text);
-					return (IJSAPI<TextItem>)textItem.GetContext();
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-					return null;
-				}
-			}
-
-			public IJSAPI<SelectionItem> generateSelection(string text, int selectionCode) {
-				try {
-					ITextItem buttonItem = _outer.GenerateSelection(text, selectionCode);
-					return (IJSAPI<SelectionItem>)buttonItem.GetContext();
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-					return null;
-				}
-			}
-
+			
 			public int getPlayerIndex() {
 				try {
 					return _outer.PlayerIndex;
@@ -758,15 +670,7 @@ namespace GameServer.Playground.StoryComponent {
 					return -1;
 				}
 			}
-
-			public void clear() {
-				try {
-					_outer.Clear();
-				} catch (Exception e) {
-					JSEngineManager.Engine.Log(e.Message);
-				}
-			}
-
+			
 			public void display() {
 				try {
 					_outer.DisplayText();
@@ -789,7 +693,7 @@ namespace GameServer.Playground.StoryComponent {
 		#endregion
 		private readonly JSAPI _apiObj;
 
-		private readonly List<ITextItem> _textItems;
+		private string _text;
 		private CharacterView _portrait;
 		private PortraitStyle _portraitStyle;
 		private readonly int _playerIndex;
@@ -800,26 +704,9 @@ namespace GameServer.Playground.StoryComponent {
 
 		public TextBox(int index) {
 			_playerIndex = index >= 0 ? index : throw new ArgumentOutOfRangeException(nameof(index), "Player index is less than 0.");
-			_textItems = new List<ITextItem>();
 			_apiObj = new JSAPI(this);
 		}
-
-		public ITextItem GenerateText(string text) {
-			TextItem ret = new TextItem(text);
-			_textItems.Add(ret);
-			return ret;
-		}
-
-		public ITextItem GenerateSelection(string text, int selectionCode) {
-			SelectionItem ret = new SelectionItem(text, selectionCode);
-			_textItems.Add(ret);
-			return ret;
-		}
-
-		public void Clear() {
-			_textItems.Clear();
-		}
-
+		
 		public void DisplayText() {
 			throw new NotImplementedException();
 		}

@@ -6,24 +6,22 @@ using System.Collections.Generic;
 
 namespace GameServer.Campaign {
 	public enum ShotType {
-		STORY, BATTLE, FREEDOM
+		STORY, BATTLE, INVESTIGATION
 	}
 
-	public enum ContainerType {
+	public enum SceneType {
 		STORY, BATTLE
 	}
 
 	public abstract class Shot : IDescribable {
-		protected List<Shot> _nexts;
 		protected string _description;
 		protected string _name;
 
 		public abstract ShotType Type { get; }
 		public abstract StoryShot Story { get; }
 		public abstract BattleShot Battle { get; }
-		public abstract FreedomShot Freedom { get; }
-
-		public List<Shot> Nexts { get => _nexts; set => _nexts = value; }
+		public abstract InvestigationShot Investigation { get; }
+		
 		public string Description { get => _description; set => _description = value; }
 		public string Name { get => _name; set => _name = value; }
 
@@ -48,30 +46,16 @@ namespace GameServer.Campaign {
 		public string Description { get => _description; set => _description = value; }
 		public string Name { get => _name; set => _name = value; }
 
-		public void JumpTo(string name) {
-
-		}
-
-		public void UseBackupShot(string name) {
-
-		}
-
 		public Campaign() {
 
 		}
 
+		public void Play(Shot shot) {
+
+		}
+		
 	}
-
-	public sealed class CampaignList {
-		private List<Campaign> _campaigns;
-		private Campaign _startup;
-
-		public List<Campaign> Campaigns { get => _campaigns; set => _campaigns = value; }
-		public Campaign Startup { get => _startup; set => _startup = value; }
-
-
-	}
-
+	
 	public sealed class CampaignManager : IJSContextProvider {
 		private sealed class JSAPI : IJSAPI<CampaignManager> {
 			private CampaignManager _outer;
@@ -90,7 +74,7 @@ namespace GameServer.Campaign {
 				}
 			}
 
-			public bool requestDMCheck(IJSAPI<Character> invoker, string text) {
+			public bool requireDMCheck(IJSAPI<Character> invoker, string text) {
 				try {
 					var origin_invoker = JSContextHelper.Instance.GetAPIOrigin(invoker);
 					return Game.DM.DMClient.RequireDMCheck(origin_invoker.Controller, text);
@@ -117,18 +101,22 @@ namespace GameServer.Campaign {
 		private static readonly CampaignManager _instance = new CampaignManager();
 		public static CampaignManager Instance => _instance;
 
-		private ContainerType _currentContainer = ContainerType.STORY;
+		private SceneType _currentScene = SceneType.STORY;
 		private Campaign _currentCampaign = null;
 		private Shot _currentShot = null;
+		private List<Campaign> _campaigns;
+		private Campaign _startup;
 
 		private CampaignManager() {
 			_apiObj = new JSAPI(this);
 		}
 
-		public ContainerType CurrentContainer { get => _currentContainer; set => _currentContainer = value; }
+		public SceneType CurrentScene { get => _currentScene; set => _currentScene = value; }
 		public Campaign CurrentCampaign => _currentCampaign;
 		public Shot CurrentShot => _currentShot;
-
+		public List<Campaign> Campaigns { get => _campaigns; set => _campaigns = value; }
+		public Campaign Startup { get => _startup; set => _startup = value; }
+		
 		public IJSContext GetContext() {
 			return _apiObj;
 		}
